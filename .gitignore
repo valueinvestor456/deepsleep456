@@ -1,0 +1,7 @@
+# Never commit installers or other non-website files accidentally dropped into this folder
+*.exe
+*.msi
+*.dmg
+*.zip
+*.7z
+*.rar
