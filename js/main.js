@@ -121,4 +121,40 @@
       if (e.key === "ArrowRight" && nextBtn) nextBtn.click();
     }
   });
+
+  // Amenity photo preview: hover (desktop) or tap (touch) reveals a supporting
+  // photo. The image is only fetched on first interaction, not on page load.
+  var amenityCards = document.querySelectorAll("[data-photo]");
+  var activeAmenity = null;
+
+  function loadAmenityPhoto(card) {
+    var img = card.querySelector(".amenity__preview img");
+    if (img && !img.getAttribute("src")) {
+      img.setAttribute("src", card.getAttribute("data-photo"));
+      img.setAttribute("alt", card.getAttribute("data-photo-alt") || "");
+    }
+  }
+
+  function closeAmenity(card) {
+    card.classList.remove("is-active");
+    if (activeAmenity === card) activeAmenity = null;
+  }
+
+  amenityCards.forEach(function (card) {
+    card.addEventListener("mouseenter", function () { loadAmenityPhoto(card); });
+    card.addEventListener("focus", function () { loadAmenityPhoto(card); });
+    card.addEventListener("click", function () {
+      loadAmenityPhoto(card);
+      var willOpen = !card.classList.contains("is-active");
+      if (activeAmenity && activeAmenity !== card) closeAmenity(activeAmenity);
+      card.classList.toggle("is-active", willOpen);
+      activeAmenity = willOpen ? card : null;
+    });
+  });
+  document.addEventListener("click", function (e) {
+    if (activeAmenity && !activeAmenity.contains(e.target)) closeAmenity(activeAmenity);
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && activeAmenity) closeAmenity(activeAmenity);
+  });
 })();
