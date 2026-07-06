@@ -23,7 +23,16 @@
   }
 
   // Hero slider (auto-cycle background slides)
+  // Slides after the first carry their image in data-bg instead of an inline
+  // background so the browser doesn't fetch them eagerly and compete with
+  // the LCP image; they're swapped in only after the page has settled.
   var slides = document.querySelectorAll("[data-hero-slider] .hero__slide");
+  window.addEventListener("load", function () {
+    slides.forEach(function (slide) {
+      var bg = slide.getAttribute("data-bg");
+      if (bg) slide.style.backgroundImage = "url('" + bg + "')";
+    });
+  });
   if (slides.length > 1) {
     var current = 0;
     setInterval(function () {
