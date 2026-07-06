@@ -163,10 +163,11 @@ button { font-family: inherit; }
 
 /* Reviews */
 .reviews { background: #FBF7EE; }
-.reviews__score { display: flex; flex-direction: column; align-items: center; margin-bottom: 36px; }
+.reviews__score { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 36px; }
+.reviews__score-stars { color: var(--color-clay); font-size: 1.6rem; letter-spacing: 2px; }
 .reviews__score-num { font-family: var(--font-heading); font-size: 3.4rem; color: var(--color-forest); font-weight: 700; }
-.reviews__score-max { font-size: 1.4rem; color: var(--color-moss); }
 .reviews__score-label { color: #55503f; font-weight: 500; }
+.reviews__score-link { color: var(--color-forest); font-weight: 600; border-bottom: 2px solid var(--color-clay); margin-top: 4px; }
 .reviews__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
 .review-card { background: #fff; border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-card); font-size: .95rem; color: #45402f; }
 .reviews__note { text-align: center; margin-top: 24px; color: #857f6b; font-size: .85rem; }
