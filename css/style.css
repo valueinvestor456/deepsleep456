@@ -181,8 +181,6 @@ button { font-family: inherit; }
 .map-section__list li p { margin: 0; color: #55503f; font-size: .92rem; }
 
 /* Cafes */
-.cafes__zone { font-family: var(--font-heading); color: var(--color-forest-dark); font-size: 1.05rem; margin: 32px 0 16px; }
-.cafes__zone:first-of-type { margin-top: 0; }
 .cafes__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .cafe-card { background: #fff; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-card); }
 .cafe-card strong { display: block; font-family: var(--font-heading); color: var(--color-forest-dark); margin-bottom: 8px; }
