@@ -157,4 +157,34 @@
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && activeAmenity) closeAmenity(activeAmenity);
   });
+
+  // Live temperature badge in the climate section (Open-Meteo, no API key,
+  // modeled for the property's exact coordinates rather than the district).
+  var climateLive = document.querySelector("[data-climate-live]");
+  if (climateLive) {
+    var lang = document.documentElement.lang === "en" ? "en" : "th";
+    var weatherLabels = {
+      th: { 0: "ท้องฟ้าแจ่มใส", 1: "มีเมฆบางส่วน", 2: "มีเมฆบางส่วน", 3: "เมฆมาก", 45: "หมอก", 48: "หมอก",
+        51: "ฝนตกปรอยๆ", 53: "ฝนตกปรอยๆ", 55: "ฝนตกปรอยๆ", 61: "ฝนตกเล็กน้อย", 63: "ฝนตกปานกลาง", 65: "ฝนตกหนัก",
+        80: "ฝนตกเป็นช่วง", 81: "ฝนตกเป็นช่วง", 82: "ฝนตกหนักเป็นช่วง", 95: "พายุฝนฟ้าคะนอง" },
+      en: { 0: "Clear sky", 1: "Partly cloudy", 2: "Partly cloudy", 3: "Overcast", 45: "Foggy", 48: "Foggy",
+        51: "Light drizzle", 53: "Drizzle", 55: "Dense drizzle", 61: "Light rain", 63: "Moderate rain", 65: "Heavy rain",
+        80: "Rain showers", 81: "Rain showers", 82: "Heavy showers", 95: "Thunderstorm" }
+    };
+    var textEl = climateLive.querySelector(".climate-live__text");
+    fetch("https://api.open-meteo.com/v1/forecast?latitude=18.8922564&longitude=98.8279099&current=temperature_2m,weather_code&timezone=Asia%2FBangkok")
+      .then(function (res) { if (!res.ok) throw new Error("bad response"); return res.json(); })
+      .then(function (data) {
+        var c = data.current;
+        var label = weatherLabels[lang][c.weather_code] || (lang === "th" ? "มีเมฆ" : "Cloudy");
+        var time = new Date(c.time).toLocaleTimeString(lang === "th" ? "th-TH" : "en-US", { hour: "2-digit", minute: "2-digit" });
+        textEl.textContent = lang === "th"
+          ? "อุณหภูมิตอนนี้ที่โป่งแยง: " + c.temperature_2m.toFixed(1) + "°C · " + label + " · อัปเดต " + time + " น."
+          : "Right now in Pong Yaeng: " + c.temperature_2m.toFixed(1) + "°C · " + label + " · updated " + time;
+        climateLive.classList.remove("climate-live--loading");
+      })
+      .catch(function () {
+        climateLive.classList.add("climate-live--error");
+      });
+  }
 })();

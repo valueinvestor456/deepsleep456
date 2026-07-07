@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<!-- PRE-LAUNCH TODO: confirm real starting price and phone/WhatsApp number. Search for data-confirm attributes before going live. Also confirm Facebook page URL (footer link currently omitted), exact map pin, and the climate comparison temperatures in the "climate" section. -->
+<!-- PRE-LAUNCH TODO: confirm real starting price and phone/WhatsApp number. Search for data-confirm attributes before going live. Also confirm Facebook page URL (footer link currently omitted), exact map pin, and the Chiang Mai city-side temperatures in the "climate" section (Pong Yaeng side already confirmed by owner). -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Deepsleep456 | ที่พักโป่งแยง ใกล้ม่อนแจ่ม เชียงใหม่</title>
@@ -186,6 +186,22 @@ button { font-family: inherit; }
 .climate-compare__stat { padding: 14px 10px; font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; color: #55503f; text-align: center; }
 .climate-compare__stat small { display: block; font-family: var(--font-body); font-weight: 300; font-size: .72rem; color: #7a7561; margin-top: 2px; }
 .climate-compare__stat--cool { color: var(--color-forest); background: #F3EDE1; }
+.climate-live {
+  display: inline-flex; align-items: center; gap: 9px; margin: 22px 0 0;
+  padding: 9px 18px; background: #fff; border-radius: 999px; box-shadow: var(--shadow-card);
+  font-size: .88rem; color: var(--color-forest-dark);
+}
+.climate-live__dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #4CAF50; flex-shrink: 0;
+  animation: climate-pulse 2s infinite;
+}
+@keyframes climate-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(76,175,80,.5); }
+  70% { box-shadow: 0 0 0 6px rgba(76,175,80,0); }
+  100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); }
+}
+.climate-live--loading .climate-live__dot { background: #ccc; animation: none; }
+.climate-live--error { display: none; }
 .climate__admin-note { margin-top: 18px; font-size: .9rem; font-style: italic; color: #5c5745; }
 .climate__media img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow-card); }
 
@@ -579,20 +595,25 @@ button { font-family: inherit; }
           <div class="climate-compare__row">
             <span class="climate-compare__label">กลางวัน</span>
             <span class="climate-compare__stat">~<span data-confirm="climate">32</span>°C<br><small>ร้อน ชื้น</small></span>
-            <span class="climate-compare__stat climate-compare__stat--cool">~<span data-confirm="climate">27</span>°C<br><small>เย็นสบาย มีลมพัด</small></span>
+            <span class="climate-compare__stat climate-compare__stat--cool">~25°C<br><small>เย็นสบาย มีลมพัด</small></span>
           </div>
           <div class="climate-compare__row">
             <span class="climate-compare__label">กลางคืน</span>
             <span class="climate-compare__stat">~<span data-confirm="climate">25</span>°C<br><small>ต้องเปิดแอร์</small></span>
-            <span class="climate-compare__stat climate-compare__stat--cool">~<span data-confirm="climate">19</span>°C<br><small>เย็นสบาย ห่มผ้าหนา</small></span>
+            <span class="climate-compare__stat climate-compare__stat--cool">~20°C<br><small>เย็นสบาย ห่มผ้าหนา</small></span>
           </div>
         </div>
+
+        <p class="climate-live climate-live--loading" data-climate-live>
+          <span class="climate-live__dot" aria-hidden="true"></span>
+          <span class="climate-live__text">กำลังโหลดอุณหภูมิตอนนี้ที่โป่งแยง…</span>
+        </p>
 
         <div class="amenity-callout climate-callout">
           <span class="amenity-callout__icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
           </span>
-          <p><strong>หมายเหตุ:</strong> ตัวเลขอุณหภูมิด้านบนเป็นค่า<em>โดยประมาณ</em>จากประสบการณ์ทีมงาน อาจแตกต่างกันไปตามวันและฤดูกาล โปรดใช้เป็นข้อมูลคร่าว ๆ เท่านั้น <span data-confirm="climate">(รอข้อมูลยืนยันจากเจ้าของที่พัก)</span></p>
+          <p><strong>หมายเหตุ:</strong> อุณหภูมิที่โป่งแยงยืนยันจากเจ้าของที่พัก แต่<em>อาจแตกต่างกันไปตามฤดูกาล</em> ส่วนตัวเลขในเมืองเชียงใหม่เป็นค่าโดยประมาณ <span data-confirm="climate">(รอข้อมูลยืนยัน)</span></p>
         </div>
 
         <p class="climate__admin-note">“จากใจทีมงาน: ขับรถจากตัวเมืองเชียงใหม่มาไม่ถึงชั่วโมง ก็เจออากาศเย็นสบายและสดชื่นขึ้นชัดเจนแล้ว”</p>
