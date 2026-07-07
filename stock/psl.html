@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>PSL Leading Indicator Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; /* blue: revenue / BDI / EBITDA */
+    --series-2:#1baf7a; /* aqua: opex / net profit (grouped) */
+    --diverge-pos:#2a78d6; --diverge-neg:#e34948; --diverge-mid:#f0efec;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --card-radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --series-2:#199e70;
+      --diverge-pos:#3987e5; --diverge-neg:#e66767; --diverge-mid:#383835;
+      --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    }
+  }
+  :root[data-theme="dark"]{
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-2:#199e70;
+    --diverge-pos:#3987e5; --diverge-neg:#e66767; --diverge-mid:#383835;
+  }
+  :root[data-theme="light"]{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#1baf7a;
+    --diverge-pos:#2a78d6; --diverge-neg:#e34948; --diverge-mid:#f0efec;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--page); color:var(--text-primary);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:24px; line-height:1.5;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+  header.page{margin-bottom:20px;}
+  h1{font-size:22px;margin:0 0 4px;}
+  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 2px;}
+  .meta{color:var(--text-muted);font-size:12px;}
+  .card{
+    background:var(--surface-1); border:1px solid var(--border);
+    border-radius:var(--card-radius); padding:18px 20px; margin-bottom:16px;
+  }
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+  .stat-tile{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:var(--card-radius);
+    padding:14px 16px;
+  }
+  .stat-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px;}
+  .stat-value{font-size:24px;font-weight:600;color:var(--text-primary);}
+  .stat-delta{font-size:12px;margin-top:4px;font-weight:600;}
+  .stat-delta.up-good{color:var(--good);}
+  .stat-delta.up-bad{color:var(--critical);}
+  .stat-delta.flip{color:var(--good);}
+  .stat-note{font-size:11px;color:var(--text-muted);margin-top:4px;}
+  .alert{
+    background:var(--surface-1); border:1px solid var(--border); border-left:4px solid var(--critical);
+    border-radius:var(--card-radius); padding:14px 18px; margin-bottom:16px;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .alert .icon{font-size:20px;line-height:1;}
+  .alert .title{font-weight:600;font-size:14px;margin-bottom:4px;}
+  .alert .body{font-size:13px;color:var(--text-secondary);}
+  .chart-title{font-size:15px;font-weight:600;margin:0 0 2px;}
+  .chart-caption{font-size:12px;color:var(--text-secondary);margin:0 0 12px;}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--text-secondary);margin-bottom:8px;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .swatch{width:14px;height:3px;border-radius:2px;display:inline-block;}
+  .swatch.dot{width:9px;height:9px;border-radius:50%;}
+  svg.chart{width:100%;height:auto;display:block;overflow:visible;}
+  .gridline{stroke:var(--grid);stroke-width:1;}
+  .axis-line{stroke:var(--axis);stroke-width:1;}
+  .axis-label{fill:var(--text-muted);font-size:11px;}
+  .data-label{fill:var(--text-secondary);font-size:11px;}
+  .no-data-label{fill:var(--text-muted);font-size:10px;font-style:italic;}
+  .tooltip{
+    position:absolute; pointer-events:none; background:var(--surface-1);
+    border:1px solid var(--border); border-radius:8px; padding:8px 10px;
+    font-size:12px; box-shadow:0 4px 16px rgba(0,0,0,0.15); opacity:0; transition:opacity .1s;
+    z-index:10; min-width:120px;
+  }
+  .tooltip .t-head{font-weight:600;color:var(--text-primary);margin-bottom:4px;}
+  .tooltip .t-row{display:flex;justify-content:space-between;gap:10px;color:var(--text-secondary);}
+  .tooltip .t-row .v{font-weight:600;color:var(--text-primary);}
+  .crosshair{stroke:var(--axis);stroke-width:1;stroke-dasharray:2,2;pointer-events:none;opacity:0;}
+  .hit-rect{fill:transparent;cursor:crosshair;}
+  .btn{
+    background:var(--surface-1); border:1px solid var(--border); color:var(--text-secondary);
+    font-size:12px; padding:6px 12px; border-radius:8px; cursor:pointer;
+  }
+  .btn:hover{color:var(--text-primary);}
+  .table-view{display:none;margin-top:12px;overflow-x:auto;}
+  .table-view.show{display:block;}
+  table{border-collapse:collapse;width:100%;font-size:12px;}
+  th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums;}
+  th:first-child,td:first-child{text-align:left;font-variant-numeric:normal;}
+  th{color:var(--text-secondary);font-weight:600;}
+  td{color:var(--text-primary);}
+  .source-list{font-size:12px;color:var(--text-secondary);}
+  .source-list a{color:var(--series-1);text-decoration:none;}
+  .stop-box{border:1px solid var(--border);border-left:4px solid var(--warning);border-radius:var(--card-radius);padding:14px 18px;background:var(--surface-1);}
+  .stop-box .title{font-weight:600;font-size:13px;margin-bottom:6px;}
+  .stop-box ul{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--text-secondary);}
+  footer{font-size:11px;color:var(--text-muted);margin-top:24px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>PSL — Precious Shipping PCL — Leading Indicator Dashboard</h1>
+    <p class="subtitle">ติดตาม driver หลักของผลประกอบการ: TCE ($/day), OPEX ($/day), EBITDA, กำไรสุทธิ, ความสัมพันธ์กับ BDI</p>
+    <p class="meta">ข้อมูลจาก LLM Wiki (wiki/entities/psl.md และ wiki/sources/psl-*.md) — อัปเดตล่าสุด 2026-07-06 · <button class="btn" id="toggle-theme" style="margin-left:8px;">สลับโหมดสี</button></p>
+  </header>
+
+  <div class="alert">
+    <div class="icon">⚠️</div>
+    <div>
+      <div class="title">Risk event — เรือ "มยุรี นารี" ถูกโจมตีในช่องแคบฮอร์มุซ</div>
+      <div class="body">11 มี.ค. 2569: ถูกโจมตีด้วยระเบิด 2 ลูกขณะแล่นผ่านช่องแคบฮอร์มุซ ลูกเรือเสียชีวิต 3 นาย เรือเสียหายเสมือนสิ้นเชิง (Constructive Total Loss) — 20 เม.ย. 2569 ได้รับชดเชยประกันภัยความเสี่ยงสงคราม $10.9M
+        ดูรายละเอียด: <span style="color:var(--text-muted);">wiki/sources/psl-mda-q1-2026-hormuz-incident.md</span>, บริบทมหภาค: <span style="color:var(--text-muted);">wiki/concepts/hormuz-strait-conflict-2026.md</span></div>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="stat-tile">
+      <div class="stat-label">TCE / วัน / ลำ (Q1/2569)</div>
+      <div class="stat-value">$12,528</div>
+      <div class="stat-delta up-good">▲ +45.0% YoY</div>
+      <div class="stat-note">เทียบ Q1/2568: $8,641</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">OPEX / วัน / ลำ (Q1/2569)</div>
+      <div class="stat-value">$5,715</div>
+      <div class="stat-delta up-bad">▲ +5.3% YoY</div>
+      <div class="stat-note">เทียบ Q1/2568: $5,425</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">EBITDA (Q1/2569)</div>
+      <div class="stat-value">$18.27M</div>
+      <div class="stat-delta up-good">▲ +119.3% YoY</div>
+      <div class="stat-note">เทียบ Q1/2568: $8.33M</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">กำไรสุทธิ (Q1/2569)</div>
+      <div class="stat-value">$3.41M</div>
+      <div class="stat-delta flip">▲ พลิกจากขาดทุน</div>
+      <div class="stat-note">เทียบ Q1/2568: -$4.14M</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">ขนาดกองเรือ (31 มี.ค. 2569)</div>
+      <div class="stat-value">41 ลำ</div>
+      <div class="stat-note">+ อยู่ระหว่างต่อเรืออีก 4 ลำ · รวมเรือมยุรี นารีที่เสียหายแล้ว</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="chart-title">BDI (Baltic Dry Index) เทียบกับกำไรสุทธิรายปี — 10 ปีย้อนหลัง</p>
+    <p class="chart-caption">Leading indicator หลักของ PSL: กำไรแปรผันตาม BDI อย่างชัดเจน (ปี 2564-65 ที่ BDI พุ่ง ทำกำไรสูงสุดในรอบ 10 ปี)</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:var(--series-1);"></span>BDI เฉลี่ยรายปี (ดัชนี)</span>
+      <span class="legend-item"><span class="swatch dot" style="background:var(--diverge-pos);"></span>กำไรสุทธิเป็นบวก ($M)</span>
+      <span class="legend-item"><span class="swatch dot" style="background:var(--diverge-neg);"></span>ขาดทุน ($M)</span>
+    </div>
+    <svg class="chart" id="chart-bdi" viewBox="0 0 900 355" preserveAspectRatio="xMidYMid meet"></svg>
+    <button class="btn" data-table-toggle="table-bdi">แสดงตารางข้อมูล</button>
+    <div class="table-view" id="table-bdi"></div>
+  </div>
+
+  <div class="card">
+    <p class="chart-title">TCE เทียบ OPEX ต่อวันต่อลำ — รายไตรมาส</p>
+    <p class="chart-caption">ส่วนต่างระหว่างสองเส้นคือ margin เชิงปฏิบัติการต่อวัน — ยิ่งห่างยิ่งดี</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:var(--series-1);"></span>TCE เฉลี่ย/วัน/ลำ ($)</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--series-2);"></span>OPEX เฉลี่ย/วัน/ลำ ($)</span>
+    </div>
+    <svg class="chart" id="chart-tce" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet"></svg>
+    <button class="btn" data-table-toggle="table-tce">แสดงตารางข้อมูล</button>
+    <div class="table-view" id="table-tce"></div>
+  </div>
+
+  <div class="card">
+    <p class="chart-title">EBITDA เทียบกำไรสุทธิ — รายไตรมาส</p>
+    <p class="chart-caption">Q2/2568 ยังไม่มีข้อมูล (ยังไม่ ingest) — แสดงเป็นช่องว่างเพื่อไม่ให้เข้าใจผิดว่าเป็นศูนย์</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:var(--series-1);"></span>EBITDA ($M)</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--series-2);"></span>กำไร(ขาดทุน)สุทธิ ($M)</span>
+    </div>
+    <svg class="chart" id="chart-ebitda" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet"></svg>
+    <button class="btn" data-table-toggle="table-ebitda">แสดงตารางข้อมูล</button>
+    <div class="table-view" id="table-ebitda"></div>
+  </div>
+
+  <div class="card stop-box">
+    <div class="title">🛑 STOP — จุดตรวจสอบก่อนเชื่อ (Concrete Verification Target)</div>
+    <ul>
+      <li>ทุกตัวเลขในแดชบอร์ดนี้ trace กลับไปยัง wiki/sources/psl-*.md และ raw/psl/*.pdf ได้ — ไม่มีตัวเลขที่เดา/ประมาณเอง</li>
+      <li>Q2/2568 (Q2 2025) ยังไม่มีข้อมูลใน wiki — ช่องว่างในกราฟคือของจริง ไม่ใช่ error</li>
+      <li>ตัวเลข "แปลงหน่วย" (บาท↔USD) ไม่ได้ทำในแดชบอร์ดนี้ — ตัวเลข $/วัน/ลำ และ EBITDA เป็น USD ตามที่บริษัทรายงาน ส่วนกำไรสุทธิบางจุดอ้างอิงบาทแยกไว้ใน source แต่ละไฟล์</li>
+      <li>เหตุการณ์ฮอร์มุซกระทบทั้งความเสี่ยงปฏิบัติการ (เสียเรือ 1 ลำ) และเป็นส่วนหนึ่งของสาเหตุ BDI พุ่ง (tailwind ระดับตลาด) — สองผลกระทบนี้ตรงข้ามกัน ต้องแยกพิจารณา</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <p class="chart-title" style="margin-bottom:8px;">แหล่งข้อมูล</p>
+    <div class="source-list">
+      wiki/entities/psl.md · wiki/sources/psl-financial-statements-fy2025.md · wiki/sources/psl-mda-fy2025-annual.md · wiki/sources/psl-mda-q3-2025-market-outlook.md · wiki/sources/psl-mda-q1-2026-hormuz-incident.md · wiki/sources/psl-agm-minutes-2025.md · wiki/concepts/hormuz-strait-conflict-2026.md
+    </div>
+  </div>
+
+  <footer>สร้างโดย Claude Code จากข้อมูลใน LLM Wiki ของโปรเจกต์ "investment with ai" — ไม่ใช่คำแนะนำการลงทุน ตรวจสอบตัวเลขกับต้นทางก่อนตัดสินใจเสมอ</footer>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- data ----------
+  var yearly = [
+    {label:'2559', en:2016, bdi:673,  profit:-75.61},
+    {label:'2560', en:2017, bdi:1145, profit:-3.76},
+    {label:'2561', en:2018, bdi:1353, profit:14.10},
+    {label:'2562', en:2019, bdi:1353, profit:-7.25},
+    {label:'2563', en:2020, bdi:1066, profit:-40.80},
+    {label:'2564', en:2021, bdi:2943, profit:136.96},
+    {label:'2565', en:2022, bdi:1934, profit:138.61},
+    {label:'2566', en:2023, bdi:1378, profit:20.35},
+    {label:'2567', en:2024, bdi:1755, profit:41.31},
+    {label:'2568', en:2025, bdi:1681, profit:13.09}
+  ];
+
+  var quarterly = [
+    {label:'Q1/68', en:'Q1 2025', rev:8641,  opex:5425, ebitda:8.33,  profit:-4.14},
+    {label:'Q2/68', en:'Q2 2025', rev:null,  opex:null, ebitda:null, profit:null},
+    {label:'Q3/68', en:'Q3 2025', rev:13368, opex:5284, ebitda:21.36, profit:7.78},
+    {label:'Q4/68', en:'Q4 2025', rev:14301, opex:5503, ebitda:26.45, profit:10.77},
+    {label:'Q1/69', en:'Q1 2026', rev:12528, opex:5715, ebitda:18.27, profit:3.41}
+  ];
+
+  var cssVar = function(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  };
+
+  var fmt = function(n, opts){
+    opts = opts || {};
+    if(n === null || n === undefined) return 'n/a';
+    var s = (opts.signed && n > 0 ? '+' : '') + n.toLocaleString('en-US', {maximumFractionDigits: opts.decimals || 0, minimumFractionDigits: opts.decimals || 0});
+    return (opts.prefix||'') + s + (opts.suffix||'');
+  };
+
+  var tooltip = document.getElementById('tooltip');
+  function showTooltip(x, y, headHtml, rows){
+    tooltip.innerHTML = '';
+    var head = document.createElement('div');
+    head.className = 't-head';
+    head.textContent = headHtml;
+    tooltip.appendChild(head);
+    rows.forEach(function(r){
+      var row = document.createElement('div');
+      row.className = 't-row';
+      var label = document.createElement('span');
+      label.textContent = r.label;
+      var val = document.createElement('span');
+      val.className = 'v';
+      val.textContent = r.value;
+      row.appendChild(label);
+      row.appendChild(val);
+      tooltip.appendChild(row);
+    });
+    tooltip.style.left = (x + 16) + 'px';
+    tooltip.style.top = (y + 16) + 'px';
+    tooltip.style.opacity = '1';
+  }
+  function hideTooltip(){ tooltip.style.opacity = '0'; }
+
+  var NS = 'http://www.w3.org/2000/svg';
+  var STYLE_KEYS = {fill:1, stroke:1};
+  function el(tag, attrs){
+    var e = document.createElementNS(NS, tag);
+    for(var k in attrs){
+      var v = attrs[k];
+      if(STYLE_KEYS[k] && typeof v === 'string' && v.indexOf('var(') === 0){
+        e.style[k] = v; // route CSS custom properties through inline style for reliable var() resolution
+      } else {
+        e.setAttribute(k, v);
+      }
+    }
+    return e;
+  }
+
+  // ---------- small-multiple: BDI (line) + Net profit (diverging bar) ----------
+  function renderBdiChart(){
+    var svg = document.getElementById('chart-bdi');
+    var W = 900, padL = 46, padR = 16;
+    var topH = 150, botH = 130, gap = 30, topY = 10, botY = topY + topH + gap;
+    var plotW = W - padL - padR;
+    var n = yearly.length;
+    var stepX = plotW / (n - 1);
+    var maxBdi = Math.max.apply(null, yearly.map(function(d){return d.bdi;})) * 1.15;
+    var maxProfit = Math.max.apply(null, yearly.map(function(d){return Math.abs(d.profit);})) * 1.2;
+
+    function xAt(i){ return padL + stepX * i; }
+    function yTop(v){ return topY + topH - (v / maxBdi) * topH; }
+    function yBotZero(){ return botY + botH / 2; }
+    function yBot(v){ return yBotZero() - (v / maxProfit) * (botH/2); }
+
+    // gridlines top
+    [0, 0.5, 1].forEach(function(f){
+      var yy = topY + topH - f * topH;
+      svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:yy, y2:yy, class:'gridline'}));
+      svg.appendChild(el('text', {x:padL-8, y:yy+4, class:'axis-label', 'text-anchor':'end'})).textContent = Math.round(maxBdi*f).toLocaleString();
+    });
+    // axis baseline bottom
+    svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:yBotZero(), y2:yBotZero(), class:'axis-line'}));
+    [1,-1].forEach(function(sign){
+      var yy = yBotZero() - sign*(botH/2)*0.9;
+      var t = el('text', {x:padL-8, y:yy+4, class:'axis-label', 'text-anchor':'end'});
+      t.textContent = (sign>0?'+':'') + Math.round(maxProfit*0.9*sign);
+      svg.appendChild(t);
+    });
+
+    // BDI line path
+    var pathD = '';
+    yearly.forEach(function(d,i){
+      var x = xAt(i), y = yTop(d.bdi);
+      pathD += (i===0?'M':'L') + x + ',' + y + ' ';
+    });
+    svg.appendChild(el('path', {d:pathD.trim(), fill:'none', stroke:'var(--series-1)', 'stroke-width':2, 'stroke-linejoin':'round','stroke-linecap':'round'}));
+
+    // BDI dots + hit areas
+    yearly.forEach(function(d,i){
+      var x = xAt(i), y = yTop(d.bdi);
+      var dot = el('circle', {cx:x, cy:y, r:4, fill:'var(--series-1)', stroke:'var(--surface-1)', 'stroke-width':2});
+      svg.appendChild(dot);
+      var hit = el('circle', {cx:x, cy:y, r:14, class:'hit-rect'});
+      hit.addEventListener('pointerenter', function(e){
+        var rect = svg.getBoundingClientRect();
+        showTooltip(e.clientX, e.clientY, 'ปี ' + d.label + ' (' + d.en + ')', [
+          {label:'BDI เฉลี่ย', value: d.bdi.toLocaleString()},
+          {label:'กำไร(ขาดทุน)สุทธิ', value: fmt(d.profit, {prefix:'$', suffix:'M', decimals:2, signed:true})}
+        ]);
+      });
+      hit.addEventListener('pointerleave', hideTooltip);
+      svg.appendChild(hit);
+    });
+
+    // Net profit bars (diverging)
+    var barW = Math.min(28, stepX*0.5);
+    yearly.forEach(function(d,i){
+      var x = xAt(i);
+      var y0 = yBotZero(), y1 = yBot(d.profit);
+      var top = Math.min(y0,y1), h = Math.abs(y1-y0);
+      var color = d.profit >= 0 ? 'var(--diverge-pos)' : 'var(--diverge-neg)';
+      var bar = el('rect', {x:x-barW/2, y:top, width:barW, height:Math.max(h,1), rx:3, fill:color});
+      svg.appendChild(bar);
+      var hit = el('rect', {x:x-barW/2-4, y:botY, width:barW+8, height:botH, class:'hit-rect'});
+      hit.addEventListener('pointerenter', function(e){
+        showTooltip(e.clientX, e.clientY, 'ปี ' + d.label + ' (' + d.en + ')', [
+          {label:'BDI เฉลี่ย', value: d.bdi.toLocaleString()},
+          {label:'กำไร(ขาดทุน)สุทธิ', value: fmt(d.profit, {prefix:'$', suffix:'M', decimals:2, signed:true})}
+        ]);
+      });
+      hit.addEventListener('pointerleave', hideTooltip);
+      svg.appendChild(hit);
+      // x labels (once, aligned to bottom panel)
+      var lbl = el('text', {x:x, y:botY+botH+18, class:'axis-label', 'text-anchor':'middle'});
+      lbl.textContent = d.label;
+      svg.appendChild(lbl);
+    });
+
+    // panel captions
+    var capTop = el('text', {x:padL, y:topY-2, class:'axis-label', 'font-weight':600});
+    capTop.textContent = 'BDI เฉลี่ยรายปี';
+    svg.appendChild(capTop);
+    var capBot = el('text', {x:padL, y:botY-6, class:'axis-label', 'font-weight':600});
+    capBot.textContent = 'กำไร(ขาดทุน)สุทธิ ($M)';
+    svg.appendChild(capBot);
+
+    buildTable('table-bdi', ['ปี','BDI เฉลี่ย','กำไร(ขาดทุน)สุทธิ ($M)'], yearly.map(function(d){
+      return [d.label+' ('+d.en+')', d.bdi.toLocaleString(), fmt(d.profit,{decimals:2,signed:true})];
+    }));
+  }
+
+  // ---------- generic multi-line chart (TCE vs OPEX) ----------
+  function renderLineChart(svgId, data, seriesKeys, seriesColors, seriesLabels, valueFmt, tableId, tableHeaders){
+    var svg = document.getElementById(svgId);
+    var W = 900, H = 300, padL = 56, padR = 16, padT = 16, padB = 40;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = data.length;
+    var stepX = plotW / (n - 1);
+    var allVals = [];
+    data.forEach(function(d){ seriesKeys.forEach(function(k){ if(d[k]!==null && d[k]!==undefined) allVals.push(d[k]); }); });
+    var maxV = Math.max.apply(null, allVals) * 1.15;
+    var minV = 0;
+
+    function xAt(i){ return padL + stepX*i; }
+    function yAt(v){ return padT + plotH - ((v-minV)/(maxV-minV))*plotH; }
+
+    // gridlines
+    [0,0.25,0.5,0.75,1].forEach(function(f){
+      var yy = padT + plotH - f*plotH;
+      svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:yy, y2:yy, class:'gridline'}));
+      var t = el('text', {x:padL-8, y:yy+4, class:'axis-label', 'text-anchor':'end'});
+      t.textContent = Math.round(minV + f*(maxV-minV)).toLocaleString();
+      svg.appendChild(t);
+    });
+    svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:padT+plotH, y2:padT+plotH, class:'axis-line'}));
+
+    // x labels + one "no data" marker per index (drawn once, not per series)
+    data.forEach(function(d,i){
+      var t = el('text', {x:xAt(i), y:H-12, class:'axis-label', 'text-anchor':'middle'});
+      t.textContent = d.label;
+      svg.appendChild(t);
+      var allNull = seriesKeys.every(function(k){ return d[k]===null || d[k]===undefined; });
+      if(allNull){
+        var nd = el('text', {x:xAt(i), y:padT+plotH/2, class:'no-data-label', 'text-anchor':'middle'});
+        nd.textContent = 'no data';
+        svg.appendChild(nd);
+      }
+    });
+
+    seriesKeys.forEach(function(key, si){
+      var color = seriesColors[si];
+      var pathD = '';
+      var started = false;
+      data.forEach(function(d,i){
+        if(d[key] === null || d[key] === undefined){ started = false; return; }
+        var x = xAt(i), y = yAt(d[key]);
+        pathD += (started?'L':'M') + x + ',' + y + ' ';
+        started = true;
+      });
+      svg.appendChild(el('path', {d:pathD.trim(), fill:'none', stroke:color, 'stroke-width':2, 'stroke-linejoin':'round','stroke-linecap':'round'}));
+
+      data.forEach(function(d,i){
+        if(d[key] === null || d[key] === undefined){
+          return;
+        }
+        var x = xAt(i), y = yAt(d[key]);
+        var dot = el('circle', {cx:x, cy:y, r:4, fill:color, stroke:'var(--surface-1)', 'stroke-width':2});
+        svg.appendChild(dot);
+        var hit = el('circle', {cx:x, cy:y, r:14, class:'hit-rect'});
+        hit.addEventListener('pointerenter', function(e){
+          var rows = seriesKeys.map(function(k2,si2){
+            return {label: seriesLabels[si2], value: d[k2]===null||d[k2]===undefined ? 'n/a' : valueFmt(d[k2])};
+          });
+          showTooltip(e.clientX, e.clientY, d.label + ' (' + d.en + ')', rows);
+        });
+        hit.addEventListener('pointerleave', hideTooltip);
+        svg.appendChild(hit);
+      });
+    });
+
+    buildTable(tableId, tableHeaders, data.map(function(d){
+      var row = [d.label + ' (' + d.en + ')'];
+      seriesKeys.forEach(function(k){ row.push(d[k]===null||d[k]===undefined?'n/a':valueFmt(d[k])); });
+      return row;
+    }));
+  }
+
+  // ---------- generic grouped bar chart (EBITDA vs Net profit) ----------
+  function renderGroupedBar(svgId, data, seriesKeys, seriesColors, seriesLabels, valueFmt, tableId, tableHeaders){
+    var svg = document.getElementById(svgId);
+    var W = 900, H = 300, padL = 56, padR = 16, padT = 16, padB = 40;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = data.length;
+    var stepX = plotW / n;
+    var allVals = [];
+    data.forEach(function(d){ seriesKeys.forEach(function(k){ if(d[k]!==null && d[k]!==undefined) allVals.push(d[k]); }); });
+    var maxV = Math.max.apply(null, allVals.concat([0])) * 1.2;
+    var minV = Math.min.apply(null, allVals.concat([0])) * 1.2;
+    var zeroY = padT + plotH * (maxV/(maxV-minV));
+
+    function yAt(v){ return padT + plotH - ((v-minV)/(maxV-minV))*plotH; }
+
+    [minV, minV/2, 0, maxV/2, maxV].forEach(function(v){
+      var yy = yAt(v);
+      svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:yy, y2:yy, class:'gridline'}));
+      var t = el('text', {x:padL-8, y:yy+4, class:'axis-label', 'text-anchor':'end'});
+      t.textContent = Math.round(v).toLocaleString();
+      svg.appendChild(t);
+    });
+    svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:zeroY, y2:zeroY, class:'axis-line'}));
+
+    var groupW = stepX * 0.6;
+    var barW = Math.min(22, groupW/seriesKeys.length - 4);
+
+    data.forEach(function(d,i){
+      var gx = padL + stepX*i + stepX/2;
+      var hasData = seriesKeys.some(function(k){return d[k]!==null && d[k]!==undefined;});
+      var lbl = el('text', {x:gx, y:H-12, class:'axis-label', 'text-anchor':'middle'});
+      lbl.textContent = d.label;
+      svg.appendChild(lbl);
+      if(!hasData){
+        var nd = el('text', {x:gx, y:zeroY-6, class:'no-data-label', 'text-anchor':'middle'});
+        nd.textContent = 'no data';
+        svg.appendChild(nd);
+        return;
+      }
+      seriesKeys.forEach(function(key, si){
+        if(d[key]===null || d[key]===undefined) return;
+        var bx = gx - (groupW/2) + si*(barW+4);
+        var y0 = zeroY, y1 = yAt(d[key]);
+        var top = Math.min(y0,y1), h = Math.max(Math.abs(y1-y0),1);
+        var bar = el('rect', {x:bx, y:top, width:barW, height:h, rx:3, fill:seriesColors[si]});
+        svg.appendChild(bar);
+        var hit = el('rect', {x:bx-3, y:padT, width:barW+6, height:plotH, class:'hit-rect'});
+        hit.addEventListener('pointerenter', function(e){
+          var rows = seriesKeys.map(function(k2,si2){
+            return {label: seriesLabels[si2], value: d[k2]===null||d[k2]===undefined?'n/a':valueFmt(d[k2])};
+          });
+          showTooltip(e.clientX, e.clientY, d.label + ' (' + d.en + ')', rows);
+        });
+        hit.addEventListener('pointerleave', hideTooltip);
+        svg.appendChild(hit);
+      });
+    });
+
+    buildTable(tableId, tableHeaders, data.map(function(d){
+      var row = [d.label + ' (' + d.en + ')'];
+      seriesKeys.forEach(function(k){ row.push(d[k]===null||d[k]===undefined?'n/a':valueFmt(d[k])); });
+      return row;
+    }));
+  }
+
+  function buildTable(containerId, headers, rows){
+    var container = document.getElementById(containerId);
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    var trh = document.createElement('tr');
+    headers.forEach(function(h){
+      var th = document.createElement('th');
+      th.textContent = h;
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+    var tbody = document.createElement('tbody');
+    rows.forEach(function(r){
+      var tr = document.createElement('tr');
+      r.forEach(function(c){
+        var td = document.createElement('td');
+        td.textContent = c;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    container.innerHTML = '';
+    container.appendChild(table);
+  }
+
+  document.querySelectorAll('[data-table-toggle]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = document.getElementById(btn.getAttribute('data-table-toggle'));
+      target.classList.toggle('show');
+      btn.textContent = target.classList.contains('show') ? 'ซ่อนตารางข้อมูล' : 'แสดงตารางข้อมูล';
+    });
+  });
+
+  document.getElementById('toggle-theme').addEventListener('click', function(){
+    var root = document.documentElement;
+    var cur = root.getAttribute('data-theme');
+    if(cur === 'dark'){ root.setAttribute('data-theme','light'); }
+    else if(cur === 'light'){ root.removeAttribute('data-theme'); }
+    else { root.setAttribute('data-theme','dark'); }
+  });
+
+  renderBdiChart();
+  renderLineChart('chart-tce', quarterly, ['rev','opex'], ['var(--series-1)','var(--series-2)'],
+    ['TCE/วัน/ลำ','OPEX/วัน/ลำ'], function(v){return '$'+v.toLocaleString();},
+    'table-tce', ['ไตรมาส','TCE/วัน/ลำ ($)','OPEX/วัน/ลำ ($)']);
+  renderGroupedBar('chart-ebitda', quarterly, ['ebitda','profit'], ['var(--series-1)','var(--series-2)'],
+    ['EBITDA','กำไร(ขาดทุน)สุทธิ'], function(v){return '$'+v.toLocaleString(undefined,{maximumFractionDigits:2})+'M';},
+    'table-ebitda', ['ไตรมาส','EBITDA ($M)','กำไร(ขาดทุน)สุทธิ ($M)']);
+
+})();
+</script>
+</body>
+</html>
