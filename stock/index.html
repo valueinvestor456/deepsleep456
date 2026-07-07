@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>Stock Dashboards</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --border:rgba(11,11,11,0.10); --cat-1:#2a78d6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --border:rgba(255,255,255,0.10); --cat-1:#3987e5;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--page); color:var(--text-primary);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:24px; line-height:1.5;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  h1{font-size:20px;margin:0 0 4px;}
+  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 20px;}
+  .list{list-style:none;margin:0;padding:0;}
+  .list li{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:12px;
+    padding:14px 16px; margin-bottom:10px;
+  }
+  .list a{color:var(--cat-1);text-decoration:none;font-weight:600;font-size:15px;}
+  .list a:hover{text-decoration:underline;}
+  .list .date{color:var(--text-muted);font-size:12px;margin-top:4px;}
+  .empty{color:var(--text-muted);font-size:14px;}
+  footer{font-size:11px;color:var(--text-muted);margin-top:24px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Stock Dashboards</h1>
+  <p class="subtitle">Fundamental + technical dashboards จาก LLM Wiki investment project — ไม่ใช่คำแนะนำการลงทุน</p>
+  <ul class="list">
+    <li class="empty">ยังไม่มี dashboard ที่ publish — ใช้คำสั่ง /publish TICKER จาก Telegram</li>
+  </ul>
+  <footer>อัปเดตอัตโนมัติทุกครั้งที่มีการ publish ผ่าน Telegram bridge</footer>
+</div>
+</body>
+</html>
