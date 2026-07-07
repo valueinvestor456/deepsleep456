@@ -147,6 +147,24 @@ button { font-family: inherit; }
 .gallery__item--wide { grid-column: span 2; }
 .gallery__item--hidden { display: none; }
 
+/* Climate */
+.climate__grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
+.climate__pullquote {
+  margin: 18px 0; padding-left: 18px; border-left: 3px solid var(--color-clay-text);
+  font-family: var(--font-heading); font-size: 1.15rem; font-style: italic; color: var(--color-forest-dark);
+}
+.climate-compare { margin: 24px 0; background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-card); overflow: hidden; }
+.climate-compare__row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; border-bottom: 1px dashed rgba(63,91,68,.25); }
+.climate-compare__row:last-child { border-bottom: none; }
+.climate-compare__row--head { background: var(--color-sand); font-family: var(--font-heading); font-weight: 600; font-size: .85rem; color: var(--color-forest-dark); }
+.climate-compare__row--head span { padding: 12px 10px; }
+.climate-compare__label { padding: 14px 10px; font-family: var(--font-heading); font-weight: 600; color: var(--color-forest-dark); font-size: .92rem; }
+.climate-compare__stat { padding: 14px 10px; font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; color: #55503f; text-align: center; }
+.climate-compare__stat small { display: block; font-family: var(--font-body); font-weight: 300; font-size: .72rem; color: #7a7561; margin-top: 2px; }
+.climate-compare__stat--cool { color: var(--color-forest); background: #F3EDE1; }
+.climate__admin-note { margin-top: 18px; font-size: .9rem; font-style: italic; color: #5c5745; }
+.climate__media img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow-card); }
+
 /* Amenities */
 .amenities__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .amenity {
@@ -275,6 +293,9 @@ button { font-family: inherit; }
   .gallery__item--tall { grid-row: span 1; }
   .gallery__item--wide { grid-column: span 2; }
 
+  .climate__grid { grid-template-columns: 1fr; }
+  .climate__media { order: -1; }
+
   .amenities__grid { grid-template-columns: 1fr 1fr; }
   .reviews__grid { grid-template-columns: 1fr; }
   .reviews__score-num { font-size: 2.6rem; }
@@ -307,4 +328,6 @@ button { font-family: inherit; }
   .amenities__grid { grid-template-columns: 1fr; }
   .gallery__grid { grid-template-columns: 1fr; grid-auto-rows: 220px; }
   .gallery__item--wide { grid-column: span 1; }
+  .climate-compare__stat { font-size: 1.1rem; padding: 10px 6px; }
+  .climate-compare__label { font-size: .85rem; padding: 10px 6px; }
 }

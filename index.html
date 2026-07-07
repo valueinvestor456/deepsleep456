@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<!-- PRE-LAUNCH TODO: confirm real starting price and phone/WhatsApp number. Search for data-confirm attributes before going live. Also confirm Facebook page URL (footer link currently omitted) and exact map pin. -->
+<!-- PRE-LAUNCH TODO: confirm real starting price and phone/WhatsApp number. Search for data-confirm attributes before going live. Also confirm Facebook page URL (footer link currently omitted), exact map pin, and the climate comparison temperatures in the "climate" section. -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Deepsleep456 | ที่พักโป่งแยง ใกล้ม่อนแจ่ม เชียงใหม่</title>
@@ -84,6 +84,7 @@ button { font-family: inherit; }
 .btn--outline:hover { background: rgba(255,255,255,.12); }
 .btn--lg { padding: 16px 32px; font-size: 1.05rem; }
 
+/* on light backgrounds, outline needs dark variant */
 .booking-cta .btn--outline, .footer .btn--outline {
   border-color: var(--color-forest); color: var(--color-forest);
 }
@@ -169,6 +170,24 @@ button { font-family: inherit; }
 .gallery__item--tall { grid-row: span 2; }
 .gallery__item--wide { grid-column: span 2; }
 .gallery__item--hidden { display: none; }
+
+/* Climate */
+.climate__grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
+.climate__pullquote {
+  margin: 18px 0; padding-left: 18px; border-left: 3px solid var(--color-clay-text);
+  font-family: var(--font-heading); font-size: 1.15rem; font-style: italic; color: var(--color-forest-dark);
+}
+.climate-compare { margin: 24px 0; background: #fff; border-radius: var(--radius); box-shadow: var(--shadow-card); overflow: hidden; }
+.climate-compare__row { display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: center; border-bottom: 1px dashed rgba(63,91,68,.25); }
+.climate-compare__row:last-child { border-bottom: none; }
+.climate-compare__row--head { background: var(--color-sand); font-family: var(--font-heading); font-weight: 600; font-size: .85rem; color: var(--color-forest-dark); }
+.climate-compare__row--head span { padding: 12px 10px; }
+.climate-compare__label { padding: 14px 10px; font-family: var(--font-heading); font-weight: 600; color: var(--color-forest-dark); font-size: .92rem; }
+.climate-compare__stat { padding: 14px 10px; font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; color: #55503f; text-align: center; }
+.climate-compare__stat small { display: block; font-family: var(--font-body); font-weight: 300; font-size: .72rem; color: #7a7561; margin-top: 2px; }
+.climate-compare__stat--cool { color: var(--color-forest); background: #F3EDE1; }
+.climate__admin-note { margin-top: 18px; font-size: .9rem; font-style: italic; color: #5c5745; }
+.climate__media img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow-card); }
 
 /* Amenities */
 .amenities__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
@@ -298,6 +317,9 @@ button { font-family: inherit; }
   .gallery__item--tall { grid-row: span 1; }
   .gallery__item--wide { grid-column: span 2; }
 
+  .climate__grid { grid-template-columns: 1fr; }
+  .climate__media { order: -1; }
+
   .amenities__grid { grid-template-columns: 1fr 1fr; }
   .reviews__grid { grid-template-columns: 1fr; }
   .reviews__score-num { font-size: 2.6rem; }
@@ -330,6 +352,8 @@ button { font-family: inherit; }
   .amenities__grid { grid-template-columns: 1fr; }
   .gallery__grid { grid-template-columns: 1fr; grid-auto-rows: 220px; }
   .gallery__item--wide { grid-column: span 1; }
+  .climate-compare__stat { font-size: 1.1rem; padding: 10px 6px; }
+  .climate-compare__label { font-size: .85rem; padding: 10px 6px; }
 }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -536,6 +560,46 @@ button { font-family: inherit; }
         <button class="gallery__item" type="button" data-category="exterior" data-lightbox="images/exterior/drone-aerial.webp">
           <img src="images/exterior/drone-aerial-thumb.webp" width="700" height="466" alt="มุมสูงตัวบ้าน Deepsleep456" loading="lazy">
         </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section climate" id="climate" aria-labelledby="climate-title">
+    <div class="container climate__grid">
+      <div class="climate__copy">
+        <p class="eyebrow">อากาศเย็นสบายที่โป่งแยง</p>
+        <h2 class="section__title" id="climate-title">ทำไมต้องมา “หลับลึก” ที่ Deep Sleep 456?</h2>
+        <p class="section__text">Deepsleep456 ตั้งอยู่บนพื้นที่สูงย่านโป่งแยง ใกล้ม่อนแจ่ม จึงมีอากาศเย็นกว่าตัวเมืองเชียงใหม่ตลอดทั้งปีแบบธรรมชาติ กลางวันเย็นสบายจนแทบไม่ต้องเปิดแอร์ มีลมพัดผ่านตลอดวัน ส่วนกลางคืนอากาศเย็นลงชัดเจน บางฤดูกาลเย็นจนอยากห่มผ้าหนาและนั่งล้อมวงหมูกระทะอุ่น ๆ ด้วยกัน ยิ่งอากาศเย็น สงบ ท่ามกลางป่าเขา ก็ยิ่งช่วยให้คุณ “หลับลึก” ได้แบบที่หาไม่ได้ในเมืองใหญ่ — นี่คือที่มาของชื่อ Deep Sleep 456</p>
+        <blockquote class="climate__pullquote">“หนีร้อนในเมือง มาเจอไอเย็นบนดอย”</blockquote>
+
+        <div class="climate-compare">
+          <div class="climate-compare__row climate-compare__row--head">
+            <span></span><span>ในเมืองเชียงใหม่</span><span>ที่โป่งแยง (Deepsleep456)</span>
+          </div>
+          <div class="climate-compare__row">
+            <span class="climate-compare__label">กลางวัน</span>
+            <span class="climate-compare__stat">~<span data-confirm="climate">32</span>°C<br><small>ร้อน ชื้น</small></span>
+            <span class="climate-compare__stat climate-compare__stat--cool">~<span data-confirm="climate">27</span>°C<br><small>เย็นสบาย มีลมพัด</small></span>
+          </div>
+          <div class="climate-compare__row">
+            <span class="climate-compare__label">กลางคืน</span>
+            <span class="climate-compare__stat">~<span data-confirm="climate">25</span>°C<br><small>ต้องเปิดแอร์</small></span>
+            <span class="climate-compare__stat climate-compare__stat--cool">~<span data-confirm="climate">19</span>°C<br><small>เย็นสบาย ห่มผ้าหนา</small></span>
+          </div>
+        </div>
+
+        <div class="amenity-callout climate-callout">
+          <span class="amenity-callout__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+          </span>
+          <p><strong>หมายเหตุ:</strong> ตัวเลขอุณหภูมิด้านบนเป็นค่า<em>โดยประมาณ</em>จากประสบการณ์ทีมงาน อาจแตกต่างกันไปตามวันและฤดูกาล โปรดใช้เป็นข้อมูลคร่าว ๆ เท่านั้น <span data-confirm="climate">(รอข้อมูลยืนยันจากเจ้าของที่พัก)</span></p>
+        </div>
+
+        <p class="climate__admin-note">“จากใจทีมงาน: ขับรถจากตัวเมืองเชียงใหม่มาไม่ถึงชั่วโมง ก็เจออากาศเย็นสบายและสดชื่นขึ้นชัดเจนแล้ว”</p>
+      </div>
+
+      <div class="climate__media">
+        <img src="images/exterior/misty-valley-thumb.webp" width="700" height="468" alt="หมอกยามเช้าเหนือหุบเขาโป่งแยง" loading="lazy">
       </div>
     </div>
   </section>
