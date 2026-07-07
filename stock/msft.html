@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>MSFT Fundamental + Technical Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --cat-1:#2a78d6; /* blue - close price / revenue */
+    --cat-2:#1baf7a; /* aqua - RSI */
+    --cat-3:#eda100; /* yellow - SMA20 */
+    --cat-4:#008300; /* green - SMA50 */
+    --cat-5:#4a3aa7; /* violet - SMA200 */
+    --diverge-pos:#2a78d6; --diverge-neg:#e34948; --diverge-mid:#f0efec;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --card-radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+      --cat-1:#3987e5; --cat-2:#199e70; --cat-3:#c98500; --cat-4:#008300; --cat-5:#9085e9;
+      --diverge-pos:#3987e5; --diverge-neg:#e66767; --diverge-mid:#383835;
+    }
+  }
+  :root[data-theme="dark"]{
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+    --cat-1:#3987e5; --cat-2:#199e70; --cat-3:#c98500; --cat-4:#008300; --cat-5:#9085e9;
+    --diverge-pos:#3987e5; --diverge-neg:#e66767; --diverge-mid:#383835;
+  }
+  :root[data-theme="light"]{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --cat-1:#2a78d6; --cat-2:#1baf7a; --cat-3:#eda100; --cat-4:#008300; --cat-5:#4a3aa7;
+    --diverge-pos:#2a78d6; --diverge-neg:#e34948; --diverge-mid:#f0efec;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--page); color:var(--text-primary);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:24px; line-height:1.5;
+  }
+  .wrap{max-width:1080px;margin:0 auto;}
+  header.page{margin-bottom:20px;}
+  h1{font-size:22px;margin:0 0 4px;}
+  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 2px;}
+  .meta{color:var(--text-muted);font-size:12px;}
+  .card{
+    background:var(--surface-1); border:1px solid var(--border);
+    border-radius:var(--card-radius); padding:18px 20px; margin-bottom:16px;
+  }
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+  .stat-tile{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:var(--card-radius);
+    padding:14px 16px;
+  }
+  .stat-label{font-size:12px;color:var(--text-secondary);margin-bottom:6px;}
+  .stat-value{font-size:24px;font-weight:600;color:var(--text-primary);}
+  .stat-delta{font-size:12px;margin-top:4px;font-weight:600;}
+  .stat-delta.up-good{color:var(--good);}
+  .stat-delta.up-bad{color:var(--critical);}
+  .stat-delta.neutral{color:var(--text-secondary);}
+  .stat-note{font-size:11px;color:var(--text-muted);margin-top:4px;}
+  .alert{
+    background:var(--surface-1); border:1px solid var(--border); border-left:4px solid var(--warning);
+    border-radius:var(--card-radius); padding:14px 18px; margin-bottom:16px;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .alert .icon{font-size:20px;line-height:1;}
+  .alert .title{font-weight:600;font-size:14px;margin-bottom:4px;}
+  .alert .body{font-size:13px;color:var(--text-secondary);}
+  .chart-title{font-size:15px;font-weight:600;margin:0 0 2px;}
+  .chart-caption{font-size:12px;color:var(--text-secondary);margin:0 0 12px;}
+  .legend{display:flex;gap:16px;font-size:12px;color:var(--text-secondary);margin-bottom:8px;flex-wrap:wrap;}
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .swatch{width:14px;height:3px;border-radius:2px;display:inline-block;}
+  .swatch.dot{width:9px;height:9px;border-radius:50%;}
+  svg.chart{width:100%;height:auto;display:block;overflow:visible;}
+  .gridline{stroke:var(--grid);stroke-width:1;}
+  .axis-line{stroke:var(--axis);stroke-width:1;}
+  .axis-label{fill:var(--text-muted);font-size:11px;}
+  .no-data-label{fill:var(--text-muted);font-size:10px;font-style:italic;}
+  .tooltip{
+    position:absolute; pointer-events:none; background:var(--surface-1);
+    border:1px solid var(--border); border-radius:8px; padding:8px 10px;
+    font-size:12px; box-shadow:0 4px 16px rgba(0,0,0,0.15); opacity:0; transition:opacity .1s;
+    z-index:10; min-width:140px;
+  }
+  .tooltip .t-head{font-weight:600;color:var(--text-primary);margin-bottom:4px;}
+  .tooltip .t-row{display:flex;justify-content:space-between;gap:10px;color:var(--text-secondary);}
+  .tooltip .t-row .v{font-weight:600;color:var(--text-primary);}
+  .crosshair{stroke:var(--axis);stroke-width:1;stroke-dasharray:2,2;pointer-events:none;opacity:0;}
+  .hit-rect{fill:transparent;cursor:crosshair;}
+  .btn{
+    background:var(--surface-1); border:1px solid var(--border); color:var(--text-secondary);
+    font-size:12px; padding:6px 12px; border-radius:8px; cursor:pointer;
+  }
+  .btn:hover{color:var(--text-primary);}
+  .table-view{display:none;margin-top:12px;overflow-x:auto;max-height:320px;overflow-y:auto;}
+  .table-view.show{display:block;}
+  table{border-collapse:collapse;width:100%;font-size:12px;}
+  th,td{padding:6px 10px;text-align:right;border-bottom:1px solid var(--grid);font-variant-numeric:tabular-nums;}
+  th:first-child,td:first-child{text-align:left;font-variant-numeric:normal;}
+  th{color:var(--text-secondary);font-weight:600;position:sticky;top:0;background:var(--surface-1);}
+  td{color:var(--text-primary);}
+  .source-list{font-size:12px;color:var(--text-secondary);}
+  .stop-box{border:1px solid var(--border);border-left:4px solid var(--warning);border-radius:var(--card-radius);padding:14px 18px;background:var(--surface-1);}
+  .stop-box .title{font-weight:600;font-size:13px;margin-bottom:6px;}
+  .stop-box ul{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--text-secondary);}
+  footer{font-size:11px;color:var(--text-muted);margin-top:24px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>MSFT — Microsoft Corporation — Fundamental + Technical Dashboard</h1>
+    <p class="subtitle">รวมปัจจัยพื้นฐาน (Azure growth, revenue) กับสัญญาณราคา (SMA, RSI) เพื่อช่วยพิจารณาจังหวะซื้อขาย — ไม่ใช่คำแนะนำการลงทุน</p>
+    <p class="meta">Fundamental จาก LLM Wiki (wiki/entities/msft.md) · ราคาดึงจาก Yahoo Finance เมื่อ 2026-07-07 · <button class="btn" id="toggle-theme" style="margin-left:8px;">สลับโหมดสี</button></p>
+  </header>
+
+  <div class="alert">
+    <div class="icon">⚠️</div>
+    <div>
+      <div class="title">ความขัดแย้งสำคัญ: Fundamental แข็งแรง แต่ Technical เป็นขาลง</div>
+      <div class="body">Azure โต +39% YoY และรายได้รวมโตต่อเนื่อง — แต่ราคาหุ้นต่ำกว่าเส้นค่าเฉลี่ย 200 วันอยู่ -13.1%, ต่ำกว่าจุดสูงสุด 52 สัปดาห์ -30.4%, และเกิด <strong>death cross</strong> (SMA50 ตัดลงต่ำกว่า SMA200) ตั้งแต่ 21 ม.ค. 2569 — เป็นจุดที่ควรหาสาเหตุเพิ่มก่อนตัดสินใจ ไม่ใช่สัญญาณซื้อหรือขายในตัวเอง
+        <br>ดูรายละเอียด: <span style="color:var(--text-muted);">wiki/sources/msft-price-technicals.md</span></div>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="stat-tile">
+      <div class="stat-label">ราคาปิดล่าสุด (2026-07-06)</div>
+      <div class="stat-value">$386.74</div>
+      <div class="stat-delta up-bad">▼ -30.4% จาก 52w high</div>
+      <div class="stat-note">52w range: $349.20 – $555.45</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">เทียบ SMA200</div>
+      <div class="stat-value">-13.1%</div>
+      <div class="stat-delta up-bad">Death cross ตั้งแต่ 21 ม.ค. 2569</div>
+      <div class="stat-note">SMA50 $406.67 / SMA200 $444.82</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">RSI (14 วัน)</div>
+      <div class="stat-value">48.3</div>
+      <div class="stat-delta neutral">โซนกลาง</div>
+      <div class="stat-note">ไม่ overbought (>70) หรือ oversold (&lt;30)</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Azure Growth (Q2 FY26)</div>
+      <div class="stat-value">+39%</div>
+      <div class="stat-delta up-good">▲ เครื่องยนต์หลัก</div>
+      <div class="stat-note">YoY</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">รายได้รวม FY2025</div>
+      <div class="stat-value">$281.7B</div>
+      <div class="stat-delta up-good">▲ +14.9% YoY</div>
+      <div class="stat-note">Microsoft Cloud +22.7%</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="chart-title">ราคาปิด + SMA 20/50/200 — รายสัปดาห์ 2 ปีย้อนหลัง</p>
+    <p class="chart-caption">เลื่อนเมาส์บนกราฟเพื่อดูค่าที่จุดนั้น — สุ่มตัวอย่างทุกสัปดาห์จากข้อมูลรายวัน (คำนวณ SMA จากข้อมูลรายวันเต็ม)</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:var(--cat-1);"></span>ราคาปิด ($)</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--cat-3);"></span>SMA20</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--cat-4);"></span>SMA50</span>
+      <span class="legend-item"><span class="swatch" style="background:var(--cat-5);"></span>SMA200</span>
+    </div>
+    <svg class="chart" id="chart-price" viewBox="0 0 900 320" preserveAspectRatio="xMidYMid meet"></svg>
+    <button class="btn" data-table-toggle="table-price">แสดงตารางข้อมูล</button>
+    <div class="table-view" id="table-price"></div>
+  </div>
+
+  <div class="card">
+    <p class="chart-title">RSI (14 วัน)</p>
+    <p class="chart-caption">เส้นประบน = overbought (70), เส้นประล่าง = oversold (30) — สังเกตช่วง มิ.ย. 2569 ที่ RSI ลงไปแตะ ~9 (oversold รุนแรง) ก่อนเด้งกลับ</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:var(--cat-2);"></span>RSI(14)</span>
+    </div>
+    <svg class="chart" id="chart-rsi" viewBox="0 0 900 240" preserveAspectRatio="xMidYMid meet"></svg>
+    <button class="btn" data-table-toggle="table-rsi">แสดงตารางข้อมูล</button>
+    <div class="table-view" id="table-rsi"></div>
+  </div>
+
+  <div class="card">
+    <p class="chart-title">รายได้รวมรายปี (Fundamental)</p>
+    <p class="chart-caption">FY สิ้นสุด 30 มิ.ย. — ยังมีแค่ 3 ปีที่ ingest (ไม่มี quarterly time series ยาวเหมือน PSL)</p>
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:var(--cat-1);"></span>รายได้รวม ($B)</span>
+    </div>
+    <svg class="chart" id="chart-revenue" viewBox="0 0 900 260" preserveAspectRatio="xMidYMid meet"></svg>
+    <button class="btn" data-table-toggle="table-revenue">แสดงตารางข้อมูล</button>
+    <div class="table-view" id="table-revenue"></div>
+  </div>
+
+  <div class="card stop-box">
+    <div class="title">🛑 STOP — จุดตรวจสอบก่อนเชื่อ (Concrete Verification Target)</div>
+    <ul>
+      <li><strong>ราคาที่แสดงเป็น snapshot ณ 2026-07-07 ไม่ใช่ real-time</strong> — ต้องเช็คราคาจริงจากโบรกเกอร์/แหล่งข้อมูลสดก่อนซื้อขายเสมอ</li>
+      <li>ข้อมูลราคา/SMA/RSI ดึงและคำนวณโดย Claude เอง (Yahoo Finance chart API) ไม่ใช่เอกสารที่ผู้ใช้ตรวจสอบมาก่อน — ความน่าเชื่อถือต่างจากข้อมูลงบการเงินที่มาจาก 10-K จริง</li>
+      <li>ข้อมูล fundamental (Azure +39%, รายได้ +14.9%) มาจากไตรมาสที่รายงาน 28 ม.ค. 2569 — อาจมีข้อมูลใหม่กว่านี้ออกมาแล้วที่ยังไม่ ingest</li>
+      <li>Death cross และ RSI เป็นตัวชี้วัดเชิงเทคนิคพื้นฐาน ไม่ใช่สัญญาณซื้อ/ขายที่รับประกันผลได้ — ใช้ประกอบการตัดสินใจ ไม่ใช่ตัวตัดสินเดียว</li>
+      <li>ยังไม่ได้อ่าน Risk Factors section ของ 10-K MSFT (ดู wiki/entities/msft.md ส่วน "สิ่งที่ยังไม่ ingest")</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <p class="chart-title" style="margin-bottom:8px;">แหล่งข้อมูล</p>
+    <div class="source-list">
+      wiki/entities/msft.md · wiki/sources/msft-fy2025-10k-and-q2fy26-earnings.md · wiki/sources/msft-price-technicals.md · raw/msft/price-history-2y-fetched-2026-07-07.csv
+    </div>
+  </div>
+
+  <footer>สร้างโดย Claude Code จากข้อมูลใน LLM Wiki ของโปรเจกต์ "investment with ai" — ไม่ใช่คำแนะนำการลงทุน ตรวจสอบตัวเลขกับต้นทางก่อนตัดสินใจเสมอ</footer>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- data ----------
+  var weekly = [{"date": "2024-07-08", "close": 466.24, "sma20": null, "sma50": null, "sma200": null, "rsi14": null, "volume": 12962300}, {"date": "2024-07-15", "close": 453.96, "sma20": null, "sma50": null, "sma200": null, "rsi14": null, "volume": 14429400}, {"date": "2024-07-22", "close": 442.94, "sma20": null, "sma50": null, "sma200": null, "rsi14": null, "volume": 15808800}, {"date": "2024-07-29", "close": 426.73, "sma20": null, "sma50": null, "sma200": null, "rsi14": 29.28, "volume": 15125800}, {"date": "2024-08-05", "close": 395.15, "sma20": 435.38, "sma50": null, "sma200": null, "rsi14": 18.58, "volume": 40709200}, {"date": "2024-08-12", "close": 406.81, "sma20": 421.66, "sma50": null, "sma200": null, "rsi14": 26.34, "volume": 16762900}, {"date": "2024-08-19", "close": 421.53, "sma20": 415.58, "sma50": null, "sma200": null, "rsi14": 48.87, "volume": 15234000}, {"date": "2024-08-26", "close": 413.49, "sma20": 413.11, "sma50": null, "sma200": null, "rsi14": 64.94, "volume": 13152800}, {"date": "2024-09-03", "close": 409.44, "sma20": 413.22, "sma50": null, "sma200": null, "rsi14": 45.19, "volume": 20313600}, {"date": "2024-09-10", "close": 414.2, "sma20": 414.49, "sma50": null, "sma200": null, "rsi14": 39.78, "volume": 19594300}, {"date": "2024-09-17", "close": 435.15, "sma20": 417.25, "sma50": 423.16, "sma200": null, "rsi14": 68.16, "volume": 18874200}, {"date": "2024-09-24", "close": 429.17, "sma20": 420.88, "sma50": 420.75, "sma200": null, "rsi14": 66.24, "volume": 17015800}, {"date": "2024-10-01", "close": 420.69, "sma20": 424.8, "sma50": 419.33, "sma200": null, "rsi14": 47.77, "volume": 19092900}, {"date": "2024-10-08", "close": 414.71, "sma20": 426.55, "sma50": 417.93, "sma200": null, "rsi14": 34.71, "volume": 19229300}, {"date": "2024-10-15", "close": 418.74, "sma20": 423.57, "sma50": 418.44, "sma200": null, "rsi14": 33.44, "volume": 18900200}, {"date": "2024-10-22", "close": 427.51, "sma20": 420.06, "sma50": 420.11, "sma200": null, "rsi14": 64.9, "volume": 25482200}, {"date": "2024-10-29", "close": 431.95, "sma20": 419.74, "sma50": 420.99, "sma200": null, "rsi14": 72.15, "volume": 17644100}, {"date": "2024-11-05", "close": 411.46, "sma20": 419.5, "sma50": 420.48, "sma200": null, "rsi14": 46.15, "volume": 17626000}, {"date": "2024-11-12", "close": 423.03, "sma20": 420.58, "sma50": 421.38, "sma200": null, "rsi14": 48.92, "volume": 19401200}, {"date": "2024-11-19", "close": 417.79, "sma20": 420.75, "sma50": 422.62, "sma200": null, "rsi14": 40.79, "volume": 18133500}, {"date": "2024-11-26", "close": 427.99, "sma20": 418.56, "sma50": 421.52, "sma200": null, "rsi14": 56.94, "volume": 23458900}, {"date": "2024-12-04", "close": 437.42, "sma20": 422.4, "sma50": 421.09, "sma200": null, "rsi14": 60.94, "volume": 26009400}, {"date": "2024-12-11", "close": 448.99, "sma20": 428.17, "sma50": 422.73, "sma200": null, "rsi14": 80.95, "volume": 19200200}, {"date": "2024-12-18", "close": 437.39, "sma20": 435.15, "sma50": 426.06, "sma200": null, "rsi14": 62.31, "volume": 24444500}, {"date": "2024-12-26", "close": 438.11, "sma20": 439.86, "sma50": 428.03, "sma200": null, "rsi14": 45.13, "volume": 8194200}, {"date": "2025-01-03", "close": 423.35, "sma20": 438.5, "sma50": 428.46, "sma200": null, "rsi14": 27.52, "volume": 16662900}, {"date": "2025-01-13", "close": 417.19, "sma20": 432.81, "sma50": 427.96, "sma200": null, "rsi14": 30.52, "volume": 17604800}, {"date": "2025-01-21", "close": 428.5, "sma20": 427.01, "sma50": 429.06, "sma200": null, "rsi14": 48.16, "volume": 26085700}, {"date": "2025-01-28", "close": 447.2, "sma20": 428.63, "sma50": 431.25, "sma200": null, "rsi14": 62.58, "volume": 23491700}, {"date": "2025-02-04", "close": 412.37, "sma20": 427.47, "sma50": 431.15, "sma200": null, "rsi14": 48.32, "volume": 20532100}, {"date": "2025-02-11", "close": 411.44, "sma20": 425.05, "sma50": 430.56, "sma200": null, "rsi14": 27.11, "volume": 18140600}, {"date": "2025-02-19", "close": 414.77, "sma20": 421.47, "sma50": 428.69, "sma200": null, "rsi14": 26.29, "volume": 24114200}, {"date": "2025-02-26", "close": 399.73, "sma20": 411.83, "sma50": 424.71, "sma200": null, "rsi14": 35.14, "volume": 19619000}, {"date": "2025-03-05", "close": 401.02, "sma20": 405.43, "sma50": 419.26, "sma200": null, "rsi14": 43.74, "volume": 23433100}, {"date": "2025-03-12", "close": 383.27, "sma20": 399.01, "sma50": 414.22, "sma200": null, "rsi14": 28.58, "volume": 24253600}, {"date": "2025-03-19", "close": 387.82, "sma20": 392.75, "sma50": 410.39, "sma200": null, "rsi14": 46.79, "volume": 19185500}, {"date": "2025-03-26", "close": 389.97, "sma20": 389.27, "sma50": 407.3, "sma200": null, "rsi14": 44.06, "volume": 16108400}, {"date": "2025-04-02", "close": 382.14, "sma20": 386.34, "sma50": 403.0, "sma200": null, "rsi14": 52.98, "volume": 16092600}, {"date": "2025-04-09", "close": 390.49, "sma20": 381.43, "sma50": 395.34, "sma200": null, "rsi14": 51.83, "volume": 50199700}, {"date": "2025-04-16", "close": 371.61, "sma20": 380.81, "sma50": 391.72, "sma200": null, "rsi14": 42.0, "volume": 21967800}, {"date": "2025-04-24", "close": 387.3, "sma20": 375.77, "sma50": 387.58, "sma200": 415.7, "rsi14": 55.53, "volume": 22232300}, {"date": "2025-05-01", "close": 425.4, "sma20": 380.2, "sma50": 386.49, "sma200": 414.25, "rsi14": 71.16, "volume": 58938100}, {"date": "2025-05-08", "close": 438.17, "sma20": 397.22, "sma50": 389.49, "sma200": 414.07, "rsi14": 87.12, "volume": 23491300}, {"date": "2025-05-15", "close": 453.13, "sma20": 413.63, "sma50": 395.01, "sma200": 414.56, "rsi14": 94.65, "volume": 21992300}, {"date": "2025-05-22", "close": 454.86, "sma20": 434.8, "sma50": 401.9, "sma200": 415.65, "rsi14": 75.67, "volume": 18025600}, {"date": "2025-05-30", "close": 460.36, "sma20": 449.27, "sma50": 409.1, "sma200": 417.01, "rsi14": 71.42, "volume": 34770500}, {"date": "2025-06-06", "close": 470.38, "sma20": 456.8, "sma50": 416.51, "sma200": 418.19, "rsi14": 68.01, "volume": 15285600}, {"date": "2025-06-13", "close": 474.96, "sma20": 463.15, "sma50": 425.73, "sma200": 419.57, "rsi14": 78.87, "volume": 16814500}, {"date": "2025-06-23", "close": 486.0, "sma20": 469.25, "sma50": 437.03, "sma200": 421.25, "rsi14": 77.69, "volume": 24864000}, {"date": "2025-06-30", "close": 497.41, "sma20": 478.55, "sma50": 448.19, "sma200": 423.42, "rsi14": 76.21, "volume": 28369000}, {"date": "2025-07-08", "close": 496.62, "sma20": 486.02, "sma50": 460.61, "sma200": 425.07, "rsi14": 69.23, "volume": 11846600}, {"date": "2025-07-15", "close": 505.82, "sma20": 493.37, "sma50": 471.0, "sma200": 426.82, "rsi14": 69.41, "volume": 14927200}, {"date": "2025-07-22", "close": 505.27, "sma20": 500.47, "sma50": 478.33, "sma200": 428.82, "rsi14": 67.62, "volume": 13868600}, {"date": "2025-07-29", "close": 512.57, "sma20": 504.59, "sma50": 484.57, "sma200": 431.22, "rsi14": 65.4, "volume": 16469200}, {"date": "2025-08-05", "close": 527.75, "sma20": 512.48, "sma50": 491.68, "sma200": 433.96, "rsi14": 65.37, "volume": 19171600}, {"date": "2025-08-12", "close": 529.24, "sma20": 517.57, "sma50": 498.32, "sma200": 436.57, "rsi14": 65.64, "volume": 18667000}, {"date": "2025-08-19", "close": 509.77, "sma20": 519.93, "sma50": 503.58, "sma200": 438.84, "rsi14": 48.03, "volume": 21481000}, {"date": "2025-08-26", "close": 502.04, "sma20": 518.33, "sma50": 506.65, "sma200": 441.11, "rsi14": 27.11, "volume": 30835700}, {"date": "2025-09-03", "close": 505.35, "sma20": 513.3, "sma50": 509.3, "sma200": 443.23, "rsi14": 31.28, "volume": 16345100}, {"date": "2025-09-10", "close": 500.37, "sma20": 507.35, "sma50": 509.84, "sma200": 445.23, "rsi14": 43.77, "volume": 21611800}, {"date": "2025-09-17", "close": 510.02, "sma20": 505.12, "sma50": 511.22, "sma200": 447.49, "rsi14": 53.22, "volume": 15816600}, {"date": "2025-09-24", "close": 510.15, "sma20": 506.95, "sma50": 512.08, "sma200": 449.56, "rsi14": 51.78, "volume": 13533700}, {"date": "2025-10-01", "close": 519.71, "sma20": 508.81, "sma50": 512.64, "sma200": 451.29, "rsi14": 66.09, "volume": 22632300}, {"date": "2025-10-08", "close": 524.85, "sma20": 514.34, "sma50": 513.74, "sma200": 453.14, "rsi14": 64.35, "volume": 13363400}, {"date": "2025-10-15", "close": 513.43, "sma20": 515.79, "sma50": 512.54, "sma200": 455.09, "rsi14": 56.09, "volume": 14694700}, {"date": "2025-10-22", "close": 520.54, "sma20": 516.79, "sma50": 511.77, "sma200": 457.39, "rsi14": 55.15, "volume": 18962700}, {"date": "2025-10-29", "close": 541.55, "sma20": 521.22, "sma50": 513.15, "sma200": 460.13, "rsi14": 69.97, "volume": 36023000}, {"date": "2025-11-05", "close": 507.16, "sma20": 519.8, "sma50": 514.33, "sma200": 462.42, "rsi14": 46.6, "volume": 23024300}, {"date": "2025-11-12", "close": 511.14, "sma20": 517.07, "sma50": 514.05, "sma200": 463.93, "rsi14": 44.19, "volume": 26574900}, {"date": "2025-11-19", "close": 487.12, "sma20": 513.15, "sma50": 514.09, "sma200": 465.96, "rsi14": 26.17, "volume": 23245300}, {"date": "2025-11-26", "close": 485.5, "sma20": 499.54, "sma50": 510.92, "sma200": 467.58, "rsi14": 42.82, "volume": 25709100}, {"date": "2025-12-04", "close": 480.84, "sma20": 491.8, "sma50": 508.26, "sma200": 469.46, "rsi14": 37.35, "volume": 22318200}, {"date": "2025-12-11", "close": 483.47, "sma20": 487.22, "sma50": 505.41, "sma200": 471.47, "rsi14": 53.16, "volume": 24669200}, {"date": "2025-12-18", "close": 483.98, "sma20": 481.62, "sma50": 501.0, "sma200": 473.58, "rsi14": 44.41, "volume": 28573500}, {"date": "2025-12-26", "close": 487.71, "sma20": 483.94, "sma50": 498.18, "sma200": 476.08, "rsi14": 54.38, "volume": 8842200}, {"date": "2026-01-05", "close": 472.85, "sma20": 482.77, "sma50": 494.66, "sma200": 478.46, "rsi14": 41.97, "volume": 25250300}, {"date": "2026-01-12", "close": 477.18, "sma20": 481.19, "sma50": 489.4, "sma200": 480.66, "rsi14": 38.87, "volume": 23519900}, {"date": "2026-01-20", "close": 454.52, "sma20": 476.75, "sma50": 483.78, "sma200": 482.62, "rsi14": 24.27, "volume": 26130000}, {"date": "2026-01-27", "close": 480.58, "sma20": 470.68, "sma50": 479.63, "sma200": 485.0, "rsi14": 51.16, "volume": 29213900}, {"date": "2026-02-03", "close": 411.21, "sma20": 459.48, "sma50": 473.19, "sma200": 486.33, "rsi14": 28.9, "volume": 61424100}, {"date": "2026-02-10", "close": 413.27, "sma20": 441.45, "sma50": 466.17, "sma200": 487.23, "rsi14": 39.84, "volume": 44857900}, {"date": "2026-02-18", "close": 399.6, "sma20": 426.6, "sma50": 457.7, "sma200": 487.26, "rsi14": 19.24, "volume": 23223400}, {"date": "2026-02-25", "close": 400.6, "sma20": 409.48, "sma50": 448.53, "sma200": 486.23, "rsi14": 42.55, "volume": 43625500}, {"date": "2026-03-04", "close": 405.2, "sma20": 400.59, "sma50": 440.78, "sma200": 485.02, "rsi14": 50.65, "volume": 35808000}, {"date": "2026-03-11", "close": 404.88, "sma20": 400.78, "sma50": 432.9, "sma200": 483.83, "rsi14": 54.95, "volume": 25512100}, {"date": "2026-03-18", "close": 391.79, "sma20": 400.01, "sma50": 424.59, "sma200": 482.33, "rsi14": 41.06, "volume": 25908500}, {"date": "2026-03-25", "close": 371.04, "sma20": 396.4, "sma50": 414.62, "sma200": 480.19, "rsi14": 11.59, "volume": 31181200}, {"date": "2026-04-01", "close": 369.37, "sma20": 387.36, "sma50": 405.02, "sma200": 477.44, "rsi14": 26.91, "volume": 29417200}, {"date": "2026-04-09", "close": 373.07, "sma20": 378.67, "sma50": 396.1, "sma200": 474.77, "rsi14": 36.07, "volume": 30435300}, {"date": "2026-04-16", "close": 420.26, "sma20": 378.24, "sma50": 392.1, "sma200": 472.3, "rsi14": 82.49, "volume": 41642400}, {"date": "2026-04-23", "close": 415.75, "sma20": 389.04, "sma50": 393.65, "sma200": 470.49, "rsi14": 72.18, "volume": 38308000}, {"date": "2026-04-30", "close": 407.78, "sma20": 403.52, "sma50": 395.79, "sma200": 468.46, "rsi14": 64.93, "volume": 70909400}, {"date": "2026-05-07", "close": 420.77, "sma20": 413.93, "sma50": 397.88, "sma200": 466.12, "rsi14": 48.89, "volume": 34942400}, {"date": "2026-05-14", "close": 409.43, "sma20": 417.45, "sma50": 398.84, "sma200": 463.59, "rsi14": 38.31, "volume": 27077500}, {"date": "2026-05-21", "close": 419.09, "sma20": 416.92, "sma50": 400.11, "sma200": 460.93, "rsi14": 54.0, "volume": 31393500}, {"date": "2026-05-29", "close": 450.24, "sma20": 417.59, "sma50": 402.83, "sma200": 458.46, "rsi14": 70.91, "volume": 79654400}, {"date": "2026-06-05", "close": 416.67, "sma20": 422.58, "sma50": 408.35, "sma200": 456.38, "rsi14": 47.67, "volume": 34782200}, {"date": "2026-06-12", "close": 390.74, "sma20": 419.75, "sma50": 411.8, "sma200": 453.73, "rsi14": 38.93, "volume": 34865800}, {"date": "2026-06-22", "close": 367.34, "sma20": 410.56, "sma50": 412.86, "sma200": 450.66, "rsi14": 9.28, "volume": 45171100}, {"date": "2026-06-29", "close": 368.57, "sma20": 396.02, "sma50": 409.94, "sma200": 447.33, "rsi14": 31.47, "volume": 51229900}, {"date": "2026-07-06", "close": 386.74, "sma20": 384.89, "sma50": 406.67, "sma200": 444.82, "rsi14": 48.34, "volume": 32621401}];
+
+  var annualRevenue = [
+    {label:'FY2023', en:'สิ้นสุด มิ.ย. 2023', revenue:211.9},
+    {label:'FY2024', en:'สิ้นสุด มิ.ย. 2024', revenue:245.1},
+    {label:'FY2025', en:'สิ้นสุด มิ.ย. 2025', revenue:281.7}
+  ];
+
+  var fmt = function(n, opts){
+    opts = opts || {};
+    if(n === null || n === undefined) return 'n/a';
+    var s = (opts.signed && n > 0 ? '+' : '') + n.toLocaleString('en-US', {maximumFractionDigits: opts.decimals || 0, minimumFractionDigits: opts.decimals || 0});
+    return (opts.prefix||'') + s + (opts.suffix||'');
+  };
+
+  var tooltip = document.getElementById('tooltip');
+  function showTooltip(x, y, headHtml, rows){
+    tooltip.innerHTML = '';
+    var head = document.createElement('div');
+    head.className = 't-head';
+    head.textContent = headHtml;
+    tooltip.appendChild(head);
+    rows.forEach(function(r){
+      var row = document.createElement('div');
+      row.className = 't-row';
+      var label = document.createElement('span');
+      label.textContent = r.label;
+      var val = document.createElement('span');
+      val.className = 'v';
+      val.textContent = r.value;
+      row.appendChild(label);
+      row.appendChild(val);
+      tooltip.appendChild(row);
+    });
+    tooltip.style.left = (x + 16) + 'px';
+    tooltip.style.top = (y + 16) + 'px';
+    tooltip.style.opacity = '1';
+  }
+  function hideTooltip(){ tooltip.style.opacity = '0'; }
+
+  var NS = 'http://www.w3.org/2000/svg';
+  var STYLE_KEYS = {fill:1, stroke:1};
+  function el(tag, attrs){
+    var e = document.createElementNS(NS, tag);
+    for(var k in attrs){
+      var v = attrs[k];
+      if(STYLE_KEYS[k] && typeof v === 'string' && v.indexOf('var(') === 0){
+        e.style[k] = v;
+      } else {
+        e.setAttribute(k, v);
+      }
+    }
+    return e;
+  }
+
+  function buildTable(containerId, headers, rows){
+    var container = document.getElementById(containerId);
+    var table = document.createElement('table');
+    var thead = document.createElement('thead');
+    var trh = document.createElement('tr');
+    headers.forEach(function(h){
+      var th = document.createElement('th');
+      th.textContent = h;
+      trh.appendChild(th);
+    });
+    thead.appendChild(trh);
+    table.appendChild(thead);
+    var tbody = document.createElement('tbody');
+    rows.forEach(function(r){
+      var tr = document.createElement('tr');
+      r.forEach(function(c){
+        var td = document.createElement('td');
+        td.textContent = c;
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    container.innerHTML = '';
+    container.appendChild(table);
+  }
+
+  // ---------- time-series chart with crosshair (price/SMA, RSI) ----------
+  function renderTimeSeriesChart(svgId, data, seriesKeys, seriesColors, seriesLabels, valueFmt, opts, tableId, tableHeaders){
+    opts = opts || {};
+    var svg = document.getElementById(svgId);
+    var W = 900, H = opts.height || 300, padL = 56, padR = 16, padT = 16, padB = 30;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = data.length;
+    var stepX = plotW / (n - 1);
+    var allVals = [];
+    data.forEach(function(d){ seriesKeys.forEach(function(k){ if(d[k]!==null && d[k]!==undefined) allVals.push(d[k]); }); });
+    var maxV = opts.yMax !== undefined ? opts.yMax : Math.max.apply(null, allVals) * 1.05;
+    var minV = opts.yMin !== undefined ? opts.yMin : Math.min.apply(null, allVals) * 0.95;
+
+    function xAt(i){ return padL + stepX * i; }
+    function yAt(v){ return padT + plotH - ((v - minV) / (maxV - minV)) * plotH; }
+
+    [0, 0.25, 0.5, 0.75, 1].forEach(function(f){
+      var yy = padT + plotH - f * plotH;
+      svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:yy, y2:yy, class:'gridline'}));
+      var t = el('text', {x:padL-8, y:yy+4, class:'axis-label', 'text-anchor':'end'});
+      t.textContent = Math.round(minV + f*(maxV-minV)).toLocaleString();
+      svg.appendChild(t);
+    });
+    svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:padT+plotH, y2:padT+plotH, class:'axis-line'}));
+
+    (opts.referenceLines || []).forEach(function(ref){
+      var yy = yAt(ref.value);
+      svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:yy, y2:yy, stroke:ref.color, 'stroke-width':1, 'stroke-dasharray':'4,3'}));
+      var t = el('text', {x:W-padR, y:yy-3, class:'axis-label', 'text-anchor':'end'});
+      t.textContent = ref.label;
+      svg.appendChild(t);
+    });
+
+    var labelEvery = Math.max(1, Math.ceil(n / 8));
+    data.forEach(function(d, i){
+      if(i % labelEvery !== 0 && i !== n - 1) return;
+      var t = el('text', {x:xAt(i), y:H-8, class:'axis-label', 'text-anchor':'middle'});
+      t.textContent = d.date ? d.date.slice(0, 7) : d.label;
+      svg.appendChild(t);
+    });
+
+    seriesKeys.forEach(function(key, si){
+      var color = seriesColors[si];
+      var pathD = '';
+      var started = false;
+      data.forEach(function(d, i){
+        if(d[key] === null || d[key] === undefined){ started = false; return; }
+        var x = xAt(i), y = yAt(d[key]);
+        pathD += (started ? 'L' : 'M') + x + ',' + y + ' ';
+        started = true;
+      });
+      svg.appendChild(el('path', {d:pathD.trim(), fill:'none', stroke:color, 'stroke-width':2, 'stroke-linejoin':'round', 'stroke-linecap':'round'}));
+
+      for(var i = data.length - 1; i >= 0; i--){
+        if(data[i][key] !== null && data[i][key] !== undefined){
+          var x = xAt(i), y = yAt(data[i][key]);
+          svg.appendChild(el('circle', {cx:x, cy:y, r:4, fill:color, stroke:'var(--surface-1)', 'stroke-width':2}));
+          break;
+        }
+      }
+    });
+
+    var crosshairLine = el('line', {x1:padL, x2:padL, y1:padT, y2:padT+plotH, class:'crosshair'});
+    svg.appendChild(crosshairLine);
+
+    var hit = el('rect', {x:padL, y:padT, width:plotW, height:plotH, class:'hit-rect'});
+    hit.addEventListener('pointermove', function(e){
+      var rect = svg.getBoundingClientRect();
+      var scaleX = W / rect.width;
+      var mx = (e.clientX - rect.left) * scaleX;
+      var idx = Math.round((mx - padL) / stepX);
+      idx = Math.max(0, Math.min(n - 1, idx));
+      var d = data[idx];
+      var x = xAt(idx);
+      crosshairLine.setAttribute('x1', x);
+      crosshairLine.setAttribute('x2', x);
+      crosshairLine.style.opacity = '1';
+      var rows = seriesKeys.map(function(k, si2){
+        return {label: seriesLabels[si2], value: (d[k] === null || d[k] === undefined) ? 'n/a' : valueFmt(d[k])};
+      });
+      showTooltip(e.clientX, e.clientY, d.date || d.label, rows);
+    });
+    hit.addEventListener('pointerleave', function(){ crosshairLine.style.opacity = '0'; hideTooltip(); });
+    svg.appendChild(hit);
+
+    buildTable(tableId, tableHeaders, data.map(function(d){
+      var row = [d.date || d.label];
+      seriesKeys.forEach(function(k){ row.push((d[k] === null || d[k] === undefined) ? 'n/a' : valueFmt(d[k])); });
+      return row;
+    }));
+  }
+
+  // ---------- grouped bar (reused for single-series annual revenue) ----------
+  function renderGroupedBar(svgId, data, seriesKeys, seriesColors, seriesLabels, valueFmt, tableId, tableHeaders){
+    var svg = document.getElementById(svgId);
+    var W = 900, H = 260, padL = 56, padR = 16, padT = 16, padB = 40;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var n = data.length;
+    var stepX = plotW / n;
+    var allVals = [];
+    data.forEach(function(d){ seriesKeys.forEach(function(k){ if(d[k]!==null && d[k]!==undefined) allVals.push(d[k]); }); });
+    var maxV = Math.max.apply(null, allVals.concat([0])) * 1.2;
+    var minV = Math.min.apply(null, allVals.concat([0])) * 1.2;
+    var zeroY = padT + plotH * (maxV / (maxV - minV));
+
+    function yAt(v){ return padT + plotH - ((v - minV) / (maxV - minV)) * plotH; }
+
+    [minV, minV/2, 0, maxV/2, maxV].forEach(function(v){
+      var yy = yAt(v);
+      svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:yy, y2:yy, class:'gridline'}));
+      var t = el('text', {x:padL-8, y:yy+4, class:'axis-label', 'text-anchor':'end'});
+      t.textContent = Math.round(v).toLocaleString();
+      svg.appendChild(t);
+    });
+    svg.appendChild(el('line', {x1:padL, x2:W-padR, y1:zeroY, y2:zeroY, class:'axis-line'}));
+
+    var groupW = stepX * 0.5;
+    var barW = Math.min(48, groupW / seriesKeys.length);
+
+    data.forEach(function(d, i){
+      var gx = padL + stepX * i + stepX / 2;
+      var lbl = el('text', {x:gx, y:H-12, class:'axis-label', 'text-anchor':'middle'});
+      lbl.textContent = d.label;
+      svg.appendChild(lbl);
+      seriesKeys.forEach(function(key, si){
+        if(d[key] === null || d[key] === undefined) return;
+        var bx = gx - (groupW/2) + si*(barW+4);
+        var y0 = zeroY, y1 = yAt(d[key]);
+        var top = Math.min(y0, y1), h = Math.max(Math.abs(y1 - y0), 1);
+        var bar = el('rect', {x:bx, y:top, width:barW, height:h, rx:3, fill:seriesColors[si]});
+        svg.appendChild(bar);
+        var valLabel = el('text', {x:bx + barW/2, y: top - 6, class:'axis-label', 'text-anchor':'middle'});
+        valLabel.textContent = valueFmt(d[key]);
+        svg.appendChild(valLabel);
+        var hit = el('rect', {x:bx-3, y:padT, width:barW+6, height:plotH, class:'hit-rect'});
+        hit.addEventListener('pointerenter', function(e){
+          var rows = seriesKeys.map(function(k2, si2){
+            return {label: seriesLabels[si2], value: (d[k2]===null||d[k2]===undefined)?'n/a':valueFmt(d[k2])};
+          });
+          showTooltip(e.clientX, e.clientY, d.label + ' (' + d.en + ')', rows);
+        });
+        hit.addEventListener('pointerleave', hideTooltip);
+        svg.appendChild(hit);
+      });
+    });
+
+    buildTable(tableId, tableHeaders, data.map(function(d){
+      var row = [d.label + ' (' + d.en + ')'];
+      seriesKeys.forEach(function(k){ row.push((d[k]===null||d[k]===undefined)?'n/a':valueFmt(d[k])); });
+      return row;
+    }));
+  }
+
+  document.querySelectorAll('[data-table-toggle]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var target = document.getElementById(btn.getAttribute('data-table-toggle'));
+      target.classList.toggle('show');
+      btn.textContent = target.classList.contains('show') ? 'ซ่อนตารางข้อมูล' : 'แสดงตารางข้อมูล';
+    });
+  });
+
+  document.getElementById('toggle-theme').addEventListener('click', function(){
+    var root = document.documentElement;
+    var cur = root.getAttribute('data-theme');
+    if(cur === 'dark'){ root.setAttribute('data-theme','light'); }
+    else if(cur === 'light'){ root.removeAttribute('data-theme'); }
+    else { root.setAttribute('data-theme','dark'); }
+  });
+
+  renderTimeSeriesChart('chart-price', weekly, ['close','sma20','sma50','sma200'],
+    ['var(--cat-1)','var(--cat-3)','var(--cat-4)','var(--cat-5)'],
+    ['ราคาปิด','SMA20','SMA50','SMA200'],
+    function(v){ return '$' + v.toLocaleString(undefined, {maximumFractionDigits:2}); },
+    {height:320},
+    'table-price', ['วันที่','ราคาปิด ($)','SMA20','SMA50','SMA200']);
+
+  renderTimeSeriesChart('chart-rsi', weekly, ['rsi14'],
+    ['var(--cat-2)'], ['RSI(14)'],
+    function(v){ return v.toLocaleString(undefined, {maximumFractionDigits:1}); },
+    {height:240, yMin:0, yMax:100, referenceLines:[
+      {value:70, label:'Overbought 70', color:'var(--diverge-neg)'},
+      {value:30, label:'Oversold 30', color:'var(--diverge-pos)'}
+    ]},
+    'table-rsi', ['วันที่','RSI(14)']);
+
+  renderGroupedBar('chart-revenue', annualRevenue, ['revenue'], ['var(--cat-1)'],
+    ['รายได้รวม'], function(v){ return '$' + v.toLocaleString(undefined,{maximumFractionDigits:1}) + 'B'; },
+    'table-revenue', ['ปีบัญชี','รายได้รวม ($B)']);
+
+})();
+</script>
+</body>
+</html>
