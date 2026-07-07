@@ -187,4 +187,21 @@
         climateLive.classList.add("climate-live--error");
       });
   }
+
+  // Review video: the YouTube player is only loaded after the visitor taps
+  // play, so the heavy embed script never affects initial page load.
+  var videoFacades = document.querySelectorAll(".video-facade[data-video-id]");
+  for (var v = 0; v < videoFacades.length; v++) {
+    videoFacades[v].addEventListener("click", function () {
+      var id = this.getAttribute("data-video-id");
+      var iframe = document.createElement("iframe");
+      iframe.src = "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1&playsinline=1";
+      iframe.title = this.getAttribute("aria-label") || "YouTube video";
+      iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
+      iframe.setAttribute("allowfullscreen", "");
+      this.innerHTML = "";
+      this.appendChild(iframe);
+      this.style.cursor = "default";
+    }, { once: true });
+  }
 })();
