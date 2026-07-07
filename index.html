@@ -80,6 +80,8 @@ button { font-family: inherit; }
 .btn__icon { width: 20px; height: 20px; flex-shrink: 0; }
 .btn--line { background: var(--color-line); color: var(--color-forest-dark); box-shadow: 0 8px 20px rgba(6,199,85,.35); }
 .btn--line:hover { background: var(--color-line-dark); }
+.btn--airbnb { background: #FF385C; color: #fff; box-shadow: 0 8px 20px rgba(255,56,92,.35); }
+.btn--airbnb:hover { background: #E31C5F; }
 .btn--outline { background: transparent; border-color: rgba(255,255,255,.85); color: #fff; }
 .btn--outline:hover { background: rgba(255,255,255,.12); }
 .btn--lg { padding: 16px 32px; font-size: 1.05rem; }
@@ -202,6 +204,7 @@ button { font-family: inherit; }
 }
 .climate-live--loading .climate-live__dot { background: #ccc; animation: none; }
 .climate-live--error { display: none; }
+.climate__disclaimer { margin: 14px 0 0; font-size: .82rem; color: #8a8571; }
 .climate__admin-note { margin-top: 18px; font-size: .9rem; font-style: italic; color: #5c5745; }
 .climate__media img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow-card); }
 
@@ -609,12 +612,7 @@ button { font-family: inherit; }
           <span class="climate-live__text">กำลังโหลดอุณหภูมิตอนนี้ที่โป่งแยง…</span>
         </p>
 
-        <div class="amenity-callout climate-callout">
-          <span class="amenity-callout__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
-          </span>
-          <p><strong>หมายเหตุ:</strong> อุณหภูมิที่โป่งแยงยืนยันจากเจ้าของที่พัก แต่<em>อาจแตกต่างกันไปตามฤดูกาล</em> ส่วนตัวเลขในเมืองเชียงใหม่เป็นค่าโดยประมาณ <span data-confirm="climate">(รอข้อมูลยืนยัน)</span></p>
-        </div>
+        <p class="climate__disclaimer">อุณหภูมิที่โป่งแยงยืนยันจากเจ้าของที่พัก อาจแตกต่างกันไปตามฤดูกาล ส่วนตัวเลขในเมืองเชียงใหม่เป็นค่าโดยประมาณ<span data-confirm="climate"></span></p>
 
         <p class="climate__admin-note">“จากใจทีมงาน: ขับรถจากตัวเมืองเชียงใหม่มาไม่ถึงชั่วโมง ก็เจออากาศเย็นสบายและสดชื่นขึ้นชัดเจนแล้ว”</p>
       </div>
@@ -632,7 +630,7 @@ button { font-family: inherit; }
         <h2 class="section__title" id="amenities-title">ครบครันเพื่อการพักผ่อนอย่างแท้จริง</h2>
       </div>
       <div class="amenities__grid">
-        <article class="amenity" tabindex="0" data-photo="images/bathroom/bathtub-outdoor-mountain-thumb.webp" data-photo-alt="อ่างอาบน้ำวิวภูเขา">
+        <article class="amenity" tabindex="0" data-photo="images/bathroom/bathtub-outdoor-alt-thumb.webp" data-photo-alt="อ่างอาบน้ำวิวภูเขา">
           <span class="amenity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h18v2a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-2Z"/><path d="M5 12V8a2 2 0 0 1 2-2c1.5 0 2 1 2 2"/><path d="M6 20v1M16 20v1"/></svg></span>
           <strong>อ่างอาบน้ำ Indoor &amp; Outdoor</strong>
           <p>อ่างอาบน้ำวิวภูเขาทั้งในตัวบ้านและกลางแจ้ง</p>
@@ -644,7 +642,7 @@ button { font-family: inherit; }
           <p>ครอบคลุมพื้นที่ส่วนกลางของบ้านพัก</p>
           <span class="amenity__preview" aria-hidden="true"><img alt=""></span>
         </article>
-        <article class="amenity" tabindex="0" data-photo="images/exterior/drone-aerial-thumb.webp" data-photo-alt="ลานจอดรถหน้าบ้านพัก">
+        <article class="amenity" tabindex="0" data-photo="images/exterior/parking-driveway-thumb.webp" data-photo-alt="ลานจอดรถหน้าบ้านพัก">
           <span class="amenity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 8h3.5a2.5 2.5 0 0 1 0 5H9V8Zm0 5v4"/></svg></span>
           <strong>ที่จอดรถส่วนตัวฟรี</strong>
           <p>จอดรถได้สะดวกภายในบริเวณบ้านพัก</p>
@@ -662,13 +660,13 @@ button { font-family: inherit; }
           <p>ร้องเพลงสนุกกับครอบครัวและเพื่อนฝูง</p>
           <span class="amenity__preview" aria-hidden="true"><img alt=""></span>
         </article>
-        <article class="amenity" tabindex="0" data-photo="images/common/living-dining-2-thumb.webp" data-photo-alt="โต๊ะเล่นไพ่ในบ้าน">
+        <article class="amenity" tabindex="0" data-photo="images/common/card-game-night-thumb.webp" data-photo-alt="โต๊ะเล่นไพ่ในบ้าน">
           <span class="amenity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="6" width="14" height="12" rx="2" transform="rotate(-8 10 12)"/><path d="M10 10.5 12 13l3-3.5"/></svg></span>
           <strong>ห้องเล่นไพ่</strong>
           <p>มุมสังสรรค์เล่นไพ่ยามค่ำคืน</p>
           <span class="amenity__preview" aria-hidden="true"><img alt=""></span>
         </article>
-        <article class="amenity" tabindex="0" data-photo="images/exterior/house-sala-view-thumb.webp" data-photo-alt="สนามหญ้าสำหรับเด็กเล่น">
+        <article class="amenity" tabindex="0" data-photo="images/exterior/playground-lawn-thumb.webp" data-photo-alt="สนามหญ้าสำหรับเด็กเล่น">
           <span class="amenity__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 20V9M18 20V9M6 9h12M8 9V5a2 2 0 0 1 4 0M14 9a2 2 0 0 1 4 0v4"/></svg></span>
           <strong>สนามเด็กเล่นฟรี</strong>
           <p>เหมาะสำหรับครอบครัวที่มีเด็กเล็ก</p>
@@ -783,6 +781,7 @@ button { font-family: inherit; }
           จองผ่าน LINE
         </a>
         <a class="btn btn--outline btn--lg" href="tel:+66659654326" data-confirm="phone">โทร / WhatsApp: 065-965-4326</a>
+        <a class="btn btn--airbnb btn--lg" href="https://airbnb.com/h/deepsleep456" target="_blank" rel="noopener">จองผ่าน Airbnb (สำหรับต่างชาติ)</a>
       </div>
     </div>
   </section>
@@ -806,6 +805,7 @@ button { font-family: inherit; }
       <a href="#amenities">สิ่งอำนวยความสะดวก</a>
       <a href="#reviews">รีวิว</a>
       <a class="footer__line" href="https://line.me/R/ti/p/@952gwewf" target="_blank" rel="noopener">แชทผ่าน LINE</a>
+      <a href="https://airbnb.com/h/deepsleep456" target="_blank" rel="noopener">จองผ่าน Airbnb</a>
     </nav>
   </div>
   <div class="container footer__bottom">

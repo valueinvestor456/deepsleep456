@@ -56,6 +56,8 @@ button { font-family: inherit; }
 .btn__icon { width: 20px; height: 20px; flex-shrink: 0; }
 .btn--line { background: var(--color-line); color: var(--color-forest-dark); box-shadow: 0 8px 20px rgba(6,199,85,.35); }
 .btn--line:hover { background: var(--color-line-dark); }
+.btn--airbnb { background: #FF385C; color: #fff; box-shadow: 0 8px 20px rgba(255,56,92,.35); }
+.btn--airbnb:hover { background: #E31C5F; }
 .btn--outline { background: transparent; border-color: rgba(255,255,255,.85); color: #fff; }
 .btn--outline:hover { background: rgba(255,255,255,.12); }
 .btn--lg { padding: 16px 32px; font-size: 1.05rem; }
@@ -178,6 +180,7 @@ button { font-family: inherit; }
 }
 .climate-live--loading .climate-live__dot { background: #ccc; animation: none; }
 .climate-live--error { display: none; }
+.climate__disclaimer { margin: 14px 0 0; font-size: .82rem; color: #8a8571; }
 .climate__admin-note { margin-top: 18px; font-size: .9rem; font-style: italic; color: #5c5745; }
 .climate__media img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow-card); }
 
