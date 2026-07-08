@@ -204,4 +204,43 @@
       this.style.cursor = "default";
     }, { once: true });
   }
+
+  // Influencer / affiliate referral tracking. A partner shares a link like
+  // ?ref=NEWVI; we remember the code for the session, show a banner, and
+  // rewrite LINE links to a pre-filled chat message so the code travels with
+  // the booking request without the guest needing to type it themselves.
+  // To onboard a new partner, just add a row to REF_PARTNERS below.
+  var REF_PARTNERS = {
+    NEWVI: { th: "เชียงใหม่ม่วนเว่อร์", en: "Chiang Mai Muan Ver" }
+  };
+  var refBanner = document.querySelector("[data-ref-banner]");
+  if (refBanner) {
+    var urlRef = new URLSearchParams(location.search).get("ref");
+    if (urlRef) {
+      try { sessionStorage.setItem("ds456_ref", urlRef.toUpperCase()); } catch (e) {}
+    }
+    var activeRef = null;
+    try { activeRef = sessionStorage.getItem("ds456_ref"); } catch (e) {}
+    var partner = activeRef && REF_PARTNERS[activeRef];
+    if (partner) {
+      var refLang = document.documentElement.lang === "en" ? "en" : "th";
+      var partnerName = partner[refLang];
+      var bannerText = refBanner.querySelector("[data-ref-banner-text]");
+      if (bannerText) {
+        bannerText.innerHTML = refLang === "th"
+          ? "🎉 คุณมาจาก " + partnerName + " — แจ้งโค้ด <strong>" + activeRef + "</strong> ตอนจองผ่าน LINE หรือโทร รับสิทธิพิเศษ"
+          : "🎉 Referred by " + partnerName + " — mention code <strong>" + activeRef + "</strong> when you book via LINE or phone";
+      }
+      refBanner.hidden = false;
+      refBanner.classList.add("is-visible");
+
+      var lineMsg = refLang === "th"
+        ? "สวัสดีค่ะ สนใจจองที่พัก Deepsleep456 (รหัสแนะนำ: " + activeRef + ")"
+        : "Hi! I'm interested in booking Deepsleep456 (referral code: " + activeRef + ")";
+      var lineLinks = document.querySelectorAll('a[href^="https://line.me/R/ti/p/"]');
+      for (var l = 0; l < lineLinks.length; l++) {
+        lineLinks[l].href = "https://line.me/R/oaMessage/@952gwewf/?" + encodeURIComponent(lineMsg);
+      }
+    }
+  }
 })();

@@ -329,6 +329,12 @@ button { font-family: inherit; }
 .lightbox__nav--next { right: 20px; top: 50%; transform: translateY(-50%); }
 .lightbox__close:hover, .lightbox__nav:hover { background: rgba(255,255,255,.25); }
 
+/* Referral / affiliate banner */
+.ref-banner { display: none; background: var(--color-clay-text); }
+.ref-banner.is-visible { display: block; }
+.ref-banner p { margin: 0; padding: 10px 16px; color: #fff; font-size: .88rem; text-align: center; line-height: 1.5; }
+.ref-banner strong { font-weight: 700; }
+
 /* Sticky mobile CTA bar */
 .sticky-cta { display: none; }
 
@@ -458,6 +464,10 @@ button { font-family: inherit; }
     </div>
   </nav>
 </header>
+
+<div class="ref-banner" data-ref-banner hidden>
+  <p class="container"><span data-ref-banner-text></span></p>
+</div>
 
 <main id="main">
 
@@ -873,6 +883,6 @@ button { font-family: inherit; }
   </a>
 </div>
 
-<script src="js/main.js?v=20260707b"></script>
+<script src="js/main.js?v=20260707c"></script>
 </body>
 </html>
