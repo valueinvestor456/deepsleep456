@@ -20,7 +20,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="../images/logo.webp?v=20260707" type="image/webp">
 <link rel="preload" as="image" href="../images/hero/hero-1-day-house.webp" fetchpriority="high">
-<link rel="stylesheet" href="../css/style.css?v=20260707c">
+<link rel="stylesheet" href="../css/style.css?v=20260707d">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
@@ -58,6 +58,22 @@
     { "@type": "LocationFeatureSpecification", "name": "Free private parking", "value": true },
     { "@type": "LocationFeatureSpecification", "name": "Free Wi-Fi", "value": true },
     { "@type": "LocationFeatureSpecification", "name": "Playground", "value": true }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "What are the check-in and check-out times?", "acceptedAnswer": { "@type": "Answer", "text": "Check-in is after 2:00 PM and check-out is before 12:00 PM. If you need an earlier or later time, ask via LINE in advance." } },
+    { "@type": "Question", "name": "How many guests can stay?", "acceptedAnswer": { "@type": "Answer", "text": "It's a private whole-house rental with 3 bedrooms and 2 bathrooms, sleeping up to 12 guests." } },
+    { "@type": "Question", "name": "How much does it cost?", "acceptedAnswer": { "@type": "Answer", "text": "From 1,000 THB per person per night. The actual rate depends on group size and season — message us on LINE to check prices and availability." } },
+    { "@type": "Question", "name": "Is there a swimming pool?", "acceptedAnswer": { "@type": "Answer", "text": "No swimming pool — but there are mountain-view bathtubs both indoors and outdoors." } },
+    { "@type": "Question", "name": "Can we have a BBQ / Thai hotpot (moo kratha)?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, there's a dedicated picnic sala for BBQ and moo kratha." } },
+    { "@type": "Question", "name": "Is parking available?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, free private parking within the property." } },
+    { "@type": "Question", "name": "Are pets allowed?", "acceptedAnswer": { "@type": "Answer", "text": "Please ask via LINE before booking — our team will let you know the conditions." } },
+    { "@type": "Question", "name": "How do we get there? Is it far from the city?", "acceptedAnswer": { "@type": "Answer", "text": "About 38.6 km from Chiang Mai Airport. Easy to reach by car, or use the airport transfer service (extra charge). Close to Mon Cham and several famous cafes." } }
   ]
 }
 </script>
@@ -438,12 +454,61 @@
     </div>
   </section>
 
+  <section class="section faq" id="faq" aria-labelledby="faq-title">
+    <div class="container">
+      <div class="section__header">
+        <p class="eyebrow">Frequently Asked Questions</p>
+        <h2 class="section__title" id="faq-title">Everything You Might Want to Know Before Booking</h2>
+      </div>
+      <div class="faq__list">
+        <details class="faq__item">
+          <summary>What are the check-in and check-out times?</summary>
+          <p>Check-in is after 2:00 PM and check-out is before 12:00 PM. If you need an earlier or later time, just ask us via LINE in advance.</p>
+        </details>
+        <details class="faq__item">
+          <summary>How many guests can stay?</summary>
+          <p>It's a private whole-house rental with 3 bedrooms and 2 bathrooms, sleeping up to 12 guests — great for families and groups of friends.</p>
+        </details>
+        <details class="faq__item">
+          <summary>How much does it cost?</summary>
+          <p>From <span data-confirm="price">1,000 THB / person / night</span> — the actual rate depends on group size and season. Message us on LINE to check prices and availability.</p>
+        </details>
+        <details class="faq__item">
+          <summary>Is there a swimming pool?</summary>
+          <p>No swimming pool — but there are mountain-view bathtubs both indoors and outdoors to soak in instead.</p>
+        </details>
+        <details class="faq__item">
+          <summary>Can we have a BBQ / Thai hotpot (moo kratha)?</summary>
+          <p>Yes! There's a dedicated picnic sala for BBQ and moo kratha with your group.</p>
+        </details>
+        <details class="faq__item">
+          <summary>Is parking available?</summary>
+          <p>Yes, free private parking within the property.</p>
+        </details>
+        <details class="faq__item">
+          <summary>Are pets allowed?</summary>
+          <p>Please ask us via LINE before booking — our team will let you know the conditions.</p>
+        </details>
+        <details class="faq__item">
+          <summary>How do we get there? Is it far from the city?</summary>
+          <p>About 38.6 km from Chiang Mai Airport. Easy to reach by car, or use our airport transfer service (extra charge). The house is close to Mon Cham and several famous cafes.</p>
+        </details>
+      </div>
+      <p class="faq__more">Any other questions? <a href="https://line.me/R/ti/p/@952gwewf" target="_blank" rel="noopener">Ask us on LINE</a> — we reply fast.</p>
+    </div>
+  </section>
+
   <section class="section booking-cta" id="booking" aria-labelledby="booking-title">
     <div class="container booking-cta__inner">
       <div class="booking-cta__copy">
         <p class="eyebrow">Ready When You Are</p>
         <h2 class="section__title" id="booking-title">Come Relax at Deepsleep456</h2>
-        <p class="section__text">Check-in after 2:00 PM · Check-out before 12:00 PM · From <span data-confirm="price">1,000 THB / person / night</span> (please confirm actual price before your stay)</p>
+        <ul class="booking-cta__facts">
+          <li><strong>Check-in</strong> after 2:00 PM</li>
+          <li><strong>Check-out</strong> before 12:00 PM</li>
+          <li><strong>From</strong> <span data-confirm="price">1,000 THB / person / night</span></li>
+        </ul>
+        <p class="section__text booking-cta__note">Actual rate depends on group size and season — confirmed when you book.</p>
       </div>
       <div class="booking-cta__actions">
         <a class="btn btn--line btn--lg" href="https://line.me/R/ti/p/@952gwewf" target="_blank" rel="noopener">
