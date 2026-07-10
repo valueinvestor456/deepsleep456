@@ -315,15 +315,18 @@ button { font-family: inherit; }
 .map-section__grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
 .map-section__map iframe { width: 100%; aspect-ratio: 4 / 3; border: 0; border-radius: var(--radius); box-shadow: var(--shadow-card); }
 .map-section__link { display: inline-block; margin-top: 12px; color: var(--color-forest); font-weight: 600; border-bottom: 2px solid var(--color-clay); }
-.map-section__list li { padding: 14px 0; border-bottom: 1px dashed rgba(63,91,68,.25); }
-.map-section__list li strong { display: block; color: var(--color-forest-dark); font-family: var(--font-heading); font-size: 1rem; margin-bottom: 4px; }
-.map-section__list li p { margin: 0; color: #55503f; font-size: .92rem; }
-
-/* Cafes */
-.cafes__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.cafe-card { background: #fff; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-card); }
-.cafe-card strong { display: block; font-family: var(--font-heading); color: var(--color-forest-dark); margin-bottom: 8px; }
-.cafe-card p { margin: 0; color: #55503f; font-size: .92rem; }
+.map-section__list { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.map-section__list li {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow-card);
+  font-size: .9rem; color: #55503f;
+}
+.map-section__list li strong { color: var(--color-forest-dark); font-family: var(--font-heading); font-weight: 500; margin-right: 6px; }
+.map-chip__icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 30px; height: 30px; border-radius: 50%; background: var(--color-sand); color: var(--color-forest);
+}
+.map-chip__icon svg { width: 16px; height: 16px; }
 
 /* FAQ */
 .faq { background: #FBF7EE; }
@@ -426,8 +429,6 @@ button { font-family: inherit; }
   .reviews__score-num { font-size: 2.2rem; }
 
   .map-section__grid { grid-template-columns: 1fr; }
-
-  .cafes__grid { grid-template-columns: 1fr; }
 
   .footer__grid { grid-template-columns: 1fr; gap: 28px; }
   .footer__bottom { flex-direction: column; gap: 8px; text-align: center; }
@@ -865,38 +866,16 @@ button { font-family: inherit; }
       </div>
       <div class="map-section__copy">
         <p class="eyebrow">ทำเลที่ตั้ง</p>
-        <h2 class="section__title" id="map-title">สถานที่ท่องเที่ยวใกล้แม่ริม</h2>
-        <p class="section__text">ที่พัก Deepsleep456 อยู่ใกล้แหล่งท่องเที่ยวยอดนิยมอย่าง ม่อนแจ่ม, สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์ และโป่งแยง จังเกิ้ล โคสเตอร์ &amp; ซิปไลน์ เดินทางสะดวกสำหรับแขกที่ต้องการทำกิจกรรมระหว่างทริป</p>
+        <h2 class="section__title" id="map-title">ใกล้ที่เที่ยวและคาเฟ่ดังของแม่ริม</h2>
+        <p class="section__text">Deepsleep456 อยู่ใจกลางโซนท่องเที่ยวโป่งแยง–ม่อนแจ่ม แวะเที่ยวและจิบกาแฟได้ครบโดยไม่ต้องขับรถไกล</p>
         <ul class="map-section__list">
-          <li><strong>ม่อนแจ่ม</strong><p>จุดชมวิวทะเลหมอกยอดฮิตและสวนดอกไม้</p></li>
-          <li><strong>สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์ (Queen Sirikit Botanic Garden)</strong><p>เดินชมธรรมชาติและทางเดินลอยฟ้า Canopy Walk</p></li>
-          <li><strong>โป่งแยง จังเกิ้ล โคสเตอร์ &amp; ซิปไลน์</strong><p>เหมาะสำหรับสายกิจกรรมแอดเวนเจอร์</p></li>
+          <li><span class="map-chip__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg></span><span><strong>ม่อนแจ่ม</strong> จุดชมทะเลหมอก</span></li>
+          <li><span class="map-chip__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg></span><span><strong>สวนพฤกษศาสตร์สมเด็จพระนางเจ้าสิริกิติ์</strong> Canopy Walk</span></li>
+          <li><span class="map-chip__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg></span><span><strong>โป่งแยง จังเกิ้ล โคสเตอร์ &amp; ซิปไลน์</strong> สายแอดเวนเจอร์</span></li>
+          <li><span class="map-chip__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h12v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/></svg></span><span><strong>WTF Coffee Camp</strong> คาเฟ่ริมน้ำตก</span></li>
+          <li><span class="map-chip__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h12v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/></svg></span><span><strong>Jungle De Cafe</strong> เปลตาข่ายริมน้ำตก</span></li>
+          <li><span class="map-chip__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h12v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2"/></svg></span><span><strong>ไอนาราคาเฟ่</strong> คาเฟ่ญี่ปุ่นวิวเขา</span></li>
         </ul>
-      </div>
-    </div>
-  </section>
-
-  <section class="section cafes" id="cafes" aria-labelledby="cafes-title">
-    <div class="container">
-      <div class="section__header">
-        <p class="eyebrow">แนะนำเพิ่มเติม</p>
-        <h2 class="section__title" id="cafes-title">คาเฟ่น่านั่งใกล้เคียง</h2>
-        <p class="section__text">ที่พัก Deepsleep456 ตั้งอยู่ไม่ไกลจากคาเฟ่ชื่อดังอย่าง WTF Coffee Camp, Jungle De Cafe และไอนาราคาเฟ่ เดินทางสะดวกสำหรับแขกที่ต้องการแวะจิบกาแฟชมวิวระหว่างทริป</p>
-      </div>
-
-      <div class="cafes__grid">
-        <article class="cafe-card">
-          <strong>WTF Coffee Camp</strong>
-          <p>คาเฟ่สไตล์แคมปิ้งสุดฮิตที่ตั้งอยู่ริมน้ำตก ให้คุณจิบกาแฟท่ามกลางเสียงน้ำตกและอากาศบริสุทธิ์ มีมุมถ่ายรูปสวย ๆ เยอะมาก และมีรถกอล์ฟคอยรับ-ส่งอำนวยความสะดวก</p>
-        </article>
-        <article class="cafe-card">
-          <strong>Jungle De Cafe</strong>
-          <p>คาเฟ่ชื่อดังที่มาพร้อมกับเปลตาข่ายริมน้ำตก บรรยากาศร่มรื่น เหมาะสำหรับการมานั่งฟังเสียงน้ำธรรมชาติและพักสายตากับวิวสีเขียว</p>
-        </article>
-        <article class="cafe-card">
-          <strong>ไอนาราคาเฟ่</strong>
-          <p>คาเฟ่ดีไซน์สวยสไตล์ญี่ปุ่นตั้งอยู่กลางหุบเขาทางไปม่อนแจ่ม วิวสวยหลักล้านและบรรยากาศเย็นสบายตลอดวัน เหมาะกับการจิบกาแฟชมวิวภูเขาและทุ่งหญ้า</p>
-        </article>
       </div>
     </div>
   </section>

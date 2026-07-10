@@ -291,15 +291,18 @@ button { font-family: inherit; }
 .map-section__grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
 .map-section__map iframe { width: 100%; aspect-ratio: 4 / 3; border: 0; border-radius: var(--radius); box-shadow: var(--shadow-card); }
 .map-section__link { display: inline-block; margin-top: 12px; color: var(--color-forest); font-weight: 600; border-bottom: 2px solid var(--color-clay); }
-.map-section__list li { padding: 14px 0; border-bottom: 1px dashed rgba(63,91,68,.25); }
-.map-section__list li strong { display: block; color: var(--color-forest-dark); font-family: var(--font-heading); font-size: 1rem; margin-bottom: 4px; }
-.map-section__list li p { margin: 0; color: #55503f; font-size: .92rem; }
-
-/* Cafes */
-.cafes__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-.cafe-card { background: #fff; border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow-card); }
-.cafe-card strong { display: block; font-family: var(--font-heading); color: var(--color-forest-dark); margin-bottom: 8px; }
-.cafe-card p { margin: 0; color: #55503f; font-size: .92rem; }
+.map-section__list { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.map-section__list li {
+  display: flex; align-items: center; gap: 12px;
+  background: #fff; border-radius: 10px; padding: 10px 14px; box-shadow: var(--shadow-card);
+  font-size: .9rem; color: #55503f;
+}
+.map-section__list li strong { color: var(--color-forest-dark); font-family: var(--font-heading); font-weight: 500; margin-right: 6px; }
+.map-chip__icon {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 30px; height: 30px; border-radius: 50%; background: var(--color-sand); color: var(--color-forest);
+}
+.map-chip__icon svg { width: 16px; height: 16px; }
 
 /* FAQ */
 .faq { background: #FBF7EE; }
@@ -402,8 +405,6 @@ button { font-family: inherit; }
   .reviews__score-num { font-size: 2.2rem; }
 
   .map-section__grid { grid-template-columns: 1fr; }
-
-  .cafes__grid { grid-template-columns: 1fr; }
 
   .footer__grid { grid-template-columns: 1fr; gap: 28px; }
   .footer__bottom { flex-direction: column; gap: 8px; text-align: center; }
