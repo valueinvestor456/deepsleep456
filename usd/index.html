@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>USD/THB Fair Value</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --border:rgba(11,11,11,0.10); --cat-1:#2a78d6;
+    --good:#1a7f37; --bad:#c93838; --warn-bg:#fff8e1; --input-bg:#fffde7;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --border:rgba(255,255,255,0.10); --cat-1:#3987e5;
+      --good:#3fb950; --bad:#f85149; --warn-bg:#2a2410; --input-bg:#26240f;
+    }
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--page); color:var(--text-primary);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:24px; line-height:1.5;
+  }
+  .wrap{max-width:680px;margin:0 auto;}
+  h1{font-size:20px;margin:0 0 4px;}
+  h2{font-size:15px;margin:0 0 10px;}
+  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 20px;}
+  .card{
+    background:var(--surface-1); border:1px solid var(--border); border-radius:12px;
+    padding:16px; margin-bottom:14px;
+  }
+  .spot-big{font-size:34px;font-weight:700;letter-spacing:-0.5px;}
+  .spot-meta{color:var(--text-muted);font-size:12px;margin-top:2px;}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:14px;}
+  .row:last-child{border-bottom:none;}
+  .row .label{color:var(--text-secondary);}
+  .row .value{font-weight:600;font-variant-numeric:tabular-nums;}
+  input[type=number]{
+    width:110px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;
+    background:var(--input-bg);color:var(--text-primary);font-size:14px;text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .verdict{font-weight:700;}
+  .verdict.rich{color:var(--bad);} .verdict.cheap{color:var(--good);} .verdict.fair{color:var(--text-secondary);}
+  .note{font-size:12px;color:var(--text-muted);margin-top:10px;}
+  .warnbox{
+    background:var(--warn-bg);border:1px solid var(--border);border-radius:12px;
+    padding:12px 16px;font-size:13px;margin-bottom:14px;color:var(--text-secondary);
+  }
+  .warnbox b{color:var(--text-primary);}
+  button{
+    padding:6px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;
+    background:var(--cat-1);color:#fff;font-size:13px;font-weight:600;
+  }
+  .err{color:var(--bad);font-size:13px;}
+  footer{font-size:11px;color:var(--text-muted);margin-top:24px;}
+  a{color:var(--cat-1);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>USD/THB Fair Value</h1>
+  <p class="subtitle">คำนวณราคายุติธรรมจาก spot แบบ realtime — เครื่องมือส่วนตัว ไม่ใช่คำแนะนำการลงทุน</p>
+
+  <div class="card">
+    <h2>Spot USD/THB (realtime)</h2>
+    <div class="spot-big" id="spot">—</div>
+    <div class="spot-meta" id="spotMeta">กำลังโหลด…</div>
+    <div class="err" id="spotErr" hidden>ดึงราคาอัตโนมัติไม่สำเร็จ — กรอกเองในช่องด้านล่าง</div>
+    <div class="row"><span class="label">แก้ spot เอง (ปล่อยว่าง = ใช้ค่า realtime)</span>
+      <input type="number" id="spotOverride" step="0.01" placeholder="auto"></div>
+  </div>
+
+  <div class="warnbox">
+    <b>ช่องสีเหลืองต้องอัปเดตเอง</b> — ดอกเบี้ย/CPI ไม่มี API ฟรีแบบ realtime:
+    ดอกเบี้ยไทยดูจาก <a href="https://www.bot.or.th" target="_blank" rel="noopener">BOT</a> (policy rate),
+    ดอกเบี้ยสหรัฐ (SOFR) และ CPI ดูจาก <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener">FRED</a>
+    — ค่าที่ใส่ไว้เป็นตัวอย่างเก่า อย่าเชื่อจนกว่าจะอัปเดต (บันทึกอัตโนมัติในเครื่องคุณเมื่อแก้)
+  </div>
+
+  <div class="card">
+    <h2>1) CIP — ราคายุติธรรมของ TFEX USD Futures เทียบ spot</h2>
+    <div class="row"><span class="label">ดอกเบี้ยไทย %/ปี</span><input type="number" id="iTH" step="0.05" value="1.50"></div>
+    <div class="row"><span class="label">ดอกเบี้ยสหรัฐ (SOFR) %/ปี</span><input type="number" id="iUS" step="0.05" value="4.00"></div>
+    <div class="row"><span class="label">จำนวนวันถึง settlement</span><input type="number" id="days" step="1" value="90"></div>
+    <div class="row"><span class="label">ราคา futures จริงบน TFEX (ถ้ามี)</span><input type="number" id="fut" step="0.01" placeholder="เช่น 31.20"></div>
+    <div class="row"><span class="label">ราคา futures ยุติธรรม</span><span class="value" id="cipFair">—</span></div>
+    <div class="row"><span class="label">Basis (จริง − ยุติธรรม)</span><span class="value" id="cipBasis">—</span></div>
+    <div class="row"><span class="label">คำตัดสิน (เผื่อต้นทุน 3 สตางค์)</span><span class="value verdict" id="cipVerdict">—</span></div>
+    <div class="note">F = S × (1 + i<sub>TH</sub>·τ) / (1 + i<sub>US</sub>·τ), τ = วัน/365 — สมการเดียวในหน้านี้ที่ "แม่นจริง" เพราะถูกบังคับด้วย arbitrage</div>
+  </div>
+
+  <div class="card">
+    <h2>2) PPP — จุดยึดระยะยาวของ spot</h2>
+    <div class="row"><span class="label">Spot ปีฐาน (เช่น ค่าเฉลี่ยปี 2016)</span><input type="number" id="sBase" step="0.01" value="35.30"></div>
+    <div class="row"><span class="label">CPI ไทย ปีฐาน</span><input type="number" id="cpiTH0" step="0.1" value="100.0"></div>
+    <div class="row"><span class="label">CPI ไทย ปัจจุบัน</span><input type="number" id="cpiTH1" step="0.1" value="108.0"></div>
+    <div class="row"><span class="label">CPI สหรัฐ ปีฐาน</span><input type="number" id="cpiUS0" step="0.1" value="100.0"></div>
+    <div class="row"><span class="label">CPI สหรัฐ ปัจจุบัน</span><input type="number" id="cpiUS1" step="0.1" value="134.0"></div>
+    <div class="row"><span class="label">PPP fair price</span><span class="value" id="pppFair">—</span></div>
+    <div class="row"><span class="label">Spot เบี่ยงจาก PPP</span><span class="value" id="pppDev">—</span></div>
+    <div class="row"><span class="label">การอ่านค่า</span><span class="value verdict" id="pppVerdict">—</span></div>
+    <div class="note">ค่าเบี่ยง ±10% อยู่ได้เป็นปี — ใช้ดูทิศทางระยะยาว ห้ามใช้เป็นสัญญาณเข้าเทรด</div>
+  </div>
+
+  <div class="card">
+    <h2>ข้อจำกัดที่ต้องรู้</h2>
+    <div class="note" style="margin-top:0">
+      ไม่มีสมการไหนทำนายทิศทาง USD/THB รายวัน/รายสัปดาห์ได้ (งานวิจัย Meese–Rogoff และงานต่อยอด 40 ปี
+      ยืนยันว่าโมเดลเศรษฐศาสตร์แพ้ random walk ที่ horizon สั้น) — หน้านี้บอกได้แค่ว่า
+      (ก) futures แพง/ถูกเทียบ spot แบบ arbitrage-exact และ (ข) ระดับราคาปัจจุบันตึงแค่ไหนเทียบพื้นฐานระยะยาว
+      · spot จาก open.er-api.com (สำรอง: frankfurter.dev) เป็นเรต reference ไม่ใช่ราคาซื้อขายจริงของโบรกเกอร์
+    </div>
+  </div>
+
+  <div style="text-align:right"><button id="refresh">รีเฟรชราคา</button></div>
+
+  <footer>เครื่องมือส่วนตัว — คำนวณฝั่งเบราว์เซอร์ทั้งหมด ไม่มีการส่งข้อมูลออก · แก้ไขล่าสุด 2026-07-10</footer>
+</div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var liveSpot = null;
+
+  var SAVED = ["iTH","iUS","days","fut","sBase","cpiTH0","cpiTH1","cpiUS0","cpiUS1","spotOverride"];
+  SAVED.forEach(function(id){
+    var v = localStorage.getItem("usdthb_" + id);
+    if (v !== null && v !== "") $(id).value = v;
+    $(id).addEventListener("input", function(){
+      localStorage.setItem("usdthb_" + id, $(id).value);
+      recalc();
+    });
+  });
+
+  function spotInUse(){
+    var o = parseFloat($("spotOverride").value);
+    if (!isNaN(o) && o > 0) return o;
+    return liveSpot;
+  }
+
+  function fmt(x, dp){ return (x === null || isNaN(x)) ? "—" : x.toFixed(dp === undefined ? 4 : dp); }
+
+  function recalc(){
+    var S = spotInUse();
+    $("spot").textContent = fmt(S, 4);
+
+    // CIP
+    var iTH = parseFloat($("iTH").value), iUS = parseFloat($("iUS").value), days = parseFloat($("days").value);
+    var cipFair = null;
+    if (S && !isNaN(iTH) && !isNaN(iUS) && days > 0){
+      var t = days / 365;
+      cipFair = S * (1 + iTH/100*t) / (1 + iUS/100*t);
+    }
+    $("cipFair").textContent = fmt(cipFair);
+    var fut = parseFloat($("fut").value);
+    var v = $("cipVerdict");
+    if (cipFair && !isNaN(fut) && fut > 0){
+      var basis = fut - cipFair;
+      $("cipBasis").textContent = (basis >= 0 ? "+" : "") + basis.toFixed(4) + " THB (" + (basis/0.01).toFixed(1) + " ticks)";
+      var allow = 0.03;
+      if (basis > allow){ v.textContent = "RICH — futures แพงกว่ายุติธรรม"; v.className = "value verdict rich"; }
+      else if (basis < -allow){ v.textContent = "CHEAP — futures ถูกกว่ายุติธรรม"; v.className = "value verdict cheap"; }
+      else { v.textContent = "FAIR — อยู่ในกรอบต้นทุน"; v.className = "value verdict fair"; }
+    } else {
+      $("cipBasis").textContent = "—";
+      v.textContent = "ใส่ราคา futures เพื่อเทียบ"; v.className = "value verdict fair";
+    }
+
+    // PPP
+    var sB = parseFloat($("sBase").value),
+        t0 = parseFloat($("cpiTH0").value), t1 = parseFloat($("cpiTH1").value),
+        u0 = parseFloat($("cpiUS0").value), u1 = parseFloat($("cpiUS1").value);
+    var pppFair = null;
+    if (sB > 0 && t0 > 0 && t1 > 0 && u0 > 0 && u1 > 0){
+      pppFair = sB * (t1/t0) / (u1/u0);
+    }
+    $("pppFair").textContent = fmt(pppFair);
+    var pv = $("pppVerdict");
+    if (pppFair && S){
+      var dev = (S/pppFair - 1) * 100;
+      $("pppDev").textContent = (dev >= 0 ? "+" : "") + dev.toFixed(2) + "%";
+      if (dev > 10){ pv.textContent = "USD แพงกว่า PPP >10% (บาทถูก)"; pv.className = "value verdict rich"; }
+      else if (dev < -10){ pv.textContent = "USD ถูกกว่า PPP >10% (บาทแพง)"; pv.className = "value verdict cheap"; }
+      else { pv.textContent = "อยู่ในกรอบ ±10% ที่ PPP แยกไม่ออก"; pv.className = "value verdict fair"; }
+    } else {
+      $("pppDev").textContent = "—"; pv.textContent = "—"; pv.className = "value verdict fair";
+    }
+  }
+
+  function setMeta(text){ $("spotMeta").textContent = text; }
+
+  function fetchSpot(){
+    setMeta("กำลังโหลด…");
+    $("spotErr").hidden = true;
+    fetch("https://open.er-api.com/v6/latest/USD")
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.rates && j.rates.THB){
+          liveSpot = j.rates.THB;
+          setMeta("ที่มา: open.er-api.com · อัปเดต " + (j.time_last_update_utc || ""));
+          recalc();
+        } else { throw new Error("no THB"); }
+      })
+      .catch(function(){
+        fetch("https://api.frankfurter.dev/v1/latest?base=USD&symbols=THB")
+          .then(function(r){ return r.json(); })
+          .then(function(j){
+            if (j && j.rates && j.rates.THB){
+              liveSpot = j.rates.THB;
+              setMeta("ที่มา: frankfurter.app (เรต ECB รายวัน) · " + (j.date || ""));
+              recalc();
+            } else { throw new Error("no THB"); }
+          })
+          .catch(function(){
+            liveSpot = null;
+            setMeta("");
+            $("spotErr").hidden = false;
+            recalc();
+          });
+      });
+  }
+
+  $("refresh").addEventListener("click", fetchSpot);
+  fetchSpot();
+})();
+</script>
+</body>
+</html>
