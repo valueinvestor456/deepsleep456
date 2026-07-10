@@ -19,7 +19,7 @@
 <meta property="og:image" content="images/og/og-image.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="images/logo.webp?v=20260707" type="image/webp">
-<link rel="preload" as="image" href="images/hero/hero-1-day-house.webp" fetchpriority="high">
+<link rel="preload" as="image" href="images/hero/hero-1-day-house.avif" type="image/avif" fetchpriority="high">
 <!-- Inlined from css/style.css to avoid a render-blocking request. Keep both in sync when editing styles. -->
 <style>
 :root {
@@ -80,8 +80,8 @@ button { font-family: inherit; }
 .btn__icon { width: 20px; height: 20px; flex-shrink: 0; }
 .btn--line { background: var(--color-line); color: var(--color-forest-dark); box-shadow: 0 8px 20px rgba(6,199,85,.35); }
 .btn--line:hover { background: var(--color-line-dark); }
-.btn--airbnb { background: #FF385C; color: #fff; box-shadow: 0 8px 20px rgba(255,56,92,.35); }
-.btn--airbnb:hover { background: #E31C5F; }
+.btn--airbnb { background: #E31C5F; color: #fff; box-shadow: 0 8px 20px rgba(227,28,95,.35); }
+.btn--airbnb:hover { background: #C4174E; }
 .btn--outline { background: transparent; border-color: rgba(255,255,255,.85); color: #fff; }
 .btn--outline:hover { background: rgba(255,255,255,.12); }
 .btn--lg { padding: 16px 32px; font-size: 1.05rem; }
@@ -193,7 +193,7 @@ button { font-family: inherit; }
 .climate-compare__row--head span { padding: 12px 10px; }
 .climate-compare__label { padding: 14px 10px; font-family: var(--font-heading); font-weight: 600; color: var(--color-forest-dark); font-size: .92rem; }
 .climate-compare__stat { padding: 14px 10px; font-family: var(--font-heading); font-size: 1.3rem; font-weight: 700; color: #55503f; text-align: center; }
-.climate-compare__stat small { display: block; font-family: var(--font-body); font-weight: 300; font-size: .72rem; color: #7a7561; margin-top: 2px; }
+.climate-compare__stat small { display: block; font-family: var(--font-body); font-weight: 300; font-size: .72rem; color: #6b6553; margin-top: 2px; }
 .climate-compare__stat--cool { color: var(--color-forest); background: #F3EDE1; }
 .climate-live {
   display: inline-flex; align-items: center; gap: 9px; margin: 22px 0 0;
@@ -211,7 +211,7 @@ button { font-family: inherit; }
 }
 .climate-live--loading .climate-live__dot { background: #ccc; animation: none; }
 .climate-live--error { display: none; }
-.climate__disclaimer { margin: 14px 0 0; font-size: .82rem; color: #8a8571; }
+.climate__disclaimer { margin: 14px 0 0; font-size: .82rem; color: #6b6553; }
 .climate__admin-note { margin-top: 18px; font-size: .9rem; font-style: italic; color: #5c5745; }
 .climate__media img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius); box-shadow: var(--shadow-card); }
 
@@ -286,7 +286,7 @@ button { font-family: inherit; }
   width: 32px; height: 32px; border-radius: 50%; background: var(--color-sand); color: var(--color-moss);
 }
 .review-card__avatar svg { width: 18px; height: 18px; }
-.review-card__who cite { font-style: normal; font-size: .8rem; color: #8a8571; }
+.review-card__who cite { font-style: normal; font-size: .8rem; color: #6b6553; }
 .reviews__video { text-align: center; }
 .video-facade {
   position: relative; display: block; width: 100%; aspect-ratio: 9 / 16;
@@ -549,7 +549,7 @@ button { font-family: inherit; }
 
   <section class="hero" id="hero" aria-label="Deepsleep456 ที่พักโป่งแยง ใกล้ม่อนแจ่ม">
     <div class="hero__slider" aria-hidden="true" data-hero-slider>
-      <div class="hero__slide hero__slide--active" style="background-image:url('images/hero/hero-1-day-house.webp');"></div>
+      <div class="hero__slide hero__slide--active" style="background-image:url('images/hero/hero-1-day-house.webp');background-image:image-set(url('images/hero/hero-1-day-house.avif') type('image/avif'),url('images/hero/hero-1-day-house.webp') type('image/webp'));"></div>
       <div class="hero__slide" data-bg="images/hero/hero-2-night-house.webp"></div>
       <div class="hero__slide" data-bg="images/hero/hero-3-drone-dusk.webp"></div>
       <div class="hero__slide" data-bg="images/hero/hero-4-day-topview.webp"></div>
@@ -846,7 +846,7 @@ button { font-family: inherit; }
           </article>
         </div>
         <div class="reviews__video">
-          <button class="video-facade" type="button" data-video-id="tlao0owwTec" aria-label="เล่นวิดีโอรีวิว Deepsleep456 จากช่องเชียงใหม่ม่วนเว่อร์">
+          <button class="video-facade" type="button" data-video-id="tlao0owwTec" aria-label="ชมคลิปรีวิว Deepsleep456 จากช่องเชียงใหม่ม่วนเว่อร์">
             <img src="images/bathroom/bathtub-outdoor-alt-thumb.webp?v=20260707" width="700" height="933" alt="วิดีโอรีวิวที่พัก Deepsleep456 โดยช่องเชียงใหม่ม่วนเว่อร์" loading="lazy">
             <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
             <span class="video-facade__label" aria-hidden="true">▶ ชมคลิปรีวิว</span>
