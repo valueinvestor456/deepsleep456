@@ -258,11 +258,40 @@ button { font-family: inherit; }
 
 /* Reviews */
 .reviews { background: #FBF7EE; }
-.reviews__video { margin: 44px auto 0; max-width: 300px; text-align: center; }
+.reviews__head {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px;
+  margin-bottom: 36px;
+}
+.reviews__g { display: inline-flex; }
+.reviews__score-stars { color: #F4B400; font-size: 1.5rem; letter-spacing: 2px; }
+.reviews__score-num { font-family: var(--font-heading); font-size: 2.6rem; line-height: 1; color: var(--color-forest-dark); font-weight: 700; }
+.reviews__score-link { color: var(--color-forest); font-weight: 500; border-bottom: 2px solid var(--color-clay); }
+.reviews__score-link strong { color: var(--color-forest-dark); }
+.reviews__layout { display: grid; grid-template-columns: 1fr 300px; gap: 26px; align-items: start; }
+.reviews__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.review-card {
+  position: relative; background: #fff; border-radius: var(--radius); padding: 22px 22px 18px;
+  box-shadow: var(--shadow-card); font-size: .95rem; color: #45402f;
+  display: flex; flex-direction: column;
+}
+.review-card::before {
+  content: "\201C"; position: absolute; top: 6px; right: 16px;
+  font-family: Georgia, serif; font-size: 3.4rem; line-height: 1; color: var(--color-sand);
+}
+.review-card__stars { color: #F4B400; letter-spacing: 2px; margin-bottom: 8px; font-size: .95rem; }
+.review-card p { margin: 0 0 14px; flex: 1; }
+.review-card__who { display: flex; align-items: center; gap: 10px; }
+.review-card__avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 32px; height: 32px; border-radius: 50%; background: var(--color-sand); color: var(--color-moss);
+}
+.review-card__avatar svg { width: 18px; height: 18px; }
+.review-card__who cite { font-style: normal; font-size: .8rem; color: #8a8571; }
+.reviews__video { text-align: center; }
 .video-facade {
   position: relative; display: block; width: 100%; aspect-ratio: 9 / 16;
-  border: 0; padding: 0; border-radius: var(--radius); overflow: hidden;
-  cursor: pointer; box-shadow: var(--shadow-card); background: #000;
+  border: 6px solid var(--color-forest-dark); padding: 0; border-radius: 26px; overflow: hidden;
+  cursor: pointer; box-shadow: 0 18px 40px rgba(46,42,34,.28); background: #000; box-sizing: border-box;
 }
 .video-facade img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .video-facade__play { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
@@ -273,16 +302,14 @@ button { font-family: inherit; }
 }
 .video-facade:hover .video-facade__play svg,
 .video-facade:focus-visible .video-facade__play svg { transform: scale(1.1); background: var(--color-forest); }
+.video-facade__label {
+  position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 14px 14px;
+  background: linear-gradient(transparent, rgba(20, 26, 21, .82));
+  color: #fff; font-size: .85rem; font-weight: 500; text-align: center;
+}
 .video-facade iframe { width: 100%; height: 100%; border: 0; }
 .reviews__video-caption { margin: 12px 0 0; font-size: .85rem; color: #6b6553; }
-.reviews__score { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 36px; }
-.reviews__score-stars { color: var(--color-clay-text); font-size: 1.6rem; letter-spacing: 2px; }
-.reviews__score-num { font-family: var(--font-heading); font-size: 3.4rem; color: var(--color-forest); font-weight: 700; }
-.reviews__score-label { color: #55503f; font-weight: 500; }
-.reviews__score-link { color: var(--color-forest); font-weight: 600; border-bottom: 2px solid var(--color-clay); margin-top: 4px; }
-.reviews__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-.review-card { background: #fff; border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow-card); font-size: .95rem; color: #45402f; }
-.reviews__note { text-align: center; margin-top: 24px; color: #5c5745; font-size: .85rem; }
+.reviews__note { text-align: center; margin-top: 26px; color: #5c5745; font-size: .85rem; }
 
 /* Map */
 .map-section__grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
@@ -393,8 +420,10 @@ button { font-family: inherit; }
   .climate__media { order: -1; }
 
   .amenities__grid { grid-template-columns: 1fr 1fr; }
+  .reviews__layout { grid-template-columns: 1fr; }
   .reviews__grid { grid-template-columns: 1fr; }
-  .reviews__score-num { font-size: 2.6rem; }
+  .reviews__video { max-width: 280px; margin: 8px auto 0; }
+  .reviews__score-num { font-size: 2.2rem; }
 
   .map-section__grid { grid-template-columns: 1fr; }
 
@@ -786,34 +815,45 @@ button { font-family: inherit; }
         <p class="eyebrow">รีวิวจากลูกค้า</p>
         <h2 class="section__title" id="reviews-title">คะแนนความพึงพอใจจากผู้เข้าพักจริง</h2>
       </div>
-      <div class="reviews__score">
-        <span class="reviews__score-stars" aria-hidden="true">★★★★★</span>
+      <div class="reviews__head">
+        <span class="reviews__g" aria-hidden="true"><svg viewBox="0 0 24 24" width="34" height="34"><path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.7-.3-2.5H12v4.7h6.5c-.3 1.6-1.2 2.9-2.5 3.8v3.1h4c2.3-2.2 3.5-5.4 3.5-9.1z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-2.9l-4-3.1c-1.1.7-2.5 1.2-4 1.2-3.1 0-5.8-2.1-6.7-5H1.2v3.2C3.2 21.4 7.3 24 12 24z"/><path fill="#FBBC05" d="M5.3 14.2c-.2-.7-.4-1.4-.4-2.2s.1-1.5.4-2.2V6.6H1.2C.4 8.2 0 10 0 12s.4 3.8 1.2 5.4l4.1-3.2z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.3.6 4.6 1.8l3.4-3.4C18 1.2 15.2 0 12 0 7.3 0 3.2 2.6 1.2 6.6l4.1 3.2c.9-2.9 3.6-5 6.7-5z"/></svg></span>
         <span class="reviews__score-num">5.0</span>
-        <span class="reviews__score-label">คะแนนจาก Google Maps</span>
-        <a class="reviews__score-link" href="https://maps.app.goo.gl/nFLFRLGoEjABzDoX6" target="_blank" rel="noopener">ดูรีวิวจริงบน Google Maps</a>
+        <span class="reviews__score-stars" aria-hidden="true">★★★★★</span>
+        <a class="reviews__score-link" href="https://maps.app.goo.gl/nFLFRLGoEjABzDoX6" target="_blank" rel="noopener">จาก <strong>37 รีวิวจริง</strong>บน Google Maps →</a>
       </div>
-      <div class="reviews__grid">
-        <article class="review-card">
-          <p>แขกที่มาพักชื่นชมความสะอาดของบ้านพักและบรรยากาศเงียบสงบท่ามกลางขุนเขาโป่งแยง</p>
-        </article>
-        <article class="review-card">
-          <p>หลายท่านประทับใจอ่างอาบน้ำวิวภูเขาทั้งแบบ indoor และ outdoor บอกว่าเป็นจุดที่ผ่อนคลายที่สุดของทริป</p>
-        </article>
-        <article class="review-card">
-          <p>ครอบครัวที่มาพักบอกว่าสนามเด็กเล่นและพื้นที่ปิกนิกทำให้เด็ก ๆ สนุกได้ทั้งวัน</p>
-        </article>
-        <article class="review-card">
-          <p>แขกหลายกลุ่มชื่นชมทำเลที่ใกล้ม่อนแจ่มและสวนสตอเบอร์รี่ เดินทางท่องเที่ยวสะดวกมาก</p>
-        </article>
+      <div class="reviews__layout">
+        <div class="reviews__grid">
+          <article class="review-card">
+            <span class="review-card__stars" aria-hidden="true">★★★★★</span>
+            <p>ที่พักให้ประสบการณ์ใกล้ชิดธรรมชาติเต็มที่ มีมุมถ่ายรูปเยอะมากเพราะบ้านหลังใหญ่และสนามหญ้ากว้าง เหมาะกับครอบครัวที่มีเด็ก ๆ รับรองว่าสนุกแน่นอน</p>
+            <footer class="review-card__who"><span class="review-card__avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg></span><cite>คุณ Nattapat · รีวิว 5 ดาว Google Maps</cite></footer>
+          </article>
+          <article class="review-card">
+            <span class="review-card__stars" aria-hidden="true">★★★★★</span>
+            <p>บรรยากาศดีมาก ธรรมชาติสวยงาม ที่นอนนอนสบาย เจ้าของที่พักน่ารัก ไว้จะกลับมาอีกแน่นอน</p>
+            <footer class="review-card__who"><span class="review-card__avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg></span><cite>คุณ Chaiyaphuek · รีวิว 5 ดาว Google Maps</cite></footer>
+          </article>
+          <article class="review-card">
+            <span class="review-card__stars" aria-hidden="true">★★★★★</span>
+            <p>ที่พักสวย สะอาด บรรยากาศดีมาก เหมาะแก่การมาพักผ่อนสุด ๆ</p>
+            <footer class="review-card__who"><span class="review-card__avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg></span><cite>คุณ Panomroong · รีวิว 5 ดาว Google Maps</cite></footer>
+          </article>
+          <article class="review-card">
+            <span class="review-card__stars" aria-hidden="true">★★★★★</span>
+            <p>ที่พักดีมาก เหมาะทั้งมากับครอบครัวและกลุ่มเพื่อน แนะนำเลยครับ</p>
+            <footer class="review-card__who"><span class="review-card__avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg></span><cite>คุณ Lanna boyss · รีวิว 5 ดาว Google Maps</cite></footer>
+          </article>
+        </div>
+        <div class="reviews__video">
+          <button class="video-facade" type="button" data-video-id="tlao0owwTec" aria-label="เล่นวิดีโอรีวิว Deepsleep456 จากช่องเชียงใหม่ม่วนเว่อร์">
+            <img src="images/bathroom/bathtub-outdoor-alt-thumb.webp?v=20260707" width="700" height="933" alt="วิดีโอรีวิวที่พัก Deepsleep456 โดยช่องเชียงใหม่ม่วนเว่อร์" loading="lazy">
+            <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+            <span class="video-facade__label" aria-hidden="true">▶ ชมคลิปรีวิวจากผู้มาเยือนจริง</span>
+          </button>
+          <p class="reviews__video-caption">โดยช่อง เชียงใหม่ม่วนเว่อร์ บน YouTube</p>
+        </div>
       </div>
-      <div class="reviews__video">
-        <button class="video-facade" type="button" data-video-id="tlao0owwTec" aria-label="เล่นวิดีโอรีวิว Deepsleep456 จากช่องเชียงใหม่ม่วนเว่อร์">
-          <img src="https://i.ytimg.com/vi/tlao0owwTec/oar2.jpg" width="1080" height="1920" alt="วิดีโอรีวิวที่พัก Deepsleep456 โดยช่องเชียงใหม่ม่วนเว่อร์" loading="lazy">
-          <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
-        </button>
-        <p class="reviews__video-caption">วิดีโอรีวิวจากผู้มาเยือนจริง — ช่อง เชียงใหม่ม่วนเว่อร์ บน YouTube</p>
-      </div>
-      <p class="reviews__note">สรุปความคิดเห็นโดยทีมงาน Deepsleep456 จากคะแนนรีวิวผู้เข้าพักจริง</p>
+      <p class="reviews__note">ข้อความเรียบเรียงจากรีวิวจริงของผู้เข้าพักบน Google Maps — กดดูรีวิวฉบับเต็มพร้อมรูปถ่ายจากผู้เข้าพักได้ที่ลิงก์ด้านบน</p>
     </div>
   </section>
 
