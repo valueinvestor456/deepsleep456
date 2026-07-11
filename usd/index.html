@@ -84,6 +84,7 @@
   }
   .chip:hover{background:var(--border);}
   .stamp{font-size:10px;color:var(--text-muted);margin-top:4px;}
+  .mom{font-size:12px;margin-top:3px;color:var(--text-secondary);}
   .cal-item{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px dashed var(--border);font-size:13px;}
   .cal-item:last-child{border-bottom:none;}
   .cal-when{color:var(--text-muted);font-size:11px;min-width:88px;}
@@ -190,26 +191,32 @@
     <div class="pmi-grid">
       <div class="pmi"><span class="flag">🇨🇳</span> <b>China</b> ×0.40
         <div class="row"><span class="label">PMI <span id="pmiCNcue"></span></span><input type="number" id="pmiCN" step="0.1" value="50.0"></div>
+        <div class="mom" id="pmiCNmom"></div>
         <div class="stamp" id="pmiCNstamp"></div>
         <div class="links"><a class="chip" href="https://tradingeconomics.com/china/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
       </div>
       <div class="pmi"><span class="flag">🇹🇭</span> <b>Thailand</b> ×0.35
         <div class="row"><span class="label">PMI <span id="pmiTHcue"></span></span><input type="number" id="pmiTH" step="0.1" value="50.0"></div>
+        <div class="mom" id="pmiTHmom"></div>
         <div class="stamp" id="pmiTHstamp"></div>
         <div class="links"><a class="chip" href="https://tradingeconomics.com/thailand/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
       </div>
       <div class="pmi"><span class="flag">🇮🇳</span> <b>India</b> ×0.15
         <div class="row"><span class="label">PMI <span id="pmiINcue"></span></span><input type="number" id="pmiIN" step="0.1" value="50.0"></div>
+        <div class="mom" id="pmiINmom"></div>
         <div class="stamp" id="pmiINstamp"></div>
         <div class="links"><a class="chip" href="https://tradingeconomics.com/india/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
       </div>
       <div class="pmi"><span class="flag">🇺🇸</span> <b>USA</b> ×(−0.10)
         <div class="row"><span class="label">PMI <span id="pmiUScue"></span></span><input type="number" id="pmiUS" step="0.1" value="50.0"></div>
+        <div class="mom" id="pmiUSmom"></div>
         <div class="stamp" id="pmiUSstamp"></div>
         <div class="links"><a class="chip" href="https://tradingeconomics.com/united-states/manufacturing-pmi" target="_blank" rel="noopener">ISM</a></div>
       </div>
     </div>
-    <div class="note">PMI &gt; 50 = ขยายตัว · จีน/ไทย/อินเดียแข็ง → THB แข็ง · สหรัฐแข็ง → Fed hawkish → USD แข็ง → THB อ่อน (น้ำหนักติดลบ)
+    <div class="note">สีตัวเลข = ระดับเทียบ 50 (เขียว&gt;50 ขยายตัว/แดง&lt;50 หดตัว) · ลูกศร+Δ ใต้ช่อง = MoM เทียบเดือนก่อน (คนละความหมายกัน อย่าสับสน)
+      · ยังไม่มี YoY (แหล่งข้อมูลที่ใช้ไม่ได้ให้ค่าปีก่อนมาด้วย ต้อง scrape เพิ่มถ้าต้องการ — บอกได้ถ้าอยากให้เพิ่ม)
+      · จีน/ไทย/อินเดียแข็ง → THB แข็ง · สหรัฐแข็ง → Fed hawkish → USD แข็ง → THB อ่อน (น้ำหนักติดลบ)
       · <span id="pmiDivOut">PMI divergence: —</span></div>
   </div>
 
@@ -277,7 +284,7 @@
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
-  var state = { spot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null };
+  var state = { spot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, pmiMom:{} };
 
   // ---- persistence -------------------------------------------------------
   var SAVED = ["spotOverride","dxyPctOv","xauPctOv","us10","th10","bdiLevel","bdiPct",
@@ -354,17 +361,29 @@
     var sPMI = clamp3(pmiDiv);
     $("pmiDivOut").textContent = "PMI divergence: " + fmt(pmiDiv, 2);
 
-    // visual cues: >50 green expansion, <50 red contraction
+    // input color = level vs 50 (expansion/contraction). Arrow + .mom line =
+    // actual month-over-month direction from the source — these are TWO
+    // DIFFERENT signals and must not be conflated (a PMI can be >50 yet
+    // falling MoM, which is exactly what China/India/USA are doing right now).
     [["pmiCN", cn], ["pmiTH", th], ["pmiIN", inn], ["pmiUS", us]].forEach(function(p){
-      var id = p[0], val = p[1], cue = $(id + "cue"), input = $(id);
+      var id = p[0], val = p[1], cue = $(id + "cue"), input = $(id), momEl = $(id + "mom");
       if (val === null || val === 50){
-        cue.textContent = ""; input.style.color = "";
+        input.style.color = ""; input.style.fontWeight = "";
       } else if (val > 50){
-        cue.textContent = "▲"; cue.className = "good";
         input.style.color = "var(--good)"; input.style.fontWeight = "700";
       } else {
-        cue.textContent = "▼"; cue.className = "bad";
         input.style.color = "var(--bad)"; input.style.fontWeight = "700";
+      }
+      var mom = state.pmiMom[id];
+      if (mom){
+        var up = mom.direction === "up";
+        cue.textContent = up ? "▲" : "▼";
+        cue.className = up ? "good" : "bad";
+        momEl.textContent = "MoM " + (mom.delta >= 0 ? "+" : "") + mom.delta.toFixed(1) +
+          " (" + mom.prev_month + " " + mom.prev.toFixed(1) + " → " + mom.cur_month + " " + val.toFixed(1) + ")";
+        momEl.style.color = up ? "var(--good)" : "var(--bad)";
+      } else {
+        cue.textContent = ""; momEl.textContent = "ยังไม่มีข้อมูล MoM";
       }
     });
 
@@ -523,10 +542,12 @@
         if (j.us10y) apply("us10", j.us10y.last);
         if (j.th10y) apply("th10", j.th10y.last);
         if (j.bdi) { apply("bdiLevel", j.bdi.last); apply("bdiPct", j.bdi.pct); }
-        if (j.pmi_cn) apply("pmiCN", j.pmi_cn.last);
-        if (j.pmi_th) apply("pmiTH", j.pmi_th.last);
-        if (j.pmi_in) apply("pmiIN", j.pmi_in.last);
-        if (j.pmi_us) apply("pmiUS", j.pmi_us.last);
+        [["pmi_cn","pmiCN"], ["pmi_th","pmiTH"], ["pmi_in","pmiIN"], ["pmi_us","pmiUS"]].forEach(function(p){
+          var src = j[p[0]], id = p[1];
+          if (!src) return;
+          apply(id, src.last);
+          state.pmiMom[id] = src.mom || null;
+        });
         if (j.bdry) {
           var arrow = j.bdry.pct >= 0 ? "🟢▲" : "🔴▼";
           $("bdryVal").textContent = "$" + j.bdry.last.toFixed(2) + "  " + arrow + " " + j.bdry.pct.toFixed(2) + "%";

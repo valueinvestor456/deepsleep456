@@ -51,6 +51,9 @@ SOURCES = {
 LEVEL_RE = re.compile(r"(?:to|at)\s+([\d,]+(?:\.\d+)?)\s*(?:%|percent|points|Index Points)", re.IGNORECASE)
 # "... up 1.17% from the previous day" / "... down 0.4% ..."
 CHANGE_RE = re.compile(r"\b(up|down)\s+([\d.]+)%", re.IGNORECASE)
+# monthly indicators (PMI/CPI): "... to 51.70 points in June from 51.80 points in May of 2026."
+MOM_RE = re.compile(r"in (\w+) from ([\d,]+(?:\.\d+)?)\s*(?:points|percent)?\s+in (\w+)", re.IGNORECASE)
+VERB_RE = re.compile(r"\b(increased|decreased|rose|fell|eased|climbed|dropped|edged up|edged down)\b", re.IGNORECASE)
 
 
 def scrape_meta(url: str) -> dict:
@@ -74,7 +77,22 @@ def scrape_meta(url: str) -> dict:
         sign = 1 if change_m.group(1).lower() == "up" else -1
         pct = sign * float(change_m.group(2))
 
-    return {"last": last, "pct": pct}
+    out = {"last": last, "pct": pct}
+
+    # month-over-month, when the source sentence has it (PMI/CPI-style pages)
+    mom_m = MOM_RE.search(desc)
+    verb_m = VERB_RE.search(desc)
+    if mom_m is not None:
+        prev = float(mom_m.group(2).replace(",", ""))
+        out["mom"] = {
+            "prev": prev,
+            "delta": round(last - prev, 4),
+            "cur_month": mom_m.group(1),
+            "prev_month": mom_m.group(3),
+            "direction": "up" if (verb_m and verb_m.group(1).lower() in
+                ("increased", "rose", "climbed", "edged up")) else "down",
+        }
+    return out
 
 
 def fetch_bdry() -> dict:
