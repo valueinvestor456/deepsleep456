@@ -19,9 +19,81 @@
 <meta property="og:image" content="images/og/og-image.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="images/logo.webp?v=20260707" type="image/webp">
-<link rel="preload" as="image" href="images/hero/hero-1-day-house.avif?v=1" type="image/avif" fetchpriority="high">
 <!-- Inlined from css/style.css to avoid a render-blocking request. Keep both in sync when editing styles. -->
 <style>
+/* thai 300 */
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/kanit-300-thai.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* latin 300 */
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/kanit-300-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* thai 500 */
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/kanit-500-thai.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* latin 500 */
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/kanit-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* thai 600 */
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/kanit-600-thai.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* latin 600 */
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/kanit-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* thai 700 */
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/kanit-700-thai.woff2') format('woff2');
+  unicode-range: U+02D7, U+0303, U+0331, U+0E01-0E5B, U+200C-200D, U+25CC;
+}
+/* latin 700 */
+@font-face {
+  font-family: 'Kanit';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/kanit-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 :root {
   --color-forest: #3F5B44;
   --color-forest-dark: #2C4232;
@@ -122,6 +194,8 @@ button { font-family: inherit; }
   position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 1.4s ease;
 }
 .hero__slide--active { opacity: 1; }
+.hero__slide picture { position: absolute; inset: 0; display: block; }
+.hero__img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
 .hero__overlay {
   position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(20,25,20,.35) 0%, rgba(20,25,20,.35) 40%, rgba(15,20,15,.85) 100%);
@@ -458,10 +532,6 @@ button { font-family: inherit; }
   .climate-compare__label { font-size: .85rem; padding: 10px 6px; }
 }
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;600;700&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;600;700&display=swap"></noscript>
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -549,7 +619,12 @@ button { font-family: inherit; }
 
   <section class="hero" id="hero" aria-label="Deepsleep456 ที่พักโป่งแยง ใกล้ม่อนแจ่ม">
     <div class="hero__slider" aria-hidden="true" data-hero-slider>
-      <div class="hero__slide hero__slide--active" style="background-image:url('images/hero/hero-1-day-house.webp');background-image:image-set(url('images/hero/hero-1-day-house.avif?v=1') type('image/avif'),url('images/hero/hero-1-day-house.webp') type('image/webp'));"></div>
+      <div class="hero__slide hero__slide--active">
+        <picture>
+          <source type="image/avif" srcset="images/hero/hero-1-day-house-828.avif 828w, images/hero/hero-1-day-house.avif?v=1 1280w" sizes="100vw">
+          <img class="hero__img" src="images/hero/hero-1-day-house.webp" srcset="images/hero/hero-1-day-house-828.webp 828w, images/hero/hero-1-day-house.webp 1280w" sizes="100vw" width="1280" height="854" alt="" fetchpriority="high" decoding="async">
+        </picture>
+      </div>
       <div class="hero__slide" data-bg="images/hero/hero-2-night-house.webp"></div>
       <div class="hero__slide" data-bg="images/hero/hero-3-drone-dusk.webp"></div>
       <div class="hero__slide" data-bg="images/hero/hero-4-day-topview.webp"></div>
@@ -998,6 +1073,6 @@ button { font-family: inherit; }
   </a>
 </div>
 
-<script src="js/main.js?v=20260707c"></script>
+<script src="js/main.js?v=20260708"></script>
 </body>
 </html>

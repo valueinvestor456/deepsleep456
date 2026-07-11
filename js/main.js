@@ -27,18 +27,23 @@
   // background so the browser doesn't fetch them eagerly and compete with
   // the LCP image; they're swapped in only after the page has settled.
   var slides = document.querySelectorAll("[data-hero-slider] .hero__slide");
-  window.addEventListener("load", function () {
-    slides.forEach(function (slide) {
-      var bg = slide.getAttribute("data-bg");
-      if (bg) slide.style.backgroundImage = "url('" + bg + "')";
-    });
-  });
+  function ensureSlideBg(slide) {
+    var bg = slide.getAttribute("data-bg");
+    if (bg && !slide.style.backgroundImage) slide.style.backgroundImage = "url('" + bg + "')";
+  }
   if (slides.length > 1) {
     var current = 0;
+    // Warm only the second slide shortly before the first rotation; every
+    // later slide is warmed one rotation ahead. Loading all of them at once
+    // used to pull ~550KB during page load and wreck LCP on slow networks.
+    setTimeout(function () { ensureSlideBg(slides[1]); }, 4000);
     setInterval(function () {
+      var next = (current + 1) % slides.length;
+      ensureSlideBg(slides[next]);
       slides[current].classList.remove("hero__slide--active");
-      current = (current + 1) % slides.length;
-      slides[current].classList.add("hero__slide--active");
+      slides[next].classList.add("hero__slide--active");
+      current = next;
+      ensureSlideBg(slides[(next + 1) % slides.length]);
     }, 5500);
   }
 
