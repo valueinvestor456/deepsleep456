@@ -3,231 +3,524 @@
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex, nofollow">
-<title>USD/THB Fair Value</title>
+<title>USD/THB Intermarket Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
     --surface-1:#fcfcfb; --page:#f9f9f7;
     --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
     --border:rgba(11,11,11,0.10); --cat-1:#2a78d6;
-    --good:#1a7f37; --bad:#c93838; --warn-bg:#fff8e1; --input-bg:#fffde7;
+    --good:#1a7f37; --bad:#c93838; --neutral:#8a8a86;
+    --warn-bg:#fff8e1; --input-bg:#fffde7;
+    --good-bg:rgba(26,127,55,0.10); --bad-bg:rgba(201,56,56,0.10);
   }
   @media (prefers-color-scheme: dark){
     :root{
       --surface-1:#1a1a19; --page:#0d0d0d;
       --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
       --border:rgba(255,255,255,0.10); --cat-1:#3987e5;
-      --good:#3fb950; --bad:#f85149; --warn-bg:#2a2410; --input-bg:#26240f;
+      --good:#3fb950; --bad:#f85149; --neutral:#9a9a95;
+      --warn-bg:#2a2410; --input-bg:#26240f;
+      --good-bg:rgba(63,185,80,0.12); --bad-bg:rgba(248,81,73,0.12);
     }
   }
   *{box-sizing:border-box;}
   body{
     margin:0; background:var(--page); color:var(--text-primary);
     font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-    padding:24px; line-height:1.5;
+    padding:20px; line-height:1.45;
   }
-  .wrap{max-width:680px;margin:0 auto;}
-  h1{font-size:20px;margin:0 0 4px;}
-  h2{font-size:15px;margin:0 0 10px;}
-  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 20px;}
+  .wrap{max-width:860px;margin:0 auto;}
+  h1{font-size:19px;margin:0 0 2px;}
+  h2{font-size:14px;margin:0 0 10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.4px;}
+  .subtitle{color:var(--text-secondary);font-size:13px;margin:0 0 16px;}
   .card{
     background:var(--surface-1); border:1px solid var(--border); border-radius:12px;
-    padding:16px; margin-bottom:14px;
+    padding:14px 16px; margin-bottom:12px;
   }
-  .spot-big{font-size:34px;font-weight:700;letter-spacing:-0.5px;}
-  .spot-meta{color:var(--text-muted);font-size:12px;margin-top:2px;}
-  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:14px;}
-  .row:last-child{border-bottom:none;}
-  .row .label{color:var(--text-secondary);}
-  .row .value{font-weight:600;font-variant-numeric:tabular-nums;}
-  input[type=number]{
-    width:110px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;
-    background:var(--input-bg);color:var(--text-primary);font-size:14px;text-align:right;
+  .header-card{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;}
+  .spot-big{font-size:32px;font-weight:700;letter-spacing:-0.5px;}
+  .spot-meta{color:var(--text-muted);font-size:11px;}
+  .score-big{font-size:28px;font-weight:800;}
+  .score-label{font-size:12px;color:var(--text-secondary);}
+  .verdict-text{font-size:13px;font-weight:600;}
+  .good{color:var(--good);} .bad{color:var(--bad);} .neutral{color:var(--neutral);}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:12px;}
+  .tile{
+    background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:12px;
+  }
+  .tile.pos{background:var(--good-bg);} .tile.neg{background:var(--bad-bg);}
+  .tile .name{font-size:12px;color:var(--text-secondary);font-weight:600;}
+  .tile .val{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;margin:2px 0;}
+  .tile .chg{font-size:13px;font-weight:600;}
+  .tile .contrib{font-size:11px;color:var(--text-muted);margin-top:4px;}
+  .tile input{width:80px;}
+  input[type=number], input[type=text]{
+    padding:4px 6px;border:1px solid var(--border);border-radius:6px;
+    background:var(--input-bg);color:var(--text-primary);font-size:13px;text-align:right;
     font-variant-numeric:tabular-nums;
   }
-  .verdict{font-weight:700;}
-  .verdict.rich{color:var(--bad);} .verdict.cheap{color:var(--good);} .verdict.fair{color:var(--text-secondary);}
-  .note{font-size:12px;color:var(--text-muted);margin-top:10px;}
+  input[type=text]{text-align:left;width:100%;}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 0;font-size:13px;}
+  .row .label{color:var(--text-secondary);}
+  .row .value{font-weight:600;font-variant-numeric:tabular-nums;}
+  .gauge{position:relative;height:14px;border-radius:7px;margin:8px 0 4px;
+    background:linear-gradient(90deg,var(--bad) 0%,var(--neutral) 50%,var(--good) 100%);opacity:0.9;}
+  .gauge .pin{position:absolute;top:-4px;width:4px;height:22px;background:var(--text-primary);border-radius:2px;}
+  .gauge-scale{display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);}
+  .bars .bar-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:2px 0;}
+  .bars .bar-name{width:64px;color:var(--text-secondary);}
+  .bars .bar-track{flex:1;height:10px;position:relative;}
+  .bars .bar-mid{position:absolute;left:50%;top:-2px;width:1px;height:14px;background:var(--border);}
+  .bars .bar-fill{position:absolute;top:0;height:10px;border-radius:3px;}
+  .bars .bar-val{width:52px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
+  .pmi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+  .pmi{border:1px solid var(--border);border-radius:10px;padding:10px;}
+  .pmi .flag{font-size:16px;}
+  .pmi .links{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{
+    font-size:11px;padding:2px 8px;border:1px solid var(--border);border-radius:999px;
+    color:var(--cat-1);text-decoration:none;
+  }
+  .chip:hover{background:var(--border);}
+  .stamp{font-size:10px;color:var(--text-muted);margin-top:4px;}
+  .cal-item{display:flex;gap:10px;align-items:baseline;padding:5px 0;border-bottom:1px dashed var(--border);font-size:13px;}
+  .cal-item:last-child{border-bottom:none;}
+  .cal-when{color:var(--text-muted);font-size:11px;min-width:88px;}
+  .cal-cty{font-weight:700;min-width:36px;}
+  .cal-impact-High{color:var(--bad);font-weight:600;}
+  .cal-impact-Medium{color:#c98a38;}
   .warnbox{
     background:var(--warn-bg);border:1px solid var(--border);border-radius:12px;
-    padding:12px 16px;font-size:13px;margin-bottom:14px;color:var(--text-secondary);
+    padding:10px 14px;font-size:12px;margin-bottom:12px;color:var(--text-secondary);
   }
   .warnbox b{color:var(--text-primary);}
   button{
     padding:6px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;
     background:var(--cat-1);color:#fff;font-size:13px;font-weight:600;
   }
-  .err{color:var(--bad);font-size:13px;}
-  footer{font-size:11px;color:var(--text-muted);margin-top:24px;}
+  details{margin-bottom:12px;}
+  details > summary{
+    cursor:pointer;font-size:14px;font-weight:600;padding:10px 16px;
+    background:var(--surface-1);border:1px solid var(--border);border-radius:12px;
+    list-style-position:inside;
+  }
+  details[open] > summary{border-radius:12px 12px 0 0;}
+  details .card{border-radius:0 0 12px 12px;margin-top:-1px;}
+  .note{font-size:11px;color:var(--text-muted);margin-top:8px;}
+  .err{color:var(--bad);font-size:12px;}
+  footer{font-size:11px;color:var(--text-muted);margin-top:20px;}
   a{color:var(--cat-1);}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>USD/THB Fair Value</h1>
-  <p class="subtitle">คำนวณราคายุติธรรมจาก spot แบบ realtime — เครื่องมือส่วนตัว ไม่ใช่คำแนะนำการลงทุน</p>
+  <h1>USD/THB Intermarket Dashboard</h1>
+  <p class="subtitle">Fair Value Bias จาก DXY · Gold · Yield Spread · BDI · PMI — เครื่องมือส่วนตัว ไม่ใช่คำแนะนำการลงทุน</p>
 
-  <div class="card">
-    <h2>Spot USD/THB (realtime)</h2>
-    <div class="spot-big" id="spot">—</div>
-    <div class="spot-meta" id="spotMeta">กำลังโหลด…</div>
-    <div class="err" id="spotErr" hidden>ดึงราคาอัตโนมัติไม่สำเร็จ — กรอกเองในช่องด้านล่าง</div>
-    <div class="row"><span class="label">แก้ spot เอง (ปล่อยว่าง = ใช้ค่า realtime)</span>
-      <input type="number" id="spotOverride" step="0.01" placeholder="auto"></div>
-  </div>
-
-  <div class="warnbox">
-    <b>ช่องสีเหลืองต้องอัปเดตเอง</b> — ดอกเบี้ย/CPI ไม่มี API ฟรีแบบ realtime:
-    ดอกเบี้ยไทยดูจาก <a href="https://www.bot.or.th" target="_blank" rel="noopener">BOT</a> (policy rate),
-    ดอกเบี้ยสหรัฐ (SOFR) และ CPI ดูจาก <a href="https://fred.stlouisfed.org" target="_blank" rel="noopener">FRED</a>
-    — ค่าที่ใส่ไว้เป็นตัวอย่างเก่า อย่าเชื่อจนกว่าจะอัปเดต (บันทึกอัตโนมัติในเครื่องคุณเมื่อแก้)
-  </div>
-
-  <div class="card">
-    <h2>1) CIP — ราคายุติธรรมของ TFEX USD Futures เทียบ spot</h2>
-    <div class="row"><span class="label">ดอกเบี้ยไทย %/ปี</span><input type="number" id="iTH" step="0.05" value="1.50"></div>
-    <div class="row"><span class="label">ดอกเบี้ยสหรัฐ (SOFR) %/ปี</span><input type="number" id="iUS" step="0.05" value="4.00"></div>
-    <div class="row"><span class="label">จำนวนวันถึง settlement</span><input type="number" id="days" step="1" value="90"></div>
-    <div class="row"><span class="label">ราคา futures จริงบน TFEX (ถ้ามี)</span><input type="number" id="fut" step="0.01" placeholder="เช่น 31.20"></div>
-    <div class="row"><span class="label">ราคา futures ยุติธรรม</span><span class="value" id="cipFair">—</span></div>
-    <div class="row"><span class="label">Basis (จริง − ยุติธรรม)</span><span class="value" id="cipBasis">—</span></div>
-    <div class="row"><span class="label">คำตัดสิน (เผื่อต้นทุน 3 สตางค์)</span><span class="value verdict" id="cipVerdict">—</span></div>
-    <div class="note">F = S × (1 + i<sub>TH</sub>·τ) / (1 + i<sub>US</sub>·τ), τ = วัน/365 — สมการเดียวในหน้านี้ที่ "แม่นจริง" เพราะถูกบังคับด้วย arbitrage</div>
-  </div>
-
-  <div class="card">
-    <h2>2) PPP — จุดยึดระยะยาวของ spot</h2>
-    <div class="row"><span class="label">Spot ปีฐาน (เช่น ค่าเฉลี่ยปี 2016)</span><input type="number" id="sBase" step="0.01" value="35.30"></div>
-    <div class="row"><span class="label">CPI ไทย ปีฐาน</span><input type="number" id="cpiTH0" step="0.1" value="100.0"></div>
-    <div class="row"><span class="label">CPI ไทย ปัจจุบัน</span><input type="number" id="cpiTH1" step="0.1" value="108.0"></div>
-    <div class="row"><span class="label">CPI สหรัฐ ปีฐาน</span><input type="number" id="cpiUS0" step="0.1" value="100.0"></div>
-    <div class="row"><span class="label">CPI สหรัฐ ปัจจุบัน</span><input type="number" id="cpiUS1" step="0.1" value="134.0"></div>
-    <div class="row"><span class="label">PPP fair price</span><span class="value" id="pppFair">—</span></div>
-    <div class="row"><span class="label">Spot เบี่ยงจาก PPP</span><span class="value" id="pppDev">—</span></div>
-    <div class="row"><span class="label">การอ่านค่า</span><span class="value verdict" id="pppVerdict">—</span></div>
-    <div class="note">ค่าเบี่ยง ±10% อยู่ได้เป็นปี — ใช้ดูทิศทางระยะยาว ห้ามใช้เป็นสัญญาณเข้าเทรด</div>
-  </div>
-
-  <div class="card">
-    <h2>ข้อจำกัดที่ต้องรู้</h2>
-    <div class="note" style="margin-top:0">
-      ไม่มีสมการไหนทำนายทิศทาง USD/THB รายวัน/รายสัปดาห์ได้ (งานวิจัย Meese–Rogoff และงานต่อยอด 40 ปี
-      ยืนยันว่าโมเดลเศรษฐศาสตร์แพ้ random walk ที่ horizon สั้น) — หน้านี้บอกได้แค่ว่า
-      (ก) futures แพง/ถูกเทียบ spot แบบ arbitrage-exact และ (ข) ระดับราคาปัจจุบันตึงแค่ไหนเทียบพื้นฐานระยะยาว
-      · spot จาก open.er-api.com (สำรอง: frankfurter.dev) เป็นเรต reference ไม่ใช่ราคาซื้อขายจริงของโบรกเกอร์
+  <div class="card header-card">
+    <div>
+      <div class="score-label">USD/THB Spot (realtime)</div>
+      <div class="spot-big" id="spot">—</div>
+      <div class="spot-meta" id="spotMeta">กำลังโหลด…</div>
+      <div class="row" style="margin-top:4px"><span class="label">แก้ spot เอง</span>
+        <input type="number" id="spotOverride" step="0.001" placeholder="auto"></div>
+    </div>
+    <div style="text-align:right">
+      <div class="score-label">THB Strength Score</div>
+      <div class="score-big" id="scoreBig">—</div>
+      <div class="verdict-text" id="scoreVerdict">—</div>
+      <div class="spot-meta" id="fairBias">FairBias 5d: —</div>
     </div>
   </div>
 
-  <div style="text-align:right"><button id="refresh">รีเฟรชราคา</button></div>
+  <div class="warnbox">
+    <b>ช่องสีเหลือง = กรอกเอง (จำค่าไว้ในเครื่อง)</b> — yields/BDI/PMI ไม่มี API ฟรี ·
+    DXY กับ Gold ดึงอัตโนมัติ · น้ำหนักสมการเป็น prior เชิงโครงสร้าง <b>ยังไม่ได้ fit กับข้อมูลจริง</b> —
+    ใช้เป็นเข็มทิศ bias ไม่ใช่ตัวทำนายที่พิสูจน์แล้ว
+  </div>
 
-  <footer>เครื่องมือส่วนตัว — คำนวณฝั่งเบราว์เซอร์ทั้งหมด ไม่มีการส่งข้อมูลออก · แก้ไขล่าสุด 2026-07-10</footer>
+  <div class="tiles">
+    <div class="tile" id="tileDXY">
+      <div class="name">DXY (synthetic จาก FX API)</div>
+      <div class="val" id="dxyVal">—</div>
+      <div class="chg" id="dxyChg">Δ —</div>
+      <div class="row"><span class="label">Δ% override</span><input type="number" id="dxyPctOv" step="0.01" placeholder="auto"></div>
+      <div class="contrib" id="dxyContrib">s=— · w=0.30</div>
+    </div>
+    <div class="tile" id="tileXAU">
+      <div class="name">Gold XAU/USD (auto)</div>
+      <div class="val" id="xauVal">—</div>
+      <div class="chg" id="xauChg">Δ —</div>
+      <div class="row"><span class="label">Δ% override</span><input type="number" id="xauPctOv" step="0.1" placeholder="auto"></div>
+      <div class="contrib" id="xauContrib">s=— · w=0.25</div>
+    </div>
+    <div class="tile" id="tileSPR">
+      <div class="name">US10Y − TH10Y (กรอกเอง)</div>
+      <div class="row"><span class="label">US10Y %</span><input type="number" id="us10" step="0.01" value="4.49"></div>
+      <div class="row"><span class="label">TH10Y %</span><input type="number" id="th10" step="0.01" value="2.08"></div>
+      <div class="chg" id="sprChg">Spread —</div>
+      <div class="contrib" id="sprContrib">s=— · w=0.20</div>
+      <div class="links"><a class="chip" href="https://tradingeconomics.com/united-states/government-bond-yield" target="_blank" rel="noopener">US10Y</a>
+      <a class="chip" href="https://tradingeconomics.com/thailand/government-bond-yield" target="_blank" rel="noopener">TH10Y</a></div>
+    </div>
+    <div class="tile" id="tileBDI">
+      <div class="name">Baltic Dry Index (กรอกเอง)</div>
+      <div class="row"><span class="label">BDI level</span><input type="number" id="bdiLevel" step="1" value="2670"></div>
+      <div class="row"><span class="label">Δ% วันนี้</span><input type="number" id="bdiPct" step="0.1" value="0.0"></div>
+      <div class="contrib" id="bdiContrib">s=— · w=0.10</div>
+      <div class="links"><a class="chip" href="https://tradingeconomics.com/commodity/baltic" target="_blank" rel="noopener">เช็ค BDI</a></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Score Breakdown</h2>
+    <div class="gauge"><div class="pin" id="gaugePin" style="left:50%"></div></div>
+    <div class="gauge-scale"><span>−100 (THB อ่อนแรง)</span><span>0</span><span>+100 (THB แข็งแรง)</span></div>
+    <div class="bars" id="contribBars" style="margin-top:10px"></div>
+    <div class="note">S = 100·tanh(Σ wᵢ·sᵢ) — บวก = บาทแข็ง = USD/THB มี bias ลง · แต่ละแท่ง = wᵢ·sᵢ (contribution)</div>
+  </div>
+
+  <div class="card">
+    <h2>PMI Tracker (คู่ค้าหลัก) — w=0.15</h2>
+    <div class="pmi-grid">
+      <div class="pmi"><span class="flag">🇨🇳</span> <b>China</b> ×0.40
+        <div class="row"><span class="label">PMI</span><input type="number" id="pmiCN" step="0.1" value="50.0"></div>
+        <div class="stamp" id="pmiCNstamp"></div>
+        <div class="links"><a class="chip" href="https://tradingeconomics.com/china/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
+      </div>
+      <div class="pmi"><span class="flag">🇹🇭</span> <b>Thailand</b> ×0.35
+        <div class="row"><span class="label">PMI</span><input type="number" id="pmiTH" step="0.1" value="50.0"></div>
+        <div class="stamp" id="pmiTHstamp"></div>
+        <div class="links"><a class="chip" href="https://tradingeconomics.com/thailand/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
+      </div>
+      <div class="pmi"><span class="flag">🇮🇳</span> <b>India</b> ×0.15
+        <div class="row"><span class="label">PMI</span><input type="number" id="pmiIN" step="0.1" value="50.0"></div>
+        <div class="stamp" id="pmiINstamp"></div>
+        <div class="links"><a class="chip" href="https://tradingeconomics.com/india/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
+      </div>
+      <div class="pmi"><span class="flag">🇺🇸</span> <b>USA</b> ×(−0.10)
+        <div class="row"><span class="label">PMI</span><input type="number" id="pmiUS" step="0.1" value="50.0"></div>
+        <div class="stamp" id="pmiUSstamp"></div>
+        <div class="links"><a class="chip" href="https://tradingeconomics.com/united-states/manufacturing-pmi" target="_blank" rel="noopener">ISM</a></div>
+      </div>
+    </div>
+    <div class="note">PMI &gt; 50 = ขยายตัว · จีน/ไทย/อินเดียแข็ง → THB แข็ง · สหรัฐแข็ง → Fed hawkish → USD แข็ง → THB อ่อน (น้ำหนักติดลบ)
+      · <span id="pmiDivOut">PMI divergence: —</span></div>
+  </div>
+
+  <div class="card">
+    <h2>📅 Macro Calendar (Forex Factory — USD/CNY, High+Medium)</h2>
+    <div id="calList"><span class="note">กำลังโหลดปฏิทิน…</span></div>
+    <div id="calFallback" hidden>
+      <div class="err">เบราว์เซอร์ถูกบล็อกไม่ให้ดึง feed ตรง (CORS) — เปิดดูเองที่
+        <a href="https://www.forexfactory.com/calendar" target="_blank" rel="noopener">forexfactory.com/calendar</a></div>
+      <div class="row" style="margin-top:6px"><span class="label">จดอีเวนต์สำคัญถัดไป (กันลืม)</span></div>
+      <input type="text" id="calNote" placeholder="เช่น ศุกร์ 19:30 US CPI m/m คาด 0.3%">
+    </div>
+  </div>
+
+  <details>
+    <summary>⚙️ น้ำหนักสมการ (แก้ได้ทั้งหมด)</summary>
+    <div class="card">
+      <div class="row"><span class="label">w DXY</span><input type="number" id="wDXY" step="0.05" value="0.30"></div>
+      <div class="row"><span class="label">w Gold</span><input type="number" id="wXAU" step="0.05" value="0.25"></div>
+      <div class="row"><span class="label">w Spread</span><input type="number" id="wSPR" step="0.05" value="0.20"></div>
+      <div class="row"><span class="label">w BDI</span><input type="number" id="wBDI" step="0.05" value="0.10"></div>
+      <div class="row"><span class="label">w PMI</span><input type="number" id="wPMI" step="0.05" value="0.15"></div>
+      <div class="row"><span class="label">Typical vol: DXY %/วัน</span><input type="number" id="vDXY" step="0.05" value="0.35"></div>
+      <div class="row"><span class="label">Typical vol: Gold %/วัน</span><input type="number" id="vXAU" step="0.1" value="1.0"></div>
+      <div class="row"><span class="label">Typical vol: BDI %/วัน</span><input type="number" id="vBDI" step="0.1" value="2.0"></div>
+      <div class="row"><span class="label">Spread จุดกลาง (%)</span><input type="number" id="sprNeutral" step="0.05" value="1.50"></div>
+      <div class="row"><span class="label">Spread สเกล (%)</span><input type="number" id="sprScale" step="0.05" value="0.75"></div>
+      <div class="row"><span class="label">k — FairBias sensitivity (% ต่อ |S|=100)</span><input type="number" id="kSens" step="0.05" value="0.30"></div>
+      <div class="note">ค่า default เป็น prior เชิงโครงสร้าง ยังไม่ได้ fit กับข้อมูลย้อนหลัง — ถ้าอยาก fit จริงใช้ shootout script ในโปรเจกต์ grid bot</div>
+    </div>
+  </details>
+
+  <details>
+    <summary>⚓ Valuation anchors — CIP (futures fair) + PPP (long-run)</summary>
+    <div class="card">
+      <h2>CIP — ราคายุติธรรม TFEX USD Futures</h2>
+      <div class="row"><span class="label">ดอกเบี้ยไทย %/ปี</span><input type="number" id="iTH" step="0.05" value="1.50"></div>
+      <div class="row"><span class="label">ดอกเบี้ยสหรัฐ (SOFR) %/ปี</span><input type="number" id="iUS" step="0.05" value="4.00"></div>
+      <div class="row"><span class="label">วันถึง settlement</span><input type="number" id="days" step="1" value="90"></div>
+      <div class="row"><span class="label">ราคา futures จริง (ถ้ามี)</span><input type="number" id="fut" step="0.01" placeholder="เช่น 32.50"></div>
+      <div class="row"><span class="label">Futures ยุติธรรม</span><span class="value" id="cipFair">—</span></div>
+      <div class="row"><span class="label">Basis</span><span class="value" id="cipBasis">—</span></div>
+      <div class="row"><span class="label">คำตัดสิน</span><span class="value verdict-text" id="cipVerdict">—</span></div>
+      <div class="note">F = S × (1+i_TH·τ)/(1+i_US·τ) — สมการเดียวในหน้านี้ที่แม่นจริง (arbitrage-enforced)</div>
+      <h2 style="margin-top:14px">PPP — จุดยึดระยะยาว</h2>
+      <div class="row"><span class="label">Spot ปีฐาน</span><input type="number" id="sBase" step="0.01" value="35.30"></div>
+      <div class="row"><span class="label">CPI ไทย ฐาน/ปัจจุบัน</span>
+        <span><input type="number" id="cpiTH0" step="0.1" value="100.0"> <input type="number" id="cpiTH1" step="0.1" value="108.0"></span></div>
+      <div class="row"><span class="label">CPI สหรัฐ ฐาน/ปัจจุบัน</span>
+        <span><input type="number" id="cpiUS0" step="0.1" value="100.0"> <input type="number" id="cpiUS1" step="0.1" value="134.0"></span></div>
+      <div class="row"><span class="label">PPP fair</span><span class="value" id="pppFair">—</span></div>
+      <div class="row"><span class="label">Spot เบี่ยงจาก PPP</span><span class="value" id="pppDev">—</span></div>
+    </div>
+  </details>
+
+  <div style="text-align:right;margin-top:4px"><button id="refresh">รีเฟรชข้อมูล</button></div>
+
+  <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · spot/DXY: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
+    · Δ% อัตโนมัติเทียบ snapshot การโหลดครั้งก่อน (ต่างวัน) · แก้ไขล่าสุด 2026-07-11</footer>
 </div>
 
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
-  var liveSpot = null;
+  var state = { spot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null };
 
-  var SAVED = ["iTH","iUS","days","fut","sBase","cpiTH0","cpiTH1","cpiUS0","cpiUS1","spotOverride"];
+  // ---- persistence -------------------------------------------------------
+  var SAVED = ["spotOverride","dxyPctOv","xauPctOv","us10","th10","bdiLevel","bdiPct",
+               "pmiCN","pmiTH","pmiIN","pmiUS",
+               "wDXY","wXAU","wSPR","wBDI","wPMI","vDXY","vXAU","vBDI","sprNeutral","sprScale","kSens",
+               "iTH","iUS","days","fut","sBase","cpiTH0","cpiTH1","cpiUS0","cpiUS1","calNote"];
+  var PMI_STAMPED = {pmiCN:"pmiCNstamp", pmiTH:"pmiTHstamp", pmiIN:"pmiINstamp", pmiUS:"pmiUSstamp"};
   SAVED.forEach(function(id){
     var v = localStorage.getItem("usdthb_" + id);
     if (v !== null && v !== "") $(id).value = v;
     $(id).addEventListener("input", function(){
       localStorage.setItem("usdthb_" + id, $(id).value);
+      if (PMI_STAMPED[id]) stampPMI(id, true);
       recalc();
     });
   });
+  function stampPMI(id, setNow){
+    var key = "usdthb_" + id + "_date";
+    if (setNow) localStorage.setItem(key, new Date().toISOString().slice(0,10));
+    var d = localStorage.getItem(key);
+    $(PMI_STAMPED[id]).textContent = d ? ("อัปเดต " + d) : "ยังไม่เคยอัปเดต";
+  }
+  Object.keys(PMI_STAMPED).forEach(function(id){ stampPMI(id, false); });
 
-  function spotInUse(){
-    var o = parseFloat($("spotOverride").value);
-    if (!isNaN(o) && o > 0) return o;
-    return liveSpot;
+  // ---- snapshot mechanism for auto Δ% (compare vs previous different-day fetch)
+  function snapshotDelta(key, current){
+    var today = new Date().toISOString().slice(0,10);
+    var last = null, prev = null;
+    try { last = JSON.parse(localStorage.getItem("usdthb_snap_" + key + "_last")); } catch(e){}
+    try { prev = JSON.parse(localStorage.getItem("usdthb_snap_" + key + "_prev")); } catch(e){}
+    if (last && last.date !== today){
+      prev = last;
+      localStorage.setItem("usdthb_snap_" + key + "_prev", JSON.stringify(prev));
+    }
+    localStorage.setItem("usdthb_snap_" + key + "_last", JSON.stringify({date: today, value: current}));
+    if (prev && prev.value > 0) return (current - prev.value) / prev.value * 100;
+    return null;
   }
 
-  function fmt(x, dp){ return (x === null || isNaN(x)) ? "—" : x.toFixed(dp === undefined ? 4 : dp); }
+  function num(id){ var v = parseFloat($(id).value); return isNaN(v) ? null : v; }
+  function fmt(x, dp){ return (x === null || x === undefined || isNaN(x)) ? "—" : x.toFixed(dp === undefined ? 2 : dp); }
+  function clamp3(x){ return Math.max(-3, Math.min(3, x)); }
 
+  function spotInUse(){
+    var o = num("spotOverride");
+    return (o && o > 0) ? o : state.spot;
+  }
+
+  // ---- the equation ------------------------------------------------------
   function recalc(){
     var S = spotInUse();
-    $("spot").textContent = fmt(S, 4);
+    $("spot").textContent = fmt(S, 3);
 
-    // CIP
-    var iTH = parseFloat($("iTH").value), iUS = parseFloat($("iUS").value), days = parseFloat($("days").value);
+    var dxyPct = num("dxyPctOv"); if (dxyPct === null) dxyPct = state.dxyPctAuto;
+    var xauPct = num("xauPctOv"); if (xauPct === null) xauPct = state.xauPctAuto;
+    var us10 = num("us10"), th10 = num("th10");
+    var spread = (us10 !== null && th10 !== null) ? us10 - th10 : null;
+    var bdiPct = num("bdiPct");
+
+    var vDXY = num("vDXY") || 0.35, vXAU = num("vXAU") || 1.0, vBDI = num("vBDI") || 2.0;
+    var sprN = num("sprNeutral"); if (sprN === null) sprN = 1.50;
+    var sprSc = num("sprScale") || 0.75;
+
+    var sDXY = dxyPct === null ? 0 : clamp3(-dxyPct / vDXY);
+    var sXAU = xauPct === null ? 0 : clamp3(+xauPct / vXAU);
+    var sSPR = spread === null ? 0 : clamp3(-(spread - sprN) / sprSc);
+    var sBDI = bdiPct === null ? 0 : clamp3(+bdiPct / vBDI);
+
+    var cn = num("pmiCN"), th = num("pmiTH"), inn = num("pmiIN"), us = num("pmiUS");
+    var pmiDiv = 0;
+    if (cn !== null && th !== null && inn !== null && us !== null){
+      pmiDiv = 0.40*(cn-50)/5 + 0.35*(th-50)/5 + 0.15*(inn-50)/5 - 0.10*(us-50)/5;
+    }
+    var sPMI = clamp3(pmiDiv);
+    $("pmiDivOut").textContent = "PMI divergence: " + fmt(pmiDiv, 2);
+
+    var w = {DXY:num("wDXY")||0, XAU:num("wXAU")||0, SPR:num("wSPR")||0, BDI:num("wBDI")||0, PMI:num("wPMI")||0};
+    var contribs = [
+      {name:"DXY", s:sDXY, w:w.DXY}, {name:"Gold", s:sXAU, w:w.XAU},
+      {name:"Spread", s:sSPR, w:w.SPR}, {name:"BDI", s:sBDI, w:w.BDI}, {name:"PMI", s:sPMI, w:w.PMI},
+    ];
+    var sum = 0;
+    contribs.forEach(function(c){ c.contrib = c.w * c.s; sum += c.contrib; });
+    var score = 100 * Math.tanh(sum);
+
+    // header
+    $("scoreBig").textContent = (score >= 0 ? "+" : "") + score.toFixed(0);
+    var sv = $("scoreVerdict");
+    if (score >= 30){ sv.textContent = "🟢 THB แข็งแรง — USD/THB bias ลง"; sv.className = "verdict-text good"; $("scoreBig").className = "score-big good"; }
+    else if (score <= -30){ sv.textContent = "🔴 THB อ่อนแรง — USD/THB bias ขึ้น"; sv.className = "verdict-text bad"; $("scoreBig").className = "score-big bad"; }
+    else { sv.textContent = "⚪ เป็นกลาง — สัญญาณไม่ชัด"; sv.className = "verdict-text neutral"; $("scoreBig").className = "score-big neutral"; }
+
+    var k = num("kSens"); if (k === null) k = 0.30;
+    if (S){
+      var fair = S * (1 - (score/100) * (k/100));
+      $("fairBias").textContent = "FairBias 5d: " + fair.toFixed(3) + " (k=" + k + "% ยังไม่ validate)";
+    } else { $("fairBias").textContent = "FairBias 5d: —"; }
+
+    // gauge + bars
+    $("gaugePin").style.left = ((score + 100) / 200 * 100) + "%";
+    var bars = "";
+    contribs.forEach(function(c){
+      var pct = Math.max(-1, Math.min(1, c.contrib / 1.0)); // 1.0 full-scale per bar
+      var left = pct < 0 ? (50 + pct*50) : 50, width = Math.abs(pct)*50;
+      var color = c.contrib >= 0 ? "var(--good)" : "var(--bad)";
+      bars += '<div class="bar-row"><div class="bar-name">' + c.name + '</div>' +
+        '<div class="bar-track"><div class="bar-mid"></div>' +
+        '<div class="bar-fill" style="left:' + left + '%;width:' + width + '%;background:' + color + '"></div></div>' +
+        '<div class="bar-val">' + (c.contrib >= 0 ? "+" : "") + c.contrib.toFixed(2) + '</div></div>';
+    });
+    $("contribBars").innerHTML = bars;
+
+    // tiles
+    updateTile("tileDXY", "dxyChg", "dxyContrib", dxyPct, sDXY, w.DXY, "%");
+    updateTile("tileXAU", "xauChg", "xauContrib", xauPct, sXAU, w.XAU, "%");
+    $("dxyVal").textContent = fmt(state.dxy, 3);
+    $("xauVal").textContent = state.xau ? "$" + state.xau.toFixed(2) : "—";
+    $("sprChg").textContent = spread === null ? "Spread —" : "Spread " + (spread >= 0 ? "+" : "") + spread.toFixed(2) + "%";
+    $("sprContrib").textContent = "s=" + fmt(sSPR) + " · w=" + w.SPR + " · contrib=" + fmt(sSPR*w.SPR);
+    paintTile("tileSPR", sSPR*w.SPR);
+    $("bdiContrib").textContent = "s=" + fmt(sBDI) + " · w=" + w.BDI + " · contrib=" + fmt(sBDI*w.BDI);
+    paintTile("tileBDI", sBDI*w.BDI);
+
+    recalcAnchors(S);
+  }
+
+  function updateTile(tileId, chgId, contribId, pct, s, w, unit){
+    $(chgId).textContent = pct === null ? "Δ รอ snapshot วันก่อน / กรอก override" :
+      "Δ " + (pct >= 0 ? "+" : "") + pct.toFixed(2) + unit;
+    $(chgId).className = "chg " + (pct === null ? "neutral" : (pct >= 0 ? "good" : "bad"));
+    $(contribId).textContent = "s=" + fmt(s) + " · w=" + w + " · contrib=" + fmt(s*w);
+    paintTile(tileId, s*w);
+  }
+  function paintTile(id, contrib){
+    $(id).className = "tile" + (contrib > 0.02 ? " pos" : (contrib < -0.02 ? " neg" : ""));
+  }
+
+  // ---- CIP / PPP anchors (unchanged math from v1) -------------------------
+  function recalcAnchors(S){
+    var iTH = num("iTH"), iUS = num("iUS"), days = num("days");
     var cipFair = null;
-    if (S && !isNaN(iTH) && !isNaN(iUS) && days > 0){
+    if (S && iTH !== null && iUS !== null && days > 0){
       var t = days / 365;
       cipFair = S * (1 + iTH/100*t) / (1 + iUS/100*t);
     }
-    $("cipFair").textContent = fmt(cipFair);
-    var fut = parseFloat($("fut").value);
-    var v = $("cipVerdict");
-    if (cipFair && !isNaN(fut) && fut > 0){
+    $("cipFair").textContent = fmt(cipFair, 4);
+    var fut = num("fut"), v = $("cipVerdict");
+    if (cipFair && fut && fut > 0){
       var basis = fut - cipFair;
       $("cipBasis").textContent = (basis >= 0 ? "+" : "") + basis.toFixed(4) + " THB (" + (basis/0.01).toFixed(1) + " ticks)";
-      var allow = 0.03;
-      if (basis > allow){ v.textContent = "RICH — futures แพงกว่ายุติธรรม"; v.className = "value verdict rich"; }
-      else if (basis < -allow){ v.textContent = "CHEAP — futures ถูกกว่ายุติธรรม"; v.className = "value verdict cheap"; }
-      else { v.textContent = "FAIR — อยู่ในกรอบต้นทุน"; v.className = "value verdict fair"; }
-    } else {
-      $("cipBasis").textContent = "—";
-      v.textContent = "ใส่ราคา futures เพื่อเทียบ"; v.className = "value verdict fair";
-    }
+      if (basis > 0.03){ v.textContent = "RICH — futures แพงกว่ายุติธรรม"; v.className = "value verdict-text bad"; }
+      else if (basis < -0.03){ v.textContent = "CHEAP — futures ถูกกว่ายุติธรรม"; v.className = "value verdict-text good"; }
+      else { v.textContent = "FAIR — อยู่ในกรอบต้นทุน"; v.className = "value verdict-text neutral"; }
+    } else { $("cipBasis").textContent = "—"; v.textContent = "ใส่ราคา futures เพื่อเทียบ"; v.className = "value verdict-text neutral"; }
 
-    // PPP
-    var sB = parseFloat($("sBase").value),
-        t0 = parseFloat($("cpiTH0").value), t1 = parseFloat($("cpiTH1").value),
-        u0 = parseFloat($("cpiUS0").value), u1 = parseFloat($("cpiUS1").value);
-    var pppFair = null;
-    if (sB > 0 && t0 > 0 && t1 > 0 && u0 > 0 && u1 > 0){
-      pppFair = sB * (t1/t0) / (u1/u0);
-    }
-    $("pppFair").textContent = fmt(pppFair);
-    var pv = $("pppVerdict");
-    if (pppFair && S){
-      var dev = (S/pppFair - 1) * 100;
-      $("pppDev").textContent = (dev >= 0 ? "+" : "") + dev.toFixed(2) + "%";
-      if (dev > 10){ pv.textContent = "USD แพงกว่า PPP >10% (บาทถูก)"; pv.className = "value verdict rich"; }
-      else if (dev < -10){ pv.textContent = "USD ถูกกว่า PPP >10% (บาทแพง)"; pv.className = "value verdict cheap"; }
-      else { pv.textContent = "อยู่ในกรอบ ±10% ที่ PPP แยกไม่ออก"; pv.className = "value verdict fair"; }
-    } else {
-      $("pppDev").textContent = "—"; pv.textContent = "—"; pv.className = "value verdict fair";
-    }
+    var sB = num("sBase"), t0 = num("cpiTH0"), t1 = num("cpiTH1"), u0 = num("cpiUS0"), u1 = num("cpiUS1");
+    var pppFair = (sB > 0 && t0 > 0 && t1 > 0 && u0 > 0 && u1 > 0) ? sB * (t1/t0) / (u1/u0) : null;
+    $("pppFair").textContent = fmt(pppFair, 4);
+    $("pppDev").textContent = (pppFair && S) ? ((S/pppFair-1)*100).toFixed(2) + "%" : "—";
   }
 
-  function setMeta(text){ $("spotMeta").textContent = text; }
+  // ---- data fetching ------------------------------------------------------
+  var DXY_W = {EUR:-0.576, JPY:0.136, GBP:-0.119, CAD:0.091, SEK:0.042, CHF:0.036};
+  function syntheticDXY(rates){
+    // ICE formula: 50.14348112 × EURUSD^-0.576 × USDJPY^0.136 × GBPUSD^-0.119 × USDCAD^0.091 × USDSEK^0.042 × USDCHF^0.036
+    // er-api gives USD->CCY (i.e. USDCCY); EURUSD = 1/USDEUR, GBPUSD = 1/USDGBP.
+    var eurusd = 1/rates.EUR, gbpusd = 1/rates.GBP;
+    return 50.14348112 * Math.pow(eurusd, -0.576) * Math.pow(rates.JPY, 0.136) *
+           Math.pow(gbpusd, -0.119) * Math.pow(rates.CAD, 0.091) *
+           Math.pow(rates.SEK, 0.042) * Math.pow(rates.CHF, 0.036);
+  }
 
-  function fetchSpot(){
-    setMeta("กำลังโหลด…");
-    $("spotErr").hidden = true;
+  function fetchAll(){
+    $("spotMeta").textContent = "กำลังโหลด…";
     fetch("https://open.er-api.com/v6/latest/USD")
       .then(function(r){ return r.json(); })
       .then(function(j){
         if (j && j.rates && j.rates.THB){
-          liveSpot = j.rates.THB;
-          setMeta("ที่มา: open.er-api.com · อัปเดต " + (j.time_last_update_utc || ""));
-          recalc();
-        } else { throw new Error("no THB"); }
+          state.spot = j.rates.THB;
+          state.dxy = syntheticDXY(j.rates);
+          state.dxyPctAuto = snapshotDelta("dxy", state.dxy);
+          snapshotDelta("spot", state.spot);
+          $("spotMeta").textContent = "open.er-api.com · " + (j.time_last_update_utc || "");
+        }
+        recalc();
       })
       .catch(function(){
         fetch("https://api.frankfurter.dev/v1/latest?base=USD&symbols=THB")
           .then(function(r){ return r.json(); })
           .then(function(j){
             if (j && j.rates && j.rates.THB){
-              liveSpot = j.rates.THB;
-              setMeta("ที่มา: frankfurter.app (เรต ECB รายวัน) · " + (j.date || ""));
-              recalc();
-            } else { throw new Error("no THB"); }
-          })
-          .catch(function(){
-            liveSpot = null;
-            setMeta("");
-            $("spotErr").hidden = false;
+              state.spot = j.rates.THB;
+              $("spotMeta").textContent = "frankfurter.dev (ECB) · " + (j.date || "") + " · DXY ใช้ไม่ได้จาก fallback นี้";
+            }
             recalc();
-          });
+          })
+          .catch(function(){ $("spotMeta").textContent = "ดึง spot ไม่สำเร็จ — กรอกเอง"; recalc(); });
+      });
+
+    fetch("https://api.gold-api.com/price/XAU")
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        if (j && j.price){
+          state.xau = j.price;
+          state.xauPctAuto = snapshotDelta("xau", state.xau);
+        }
+        recalc();
+      })
+      .catch(function(){ recalc(); });
+
+    fetchCalendar();
+  }
+
+  function fetchCalendar(){
+    fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json")
+      .then(function(r){ return r.json(); })
+      .then(function(events){
+        var now = new Date();
+        var wanted = events.filter(function(e){
+          return (e.country === "USD" || e.country === "CNY") &&
+                 (e.impact === "High" || e.impact === "Medium") &&
+                 new Date(e.date) >= now;
+        }).slice(0, 6);
+        if (!wanted.length){
+          $("calList").innerHTML = '<span class="note">ไม่มีอีเวนต์ USD/CNY (High/Med) เหลือในสัปดาห์นี้</span>';
+          return;
+        }
+        var html = "";
+        wanted.forEach(function(e){
+          var d = new Date(e.date);
+          var when = d.toLocaleDateString("th-TH", {weekday:"short"}) + " " +
+                     d.toLocaleTimeString("th-TH", {hour:"2-digit", minute:"2-digit"});
+          html += '<div class="cal-item"><span class="cal-when">' + when + '</span>' +
+                  '<span class="cal-cty">' + e.country + '</span>' +
+                  '<span class="cal-impact-' + e.impact + '">●</span> ' +
+                  '<span>' + e.title +
+                  (e.forecast ? ' <span class="note">คาด ' + e.forecast + '</span>' : '') +
+                  (e.previous ? ' <span class="note">ก่อนหน้า ' + e.previous + '</span>' : '') +
+                  '</span></div>';
+        });
+        $("calList").innerHTML = html;
+      })
+      .catch(function(){
+        $("calList").innerHTML = "";
+        $("calFallback").hidden = false;
       });
   }
 
-  $("refresh").addEventListener("click", fetchSpot);
-  fetchSpot();
+  $("refresh").addEventListener("click", fetchAll);
+  fetchAll();
 })();
 </script>
 </body>
