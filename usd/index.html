@@ -54,7 +54,6 @@
   .tile .val{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;margin:2px 0;}
   .tile .chg{font-size:13px;font-weight:600;}
   .tile .contrib{font-size:11px;color:var(--text-muted);margin-top:4px;}
-  .tile input{width:80px;}
   input[type=number], input[type=text]{
     padding:4px 6px;border:1px solid var(--border);border-radius:6px;
     background:var(--input-bg);color:var(--text-primary);font-size:13px;text-align:right;
@@ -76,6 +75,7 @@
   .bars .bar-val{width:52px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600;}
   .pmi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
   .pmi{border:1px solid var(--border);border-radius:10px;padding:10px;}
+  .pmi input, .tile input{width:70px;}
   .pmi .flag{font-size:16px;}
   .pmi .links{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;}
   .chip{
@@ -156,19 +156,21 @@
       <div class="contrib" id="xauContrib">s=— · w=0.25</div>
     </div>
     <div class="tile" id="tileSPR">
-      <div class="name">US10Y − TH10Y (กรอกเอง)</div>
+      <div class="name">US10Y − TH10Y (auto)</div>
       <div class="row"><span class="label">US10Y %</span><input type="number" id="us10" step="0.01" value="4.49"></div>
       <div class="row"><span class="label">TH10Y %</span><input type="number" id="th10" step="0.01" value="2.08"></div>
       <div class="chg" id="sprChg">Spread —</div>
       <div class="contrib" id="sprContrib">s=— · w=0.20</div>
+      <div class="stamp" id="sprStamp"></div>
       <div class="links"><a class="chip" href="https://tradingeconomics.com/united-states/government-bond-yield" target="_blank" rel="noopener">US10Y</a>
       <a class="chip" href="https://tradingeconomics.com/thailand/government-bond-yield" target="_blank" rel="noopener">TH10Y</a></div>
     </div>
     <div class="tile" id="tileBDI">
-      <div class="name">Baltic Dry Index (กรอกเอง)</div>
+      <div class="name">Baltic Dry Index (auto)</div>
       <div class="row"><span class="label">BDI level</span><input type="number" id="bdiLevel" step="1" value="2670"></div>
       <div class="row"><span class="label">Δ% วันนี้</span><input type="number" id="bdiPct" step="0.1" value="0.0"></div>
       <div class="contrib" id="bdiContrib">s=— · w=0.10</div>
+      <div class="stamp" id="bdiStamp"></div>
       <div class="links"><a class="chip" href="https://tradingeconomics.com/commodity/baltic" target="_blank" rel="noopener">เช็ค BDI</a></div>
     </div>
   </div>
@@ -498,7 +500,45 @@
       })
       .catch(function(){ recalc(); });
 
+    fetchMarketData();
     fetchCalendar();
+  }
+
+  // US10Y/TH10Y/BDI/PMI: TradingEconomics has no CORS header, so these come
+  // from a same-origin relay (market-data.json) refreshed hourly by a GitHub
+  // Action — see .github/workflows/market-data.yml. Auto-fills every load;
+  // still editable by hand for a quick what-if (next refresh overwrites it).
+  function fetchMarketData(){
+    fetch("market-data.json", {cache: "no-cache"})
+      .then(function(r){ if (!r.ok) throw new Error("no relay"); return r.json(); })
+      .then(function(j){
+        var when = j.updated ? new Date(j.updated).toLocaleString("th-TH") : "";
+        function apply(fieldId, value){
+          if (value === null || value === undefined) return;
+          $(fieldId).value = value;
+          localStorage.setItem("usdthb_" + fieldId, String(value));
+        }
+        if (j.us10y) apply("us10", j.us10y.last);
+        if (j.th10y) apply("th10", j.th10y.last);
+        if (j.bdi) { apply("bdiLevel", j.bdi.last); apply("bdiPct", j.bdi.pct); }
+        if (j.pmi_cn) apply("pmiCN", j.pmi_cn.last);
+        if (j.pmi_th) apply("pmiTH", j.pmi_th.last);
+        if (j.pmi_in) apply("pmiIN", j.pmi_in.last);
+        if (j.pmi_us) apply("pmiUS", j.pmi_us.last);
+
+        var stampTxt = "auto จาก TradingEconomics · " + when;
+        $("sprStamp").textContent = stampTxt;
+        $("bdiStamp").textContent = stampTxt;
+        ["pmiCN","pmiTH","pmiIN","pmiUS"].forEach(function(id){
+          localStorage.setItem("usdthb_" + id + "_date", (j.updated || "").slice(0, 10));
+          stampPMI(id, false);
+        });
+        recalc();
+      })
+      .catch(function(){
+        $("sprStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
+        $("bdiStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
+      });
   }
 
   function renderCalendar(events, updatedStamp){
