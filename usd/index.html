@@ -223,9 +223,9 @@
   <details>
     <summary>⚙️ น้ำหนักสมการ (แก้ได้ทั้งหมด)</summary>
     <div class="card">
-      <div class="row"><span class="label">w DXY</span><input type="number" id="wDXY" step="0.05" value="0.30"></div>
-      <div class="row"><span class="label">w Gold</span><input type="number" id="wXAU" step="0.05" value="0.25"></div>
-      <div class="row"><span class="label">w Spread</span><input type="number" id="wSPR" step="0.05" value="0.20"></div>
+      <div class="row"><span class="label">w DXY</span><input type="number" id="wDXY" step="0.05" value="0.60"></div>
+      <div class="row"><span class="label">w Gold</span><input type="number" id="wXAU" step="0.05" value="0.17"></div>
+      <div class="row"><span class="label">w Spread</span><input type="number" id="wSPR" step="0.05" value="0.22"></div>
       <div class="row"><span class="label">w BDI</span><input type="number" id="wBDI" step="0.05" value="0.10"></div>
       <div class="row"><span class="label">w PMI</span><input type="number" id="wPMI" step="0.05" value="0.15"></div>
       <div class="row"><span class="label">Typical vol: DXY %/วัน</span><input type="number" id="vDXY" step="0.05" value="0.35"></div>
@@ -233,8 +233,11 @@
       <div class="row"><span class="label">Typical vol: BDI %/วัน</span><input type="number" id="vBDI" step="0.1" value="2.0"></div>
       <div class="row"><span class="label">Spread จุดกลาง (%)</span><input type="number" id="sprNeutral" step="0.05" value="1.50"></div>
       <div class="row"><span class="label">Spread สเกล (%)</span><input type="number" id="sprScale" step="0.05" value="0.75"></div>
-      <div class="row"><span class="label">k — FairBias sensitivity (% ต่อ |S|=100)</span><input type="number" id="kSens" step="0.05" value="0.30"></div>
-      <div class="note">ค่า default เป็น prior เชิงโครงสร้าง ยังไม่ได้ fit กับข้อมูลย้อนหลัง — ถ้าอยาก fit จริงใช้ shootout script ในโปรเจกต์ grid bot</div>
+      <div class="row"><span class="label">k — FairBias sensitivity (% ต่อ |S|=100)</span><input type="number" id="kSens" step="0.05" value="0.09"></div>
+      <div class="note">w DXY/Gold/Spread และ k คือค่าที่ fit ด้วย walk-forward OLS จากข้อมูลจริง 10 ปี (2016-2025, out-of-sample)
+        — นัยสำคัญเฉพาะ horizon 1 วัน (ทายทิศถูก 53.1%, p=0.008) ที่ 5/21 วันไม่เหลือสัญญาณ (~50% = เดาสุ่ม)
+        ถือเป็น edge บางมาก ไม่ใช่ตัวทำนายที่แม่นยำ · w BDI/PMI ยังเป็น prior เพราะไม่มีข้อมูลย้อนหลังฟรีให้ทดสอบ
+        · รายละเอียด/รันซ้ำได้ที่ scripts/fit_dashboard_weights.py ในโปรเจกต์ grid bot</div>
     </div>
   </details>
 
