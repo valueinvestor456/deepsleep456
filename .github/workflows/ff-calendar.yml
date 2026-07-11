@@ -1,0 +1,38 @@
+name: Refresh Forex Factory calendar
+
+# Relays the FF weekly calendar feed into usd/calendar.json so the dashboard
+# can fetch it same-origin (the upstream feed sends no CORS headers).
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # every 6 hours (offset to avoid top-of-hour load spikes)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch feed and wrap with timestamp
+        run: |
+          curl -sf --max-time 30 "https://nfs.faireconomy.media/ff_calendar_thisweek.json" -o /tmp/feed.json
+          # fail loudly if the feed isn't a JSON array with events
+          jq -e 'type == "array" and length > 0' /tmp/feed.json > /dev/null
+          jq -n --arg updated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+                --slurpfile events /tmp/feed.json \
+                '{updated: $updated, events: $events[0]}' > usd/calendar.json
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- usd/calendar.json; then
+            echo "calendar.json unchanged, skipping commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add usd/calendar.json
+          git commit -m "Refresh FF calendar feed [skip ci]"
+          git push

@@ -185,22 +185,22 @@
     <h2>PMI Tracker (คู่ค้าหลัก) — w=0.15</h2>
     <div class="pmi-grid">
       <div class="pmi"><span class="flag">🇨🇳</span> <b>China</b> ×0.40
-        <div class="row"><span class="label">PMI</span><input type="number" id="pmiCN" step="0.1" value="50.0"></div>
+        <div class="row"><span class="label">PMI <span id="pmiCNcue"></span></span><input type="number" id="pmiCN" step="0.1" value="50.0"></div>
         <div class="stamp" id="pmiCNstamp"></div>
         <div class="links"><a class="chip" href="https://tradingeconomics.com/china/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
       </div>
       <div class="pmi"><span class="flag">🇹🇭</span> <b>Thailand</b> ×0.35
-        <div class="row"><span class="label">PMI</span><input type="number" id="pmiTH" step="0.1" value="50.0"></div>
+        <div class="row"><span class="label">PMI <span id="pmiTHcue"></span></span><input type="number" id="pmiTH" step="0.1" value="50.0"></div>
         <div class="stamp" id="pmiTHstamp"></div>
         <div class="links"><a class="chip" href="https://tradingeconomics.com/thailand/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
       </div>
       <div class="pmi"><span class="flag">🇮🇳</span> <b>India</b> ×0.15
-        <div class="row"><span class="label">PMI</span><input type="number" id="pmiIN" step="0.1" value="50.0"></div>
+        <div class="row"><span class="label">PMI <span id="pmiINcue"></span></span><input type="number" id="pmiIN" step="0.1" value="50.0"></div>
         <div class="stamp" id="pmiINstamp"></div>
         <div class="links"><a class="chip" href="https://tradingeconomics.com/india/manufacturing-pmi" target="_blank" rel="noopener">เช็ค</a></div>
       </div>
       <div class="pmi"><span class="flag">🇺🇸</span> <b>USA</b> ×(−0.10)
-        <div class="row"><span class="label">PMI</span><input type="number" id="pmiUS" step="0.1" value="50.0"></div>
+        <div class="row"><span class="label">PMI <span id="pmiUScue"></span></span><input type="number" id="pmiUS" step="0.1" value="50.0"></div>
         <div class="stamp" id="pmiUSstamp"></div>
         <div class="links"><a class="chip" href="https://tradingeconomics.com/united-states/manufacturing-pmi" target="_blank" rel="noopener">ISM</a></div>
       </div>
@@ -347,6 +347,20 @@
     var sPMI = clamp3(pmiDiv);
     $("pmiDivOut").textContent = "PMI divergence: " + fmt(pmiDiv, 2);
 
+    // visual cues: >50 green expansion, <50 red contraction
+    [["pmiCN", cn], ["pmiTH", th], ["pmiIN", inn], ["pmiUS", us]].forEach(function(p){
+      var id = p[0], val = p[1], cue = $(id + "cue"), input = $(id);
+      if (val === null || val === 50){
+        cue.textContent = ""; input.style.color = "";
+      } else if (val > 50){
+        cue.textContent = "▲"; cue.className = "good";
+        input.style.color = "var(--good)"; input.style.fontWeight = "700";
+      } else {
+        cue.textContent = "▼"; cue.className = "bad";
+        input.style.color = "var(--bad)"; input.style.fontWeight = "700";
+      }
+    });
+
     var w = {DXY:num("wDXY")||0, XAU:num("wXAU")||0, SPR:num("wSPR")||0, BDI:num("wBDI")||0, PMI:num("wPMI")||0};
     var contribs = [
       {name:"DXY", s:sDXY, w:w.DXY}, {name:"Gold", s:sXAU, w:w.XAU},
@@ -484,38 +498,50 @@
     fetchCalendar();
   }
 
+  function renderCalendar(events, updatedStamp){
+    var now = new Date();
+    var wanted = events.filter(function(e){
+      return (e.country === "USD" || e.country === "CNY") &&
+             (e.impact === "High" || e.impact === "Medium") &&
+             new Date(e.date) >= now;
+    }).slice(0, 6);
+    var stamp = updatedStamp ?
+      '<div class="note">ปฏิทินอัปเดตเมื่อ ' + new Date(updatedStamp).toLocaleString("th-TH") + ' (refresh อัตโนมัติทุก 6 ชม.)</div>' : "";
+    if (!wanted.length){
+      $("calList").innerHTML = '<span class="note">ไม่มีอีเวนต์ USD/CNY (High/Med) เหลือในสัปดาห์นี้</span>' + stamp;
+      return;
+    }
+    var html = "";
+    wanted.forEach(function(e){
+      var d = new Date(e.date);
+      var when = d.toLocaleDateString("th-TH", {weekday:"short"}) + " " +
+                 d.toLocaleTimeString("th-TH", {hour:"2-digit", minute:"2-digit"});
+      html += '<div class="cal-item"><span class="cal-when">' + when + '</span>' +
+              '<span class="cal-cty">' + e.country + '</span>' +
+              '<span class="cal-impact-' + e.impact + '">●</span> ' +
+              '<span>' + e.title +
+              (e.forecast ? ' <span class="note">คาด ' + e.forecast + '</span>' : '') +
+              (e.previous ? ' <span class="note">ก่อนหน้า ' + e.previous + '</span>' : '') +
+              '</span></div>';
+    });
+    $("calList").innerHTML = html + stamp;
+  }
+
   function fetchCalendar(){
-    fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json")
-      .then(function(r){ return r.json(); })
-      .then(function(events){
-        var now = new Date();
-        var wanted = events.filter(function(e){
-          return (e.country === "USD" || e.country === "CNY") &&
-                 (e.impact === "High" || e.impact === "Medium") &&
-                 new Date(e.date) >= now;
-        }).slice(0, 6);
-        if (!wanted.length){
-          $("calList").innerHTML = '<span class="note">ไม่มีอีเวนต์ USD/CNY (High/Med) เหลือในสัปดาห์นี้</span>';
-          return;
-        }
-        var html = "";
-        wanted.forEach(function(e){
-          var d = new Date(e.date);
-          var when = d.toLocaleDateString("th-TH", {weekday:"short"}) + " " +
-                     d.toLocaleTimeString("th-TH", {hour:"2-digit", minute:"2-digit"});
-          html += '<div class="cal-item"><span class="cal-when">' + when + '</span>' +
-                  '<span class="cal-cty">' + e.country + '</span>' +
-                  '<span class="cal-impact-' + e.impact + '">●</span> ' +
-                  '<span>' + e.title +
-                  (e.forecast ? ' <span class="note">คาด ' + e.forecast + '</span>' : '') +
-                  (e.previous ? ' <span class="note">ก่อนหน้า ' + e.previous + '</span>' : '') +
-                  '</span></div>';
-        });
-        $("calList").innerHTML = html;
-      })
+    // tier 1: same-origin relay (refreshed by GitHub Action every 6h — no CORS issue)
+    fetch("calendar.json", {cache: "no-cache"})
+      .then(function(r){ if (!r.ok) throw new Error("no relay"); return r.json(); })
+      .then(function(j){ renderCalendar(j.events, j.updated); })
       .catch(function(){
-        $("calList").innerHTML = "";
-        $("calFallback").hidden = false;
+        // tier 2: direct feed (works only if upstream ever adds CORS)
+        fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json")
+          .then(function(r){ return r.json(); })
+          .then(function(events){ renderCalendar(events, null); })
+          .catch(function(){
+            // tier 3: manual fallback
+            $("calList").innerHTML = "";
+            $("calFallback").hidden = false;
+          });
       });
   }
 
