@@ -1,7 +1,8 @@
-"""Scrape US10Y / TH10Y / BDI / PMI (CN/TH/IN/US) from TradingEconomics and
-write usd/market-data.json same-origin, so the dashboard (static GitHub
-Pages, no backend) can auto-fill those fields without hitting TE's browser
-CORS block.
+"""Scrape US10Y / TH10Y / BDI / PMI (CN/TH/IN/US) / BDRY from TradingEconomics
++ Yahoo Finance and write usd/market-data.json same-origin, so the dashboard
+(static GitHub Pages, no backend) can auto-fill those fields without hitting
+CORS blocks (TE sends no CORS header at all; Yahoo's chart API sends `vary:
+Origin` but no Access-Control-Allow-Origin, so browsers block it too).
 
 Every TE indicator page ships a reliable server-rendered <meta id="metaDesc">
 summary sentence (e.g. "Manufacturing PMI in China decreased to 51.70 points
@@ -10,6 +11,11 @@ previous day", "... was last recorded at 3.75 percent") — parsing that one
 sentence with two small regexes is far more robust across page TYPES (bond
 yield / commodity / PMI / interest-rate all render differently in the body)
 than chasing each page's HTML widget structure individually.
+
+BDRY (Breakwave Dry Bulk Shipping ETF, NYSE Arca) is a market-traded proxy
+for the same freight-rate signal as BDI, but updates intraday during US
+market hours instead of once/day — fetched via yfinance (already proven
+reliable for DXY/Gold/US10Y/USDTHB tickers in the macro-telegram-bot project).
 """
 from __future__ import annotations
 
@@ -19,6 +25,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
+import yfinance as yf
 from bs4 import BeautifulSoup
 
 OUT_PATH = Path(__file__).resolve().parent.parent / "usd" / "market-data.json"
@@ -70,6 +77,15 @@ def scrape_meta(url: str) -> dict:
     return {"last": last, "pct": pct}
 
 
+def fetch_bdry() -> dict:
+    hist = yf.Ticker("BDRY").history(period="5d")
+    if len(hist) < 2:
+        raise ValueError(f"BDRY: got {len(hist)} rows, need >= 2")
+    last = float(hist["Close"].iloc[-1])
+    prev = float(hist["Close"].iloc[-2])
+    return {"last": last, "pct": (last / prev - 1.0) * 100.0}
+
+
 def main():
     out = {"updated": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")}
     for key, url in SOURCES.items():
@@ -79,6 +95,13 @@ def main():
         except Exception as e:
             out[key] = None
             print(f"[FAIL -> null] {key}: {type(e).__name__}: {e}")
+
+    try:
+        out["bdry"] = fetch_bdry()
+        print(f"[ok] bdry: {out['bdry']}")
+    except Exception as e:
+        out["bdry"] = None
+        print(f"[FAIL -> null] bdry: {type(e).__name__}: {e}")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(json.dumps(out), encoding="utf-8")
