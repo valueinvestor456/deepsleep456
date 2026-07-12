@@ -45,6 +45,10 @@ SOURCES = {
     "pmi_th": "https://tradingeconomics.com/thailand/manufacturing-pmi",
     "pmi_in": "https://tradingeconomics.com/india/manufacturing-pmi",
     "pmi_us": "https://tradingeconomics.com/united-states/manufacturing-pmi",
+    "th_rate": "https://tradingeconomics.com/thailand/interest-rate",
+    "us_rate": "https://tradingeconomics.com/united-states/interest-rate",  # Fed Funds Rate, proxy for SOFR
+    "th_cpi": "https://tradingeconomics.com/thailand/consumer-price-index-cpi",
+    "us_cpi": "https://tradingeconomics.com/united-states/consumer-price-index-cpi",
 }
 
 # "... decreased to 51.70 points ..." / "... eased to 1.95% ..." / "... was last recorded at 3.75 percent"

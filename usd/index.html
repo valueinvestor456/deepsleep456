@@ -256,22 +256,33 @@
     <summary>⚓ Valuation anchors — CIP (futures fair) + PPP (long-run)</summary>
     <div class="card">
       <h2>CIP — ราคายุติธรรม TFEX USD Futures</h2>
-      <div class="row"><span class="label">ดอกเบี้ยไทย %/ปี</span><input type="number" id="iTH" step="0.05" value="1.50"></div>
-      <div class="row"><span class="label">ดอกเบี้ยสหรัฐ (SOFR) %/ปี</span><input type="number" id="iUS" step="0.05" value="4.00"></div>
-      <div class="row"><span class="label">วันถึง settlement</span><input type="number" id="days" step="1" value="90"></div>
-      <div class="row"><span class="label">ราคา futures จริง (ถ้ามี)</span><input type="number" id="fut" step="0.01" placeholder="เช่น 32.50"></div>
+      <div class="row"><span class="label">ดอกเบี้ยไทย %/ปี (auto)</span><input type="number" id="iTH" step="0.05" value="1.50"></div>
+      <div class="row"><span class="label">ดอกเบี้ยสหรัฐ (Fed Funds, proxy SOFR) %/ปี (auto)</span><input type="number" id="iUS" step="0.05" value="4.00"></div>
+      <div class="row"><span class="label">TFEX series (เช่น USDU26)</span><input type="text" id="tfexSeries" style="width:80px;text-transform:uppercase" value="USDU26"></div>
+      <div class="row"><span class="label">วันถึง settlement (auto จาก series)</span><input type="number" id="days" step="1" value="90"></div>
+      <div class="note" id="seriesInfo" style="margin:-4px 0 8px"></div>
+      <div class="row"><span class="label">ราคา futures จริง (คีย์เอง — ไม่มี auto ฟรี)</span><input type="number" id="fut" step="0.01" placeholder="เช่น 32.50"></div>
       <div class="row"><span class="label">Futures ยุติธรรม</span><span class="value" id="cipFair">—</span></div>
       <div class="row"><span class="label">Basis</span><span class="value" id="cipBasis">—</span></div>
       <div class="row"><span class="label">คำตัดสิน</span><span class="value verdict-text" id="cipVerdict">—</span></div>
-      <div class="note">F = S × (1+i_TH·τ)/(1+i_US·τ) — สมการเดียวในหน้านี้ที่แม่นจริง (arbitrage-enforced)</div>
+      <div class="row"><span class="label">กำไร/ขาดทุนถ้า long 1 สัญญา ที่ราคาที่คีย์ (THB)</span><span class="value" id="cipPnlLong1">—</span></div>
+      <div class="row"><span class="label">กำไร/ขาดทุนถ้า short 1 สัญญา ที่ราคาที่คีย์ (THB)</span><span class="value" id="cipPnlShort1">—</span></div>
+      <div class="row"><span class="label">จำนวนสัญญา (สำหรับคำนวณ P&amp;L รวม)</span><input type="number" id="cipContracts" step="1" value="100"></div>
+      <div class="row"><span class="label">P&amp;L รวมถ้า LONG (THB)</span><span class="value" id="cipPnlLongN">—</span></div>
+      <div class="row"><span class="label">P&amp;L รวมถ้า SHORT (THB)</span><span class="value" id="cipPnlShortN">—</span></div>
+      <div class="stamp" id="cipStamp"></div>
+      <div class="note">F = S × (1+i_TH·τ)/(1+i_US·τ) — สมการเดียวในหน้านี้ที่แม่นจริง (arbitrage-enforced)
+        · P&amp;L สมมติว่าราคาวิ่งไปหา Futures ยุติธรรมที่คำนวณได้ ณ settlement — ไม่ใช่การประกัน/ทำนาย
+        (1 สัญญา = 1,000 USD, tick 0.01 THB = 10 THB/tick/สัญญา ตามสเปก TFEX)</div>
       <h2 style="margin-top:14px">PPP — จุดยึดระยะยาว</h2>
-      <div class="row"><span class="label">Spot ปีฐาน</span><input type="number" id="sBase" step="0.01" value="35.30"></div>
-      <div class="row"><span class="label">CPI ไทย ฐาน/ปัจจุบัน</span>
+      <div class="row"><span class="label">Spot ปีฐาน (anchor คงที่ ไม่ auto)</span><input type="number" id="sBase" step="0.01" value="35.30"></div>
+      <div class="row"><span class="label">CPI ไทย ฐาน (คงที่) / ปัจจุบัน (auto)</span>
         <span><input type="number" id="cpiTH0" step="0.1" value="100.0"> <input type="number" id="cpiTH1" step="0.1" value="108.0"></span></div>
-      <div class="row"><span class="label">CPI สหรัฐ ฐาน/ปัจจุบัน</span>
+      <div class="row"><span class="label">CPI สหรัฐ ฐาน (คงที่) / ปัจจุบัน (auto)</span>
         <span><input type="number" id="cpiUS0" step="0.1" value="100.0"> <input type="number" id="cpiUS1" step="0.1" value="134.0"></span></div>
       <div class="row"><span class="label">PPP fair</span><span class="value" id="pppFair">—</span></div>
       <div class="row"><span class="label">Spot เบี่ยงจาก PPP</span><span class="value" id="pppDev">—</span></div>
+      <div class="stamp" id="pppStamp"></div>
     </div>
   </details>
 
@@ -290,7 +301,7 @@
   var SAVED = ["spotOverride","dxyPctOv","xauPctOv","us10","th10","bdiLevel","bdiPct",
                "pmiCN","pmiTH","pmiIN","pmiUS",
                "wDXY","wXAU","wSPR","wBDI","wPMI","vDXY","vXAU","vBDI","sprNeutral","sprScale","kSens",
-               "iTH","iUS","days","fut","sBase","cpiTH0","cpiTH1","cpiUS0","cpiUS1","calNote"];
+               "iTH","iUS","days","fut","tfexSeries","cipContracts","sBase","cpiTH0","cpiTH1","cpiUS0","cpiUS1","calNote"];
   var PMI_STAMPED = {pmiCN:"pmiCNstamp", pmiTH:"pmiTHstamp", pmiIN:"pmiINstamp", pmiUS:"pmiUSstamp"};
   SAVED.forEach(function(id){
     var v = localStorage.getItem("usdthb_" + id);
@@ -449,7 +460,37 @@
   }
 
   // ---- CIP / PPP anchors (unchanged math from v1) -------------------------
+  // TFEX quarterly futures month codes -> 0-indexed JS month
+  var TFEX_MONTH_CODES = {F:0,G:1,H:2,J:3,K:4,M:5,N:6,Q:7,U:8,V:9,X:10,Z:11};
+  function parseTfexSeries(code){
+    var m = /^([A-Z]+)([FGHJKMNQUVXZ])(\d{2})$/.exec((code || "").trim().toUpperCase());
+    if (!m) return null;
+    return {prefix: m[1], year: 2000 + parseInt(m[3], 10), month: TFEX_MONTH_CODES[m[2]]};
+  }
+  function updateSettlementFromSeries(){
+    var parsed = parseTfexSeries($("tfexSeries").value);
+    var info = $("seriesInfo");
+    if (!parsed){
+      info.textContent = "รูปแบบ series ไม่ถูกต้อง (ตัวอย่าง USDU26 = ก.ย. 2569) — ใช้ค่า วันถึง settlement เดิม";
+      return;
+    }
+    // Last trading day = business day before the final business day of the
+    // contract month; no Thai holiday calendar client-side, so approximate
+    // as (last calendar day of month) - 2 days. Off by ~1-2 business days
+    // around weekends/holidays — treat "days" as approximate, not exact.
+    var lastDayOfMonth = new Date(parsed.year, parsed.month + 1, 0);
+    var settlement = new Date(lastDayOfMonth);
+    settlement.setDate(settlement.getDate() - 2);
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var diffDays = Math.round((settlement - today) / 86400000);
+    $("days").value = diffDays > 0 ? diffDays : 1;
+    localStorage.setItem("usdthb_days", $("days").value);
+    info.textContent = "Settlement โดยประมาณ: " + settlement.toLocaleDateString("th-TH") +
+      " (≈ ปลายเดือนสัญญา −2 วัน, ไม่มีปฏิทินวันหยุดไทย ± 1-2 วันทำการ)";
+  }
+
   function recalcAnchors(S){
+    updateSettlementFromSeries();
     var iTH = num("iTH"), iUS = num("iUS"), days = num("days");
     var cipFair = null;
     if (S && iTH !== null && iUS !== null && days > 0){
@@ -458,13 +499,31 @@
     }
     $("cipFair").textContent = fmt(cipFair, 4);
     var fut = num("fut"), v = $("cipVerdict");
+    var TICK_SIZE = 0.01, TICK_VALUE_THB = 10; // TFEX USD futures spec: 1 contract = 1,000 USD
     if (cipFair && fut && fut > 0){
       var basis = fut - cipFair;
       $("cipBasis").textContent = (basis >= 0 ? "+" : "") + basis.toFixed(4) + " THB (" + (basis/0.01).toFixed(1) + " ticks)";
       if (basis > 0.03){ v.textContent = "RICH — futures แพงกว่ายุติธรรม"; v.className = "value verdict-text bad"; }
       else if (basis < -0.03){ v.textContent = "CHEAP — futures ถูกกว่ายุติธรรม"; v.className = "value verdict-text good"; }
       else { v.textContent = "FAIR — อยู่ในกรอบต้นทุน"; v.className = "value verdict-text neutral"; }
-    } else { $("cipBasis").textContent = "—"; v.textContent = "ใส่ราคา futures เพื่อเทียบ"; v.className = "value verdict-text neutral"; }
+
+      // P&L if price converges from the keyed futures price to fair value by settlement
+      var priceDiff = cipFair - fut; // long profits if fair > entry
+      var pnlPerContract = (priceDiff / TICK_SIZE) * TICK_VALUE_THB;
+      var n = num("cipContracts") || 0;
+      $("cipPnlLong1").textContent = (pnlPerContract >= 0 ? "+" : "") + pnlPerContract.toFixed(0) + " THB";
+      $("cipPnlLong1").className = "value " + (pnlPerContract >= 0 ? "good" : "bad");
+      $("cipPnlShort1").textContent = (-pnlPerContract >= 0 ? "+" : "") + (-pnlPerContract).toFixed(0) + " THB";
+      $("cipPnlShort1").className = "value " + (-pnlPerContract >= 0 ? "good" : "bad");
+      var pnlN = pnlPerContract * n;
+      $("cipPnlLongN").textContent = (pnlN >= 0 ? "+" : "") + pnlN.toLocaleString("en-US", {maximumFractionDigits:0}) + " THB (" + n + " สัญญา)";
+      $("cipPnlLongN").className = "value " + (pnlN >= 0 ? "good" : "bad");
+      $("cipPnlShortN").textContent = (-pnlN >= 0 ? "+" : "") + (-pnlN).toLocaleString("en-US", {maximumFractionDigits:0}) + " THB (" + n + " สัญญา)";
+      $("cipPnlShortN").className = "value " + (-pnlN >= 0 ? "good" : "bad");
+    } else {
+      $("cipBasis").textContent = "—"; v.textContent = "ใส่ราคา futures เพื่อเทียบ"; v.className = "value verdict-text neutral";
+      ["cipPnlLong1","cipPnlShort1","cipPnlLongN","cipPnlShortN"].forEach(function(id){ $(id).textContent = "—"; $(id).className = "value"; });
+    }
 
     var sB = num("sBase"), t0 = num("cpiTH0"), t1 = num("cpiTH1"), u0 = num("cpiUS0"), u1 = num("cpiUS1");
     var pppFair = (sB > 0 && t0 > 0 && t1 > 0 && u0 > 0 && u1 > 0) ? sB * (t1/t0) / (u1/u0) : null;
@@ -552,10 +611,16 @@
           var arrow = j.bdry.pct >= 0 ? "🟢▲" : "🔴▼";
           $("bdryVal").textContent = "$" + j.bdry.last.toFixed(2) + "  " + arrow + " " + j.bdry.pct.toFixed(2) + "%";
         }
+        if (j.th_rate) apply("iTH", j.th_rate.last);
+        if (j.us_rate) apply("iUS", j.us_rate.last);
+        if (j.th_cpi) apply("cpiTH1", j.th_cpi.last);
+        if (j.us_cpi) apply("cpiUS1", j.us_cpi.last);
 
         var stampTxt = "auto จาก TradingEconomics · " + when;
         $("sprStamp").textContent = stampTxt;
         $("bdiStamp").textContent = stampTxt;
+        $("cipStamp").textContent = stampTxt + " (ดอกเบี้ย)";
+        $("pppStamp").textContent = stampTxt + " (CPI ปัจจุบัน — ฐานยังคงต้องกรอกเอง)";
         ["pmiCN","pmiTH","pmiIN","pmiUS"].forEach(function(id){
           localStorage.setItem("usdthb_" + id + "_date", (j.updated || "").slice(0, 10));
           stampPMI(id, false);
@@ -565,6 +630,8 @@
       .catch(function(){
         $("sprStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
         $("bdiStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
+        $("cipStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
+        $("pppStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
       });
   }
 
