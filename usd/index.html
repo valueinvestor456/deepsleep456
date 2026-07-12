@@ -274,6 +274,23 @@
       <div class="note">F = S × (1+i_TH·τ)/(1+i_US·τ) — สมการเดียวในหน้านี้ที่แม่นจริง (arbitrage-enforced)
         · P&amp;L สมมติว่าราคาวิ่งไปหา Futures ยุติธรรมที่คำนวณได้ ณ settlement — ไม่ใช่การประกัน/ทำนาย
         (1 สัญญา = 1,000 USD, tick 0.01 THB = 10 THB/tick/สัญญา ตามสเปก TFEX)</div>
+
+      <h2 style="margin-top:14px">เงินประกันที่ควรวางไว้ (Margin Reserve)</h2>
+      <div class="row"><span class="label">ค่าคอมมิชชั่นไป-กลับ/สัญญา (THB) — คีย์เอง</span><input type="number" id="commRT" step="0.1" value="8"></div>
+      <div class="row"><span class="label">IM ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="imPerLot" step="0.1" value="840"></div>
+      <div class="row"><span class="label">MM ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="mmPerLot" step="0.1" value="590.4"></div>
+      <div class="row"><span class="label">FM (Force) ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="fmPerLot" step="0.1" value="254.4"></div>
+      <div class="row"><span class="label">ราคาที่ต้องทนเหวี่ยง (บาท)</span><input type="number" id="swingBaht" step="0.1" value="1.0"></div>
+      <div class="row"><span class="label">ขาดทุนจากการเหวี่ยง/สัญญา (THB)</span><span class="value" id="swingLossPerLot">—</span></div>
+      <div class="row"><span class="label">วางเท่านี้ถึงจะไม่โดน Force Close/สัญญา</span><span class="value" id="reserveAvoidForce">—</span></div>
+      <div class="row"><span class="label">วางเท่านี้ถึงจะไม่โดนเรียก Margin Call/สัญญา</span><span class="value" id="reserveAvoidCall">—</span></div>
+      <div class="row"><span class="label">วางเท่านี้ถึงจะยังเต็ม IM หลังโดนเหวี่ยง/สัญญา</span><span class="value" id="reserveFullIM">—</span></div>
+      <div class="row"><span class="label">รวม N สัญญา (ใช้จำนวนสัญญาด้านบน) — ไม่โดน Force</span><span class="value" id="reserveAvoidForceN">—</span></div>
+      <div class="row"><span class="label">รวม N สัญญา — ไม่โดน Call</span><span class="value" id="reserveAvoidCallN">—</span></div>
+      <div class="row"><span class="label">รวม N สัญญา — เต็ม IM</span><span class="value" id="reserveFullIMN">—</span></div>
+      <div class="note">ขาดทุนจากราคาเหวี่ยง = (บาทที่เหวี่ยง/0.01)×10×สัญญา · เผื่อ = ระดับ margin + ขาดทุนที่เหวี่ยง (ยังไม่รวมค่าคอม — ถ้าจะปิดสถานะหลังเหวี่ยงบวกค่าคอมไป-กลับ {ช่องด้านบน} เพิ่มเอง)
+        · นี่คือขั้นต่ำทางคณิตศาสตร์ ไม่ใช่คำแนะนำการเทรด ควรเผื่อ buffer เพิ่มสำหรับความผันผวนที่มากกว่าที่ประเมินไว้</div>
+
       <h2 style="margin-top:14px">PPP — จุดยึดระยะยาว</h2>
       <div class="row"><span class="label">Spot ปีฐาน (anchor คงที่ ไม่ auto)</span><input type="number" id="sBase" step="0.01" value="35.30"></div>
       <div class="row"><span class="label">CPI ไทย ฐาน (คงที่) / ปัจจุบัน (auto)</span>
@@ -301,7 +318,8 @@
   var SAVED = ["spotOverride","dxyPctOv","xauPctOv","us10","th10","bdiLevel","bdiPct",
                "pmiCN","pmiTH","pmiIN","pmiUS",
                "wDXY","wXAU","wSPR","wBDI","wPMI","vDXY","vXAU","vBDI","sprNeutral","sprScale","kSens",
-               "iTH","iUS","days","fut","tfexSeries","cipContracts","sBase","cpiTH0","cpiTH1","cpiUS0","cpiUS1","calNote"];
+               "iTH","iUS","days","fut","tfexSeries","cipContracts","sBase","cpiTH0","cpiTH1","cpiUS0","cpiUS1","calNote",
+               "commRT","imPerLot","mmPerLot","fmPerLot","swingBaht"];
   var PMI_STAMPED = {pmiCN:"pmiCNstamp", pmiTH:"pmiTHstamp", pmiIN:"pmiINstamp", pmiUS:"pmiUSstamp"};
   SAVED.forEach(function(id){
     var v = localStorage.getItem("usdthb_" + id);
@@ -529,6 +547,31 @@
     var pppFair = (sB > 0 && t0 > 0 && t1 > 0 && u0 > 0 && u1 > 0) ? sB * (t1/t0) / (u1/u0) : null;
     $("pppFair").textContent = fmt(pppFair, 4);
     $("pppDev").textContent = (pppFair && S) ? ((S/pppFair-1)*100).toFixed(2) + "%" : "—";
+
+    recalcMarginReserve();
+  }
+
+  function recalcMarginReserve(){
+    var TICK_SIZE = 0.01, TICK_VALUE_THB = 10;
+    var im = num("imPerLot"), mm = num("mmPerLot"), fm = num("fmPerLot"), swing = num("swingBaht");
+    var n = num("cipContracts") || 0;
+    if (im === null || mm === null || fm === null || swing === null || swing <= 0){
+      ["swingLossPerLot","reserveAvoidForce","reserveAvoidCall","reserveFullIM",
+       "reserveAvoidForceN","reserveAvoidCallN","reserveFullIMN"].forEach(function(id){ $(id).textContent = "—"; });
+      return;
+    }
+    var lossPerLot = (swing / TICK_SIZE) * TICK_VALUE_THB;
+    var avoidForce = fm + lossPerLot;
+    var avoidCall = mm + lossPerLot;
+    var fullIM = im + lossPerLot;
+
+    $("swingLossPerLot").textContent = lossPerLot.toLocaleString("en-US", {maximumFractionDigits:0}) + " THB";
+    $("reserveAvoidForce").textContent = avoidForce.toLocaleString("en-US", {maximumFractionDigits:1}) + " THB";
+    $("reserveAvoidCall").textContent = avoidCall.toLocaleString("en-US", {maximumFractionDigits:1}) + " THB";
+    $("reserveFullIM").textContent = fullIM.toLocaleString("en-US", {maximumFractionDigits:1}) + " THB";
+    $("reserveAvoidForceN").textContent = (avoidForce * n).toLocaleString("en-US", {maximumFractionDigits:0}) + " THB (" + n + " สัญญา)";
+    $("reserveAvoidCallN").textContent = (avoidCall * n).toLocaleString("en-US", {maximumFractionDigits:0}) + " THB (" + n + " สัญญา)";
+    $("reserveFullIMN").textContent = (fullIM * n).toLocaleString("en-US", {maximumFractionDigits:0}) + " THB (" + n + " สัญญา)";
   }
 
   // ---- data fetching ------------------------------------------------------
