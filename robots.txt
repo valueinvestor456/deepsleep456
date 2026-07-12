@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /stock/
+Disallow: /dr/
 
 Sitemap: https://deepsleep456.com/sitemap.xml

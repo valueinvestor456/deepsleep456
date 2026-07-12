@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>DR Fair Price Monitor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#c9972c; --series-3:#a09d94;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --card-radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --series-2:#d9ab45; --series-3:#6f6d66;
+    }
+  }
+  :root[data-theme="dark"]{
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-2:#d9ab45; --series-3:#6f6d66;
+  }
+  :root[data-theme="light"]{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#c9972c; --series-3:#a09d94;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px;line-height:1.5;}
+  .wrap{max-width:1200px;margin:0 auto;}
+  header.page{margin-bottom:20px;}
+  h1{font-size:22px;margin:0 0 4px;}
+  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 2px;}
+  .meta{color:var(--text-muted);font-size:12px;}
+  .card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--card-radius);padding:18px 20px;margin-bottom:16px;}
+  .alert{background:var(--surface-1);border:1px solid var(--border);border-left:4px solid var(--warning);border-radius:var(--card-radius);padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;}
+  .alert .icon{font-size:20px;line-height:1;}
+  .alert .title{font-weight:600;font-size:14px;margin-bottom:4px;}
+  .alert .body{font-size:13px;color:var(--text-secondary);}
+  .btn{background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary);font-size:13px;padding:8px 14px;border-radius:8px;cursor:pointer;}
+  .btn:hover{color:var(--text-primary);}
+  .btn.primary{background:var(--series-1);color:#fff;border-color:var(--series-1);}
+  .btn.small{font-size:11px;padding:4px 8px;}
+  input[type=text],input[type=number],select{
+    background:var(--page);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);
+    padding:8px 10px;font-size:13px;
+  }
+  .add-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .add-row input[type=text]{flex:1;min-width:220px;}
+  .stat-row{display:flex;gap:16px;font-size:12px;color:var(--text-secondary);margin-top:10px;flex-wrap:wrap;}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .badge.market-US{background:rgba(42,120,214,0.15);color:var(--series-1);}
+  .badge.market-HK{background:rgba(201,151,44,0.15);color:var(--series-2);}
+  .badge.market-JP{background:rgba(160,157,148,0.2);color:var(--text-secondary);}
+  .badge.market-SG{background:rgba(160,157,148,0.2);color:var(--text-secondary);}
+  .badge.market-EU{background:rgba(160,157,148,0.2);color:var(--text-secondary);}
+  .badge.ok{background:rgba(12,163,12,0.12);color:var(--good);}
+  .badge.warn{background:rgba(250,178,25,0.15);color:#a06d00;}
+  .badge.conflict{background:rgba(208,59,59,0.12);color:var(--critical);}
+  .row-card{border:1px solid var(--border);border-radius:var(--card-radius);padding:14px 16px;margin-bottom:12px;background:var(--surface-1);}
+  .row-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;}
+  .row-title{font-weight:600;font-size:15px;}
+  .row-sub{font-size:12px;color:var(--text-muted);}
+  .row-actions{display:flex;gap:8px;align-items:center;}
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  @media (max-width:640px){.charts{grid-template-columns:1fr;}}
+  .chart-box{border:1px solid var(--border);border-radius:8px;overflow:hidden;height:220px;}
+  .chart-label{font-size:11px;color:var(--text-muted);margin:0 0 4px;}
+  .fill-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;padding:10px;border:1px dashed var(--border);border-radius:8px;background:var(--page);}
+  .fill-form label{font-size:11px;color:var(--text-secondary);display:flex;flex-direction:column;gap:3px;}
+  .fill-form input,.fill-form select{font-size:12px;padding:6px 8px;}
+  .ext-link{font-size:12px;margin-top:8px;display:inline-block;color:var(--series-1);}
+  .conflict-note{font-size:11px;color:var(--critical);margin-top:6px;}
+  .browse-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+  .browse-table th,.browse-table td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--grid);}
+  .browse-table th{color:var(--text-secondary);font-weight:600;}
+  .section-title{font-size:15px;font-weight:600;margin:0 0 10px;}
+  .stop-box{border:1px solid var(--border);border-left:4px solid var(--warning);border-radius:var(--card-radius);padding:14px 18px;background:var(--surface-1);}
+  .stop-box .title{font-weight:600;font-size:13px;margin-bottom:6px;}
+  .stop-box ul{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--text-secondary);}
+  footer{font-size:11px;color:var(--text-muted);margin-top:24px;text-align:center;}
+  #browse-panel{display:none;max-height:400px;overflow-y:auto;}
+  #browse-panel.show{display:block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>DR Fair Price Monitor — เทียบราคาจริง vs Fair Price (Arbitrage)</h1>
+    <p class="subtitle">เทียบราคา DR ที่เทรดจริงบน SET กับ Fair Price ที่คำนวณจากราคาหุ้นแม่ &times; อัตราแลกเปลี่ยน &divide; อัตราแปลงสภาพ (ratio) &mdash; ใช้ TradingView live chart ทั้งสองฝั่ง</p>
+    <p class="meta">ที่มา: raw/dr/SET_DR_with_Ratios_and_FairTHB_2025-09-11.csv, raw/dr/DR_fairprice_template.xlsx, TradingView watchlists "doang_DR_China"/"doang_DR_US" (เฉพาะรายชื่อ ticker ไม่ใช่ ratio) — อัปเดต 2026-07-12
+      <button class="btn small" id="toggle-theme" style="margin-left:8px;">สลับโหมดสี</button></p>
+  </header>
+
+  <div class="alert">
+    <div class="icon">⚠️</div>
+    <div>
+      <div class="title">Ratio ต้องยืนยันเองเสมอ ห้ามเดา</div>
+      <div class="body">มีเพียง 39 DR ที่มี ratio ยืนยันแล้ว (จาก raw/dr/) — DR อีก ~150 ตัวที่เห็นชื่อจาก watchlist ของคุณ ยังไม่มี ratio ในระบบ ต้องกรอกเองในฟอร์มของแต่ละแถว (จาก SET DR factsheet หรือแหล่งที่คุณเชื่อถือ) ก่อนจะเห็น Fair Price — ค่าที่กรอกจะถูกจำไว้ในเบราว์เซอร์นี้ (localStorage) เท่านั้น ไม่ได้ส่งกลับมาที่ repo อัตโนมัติ
+        <br>⚠️ <b>BABA80</b> มีข้อมูล ratio ขัดแย้งกันระหว่าง 2 ไฟล์ในโปรเจกต์ (100 vs 1000) — แสดงเป็น ⚠️ conflict ไม่ใช้ตัวเลขใดจนกว่าจะตรวจสอบ</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">เพิ่ม DR เข้า monitor</p>
+    <div class="add-row">
+      <input type="text" id="add-input" list="dr-datalist" placeholder="พิมพ์ ticker เช่น CATL01, NEM06, TER23">
+      <datalist id="dr-datalist"></datalist>
+      <button class="btn primary" id="add-btn">+ เพิ่ม</button>
+      <button class="btn" id="browse-btn">เรียกดูรายชื่อทั้งหมด (<span id="browse-count">0</span>)</button>
+    </div>
+    <div id="browse-panel">
+      <table class="browse-table">
+        <thead><tr><th>Ticker</th><th>ชื่อ/มาจาก</th><th>ตลาด</th><th>สถานะ</th><th></th></tr></thead>
+        <tbody id="browse-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="monitor-list"></div>
+
+  <div class="card stop-box">
+    <div class="title">🛑 STOP — จุดตรวจสอบก่อนเชื่อ</div>
+    <ul>
+      <li>Ratio ของ 39 DR ที่มีเครื่องหมาย ✓ มาจาก raw/dr/SET_DR_with_Ratios_and_FairTHB_2025-09-11.csv และ raw/dr/DR_fairprice_template.xlsx — CATL01 (ratio 440) เป็นค่าที่คุณให้มาเอง ยังไม่ได้เทียบกับ SET factsheet โดยตรง (แต่ cross-check คร่าวๆ จากราคาจริงใน watchlist ของคุณ ณ ขณะ ingest ให้ผลใกล้เคียง 440 ที่ FX ปัจจุบัน)</li>
+      <li><b>BABA80 มีข้อมูลขัดแย้ง</b> (CSV=100 vs xlsx=1000) — ห้ามเชื่อค่าใดค่าหนึ่งจนกว่าจะตรวจสอบกับ SET DR factsheet จริง</li>
+      <li>DR อีก ~150 ตัว ชื่อ ticker มาจาก TradingView watchlist ของคุณเอง (doang_DR_China, doang_DR_US) แต่ ratio/ตลาดหุ้นแม่ยังไม่มีในระบบ — ต้องกรอกเองทีละตัว ค่าที่กรอกเก็บใน localStorage ของเบราว์เซอร์นี้เท่านั้น (ถ้าเปลี่ยนเครื่อง/ล้าง cache จะหายและต้องกรอกใหม่)</li>
+      <li>Fair Price chart ใช้ TradingView symbol formula (เช่น NASDAQ:AAPL*FX_IDC:USDTHB/1000) ผ่าน embed widget — เคยพบว่า TradingView embed widget "ปฏิเสธ" สูตรที่ซับซ้อนเกินไป (เช่น การหารด้วยราคาจริงในสูตรเดียว) จึงต้องแยกเป็น 2 กราฟ (ราคาจริง, Fair Price) แทนที่จะรวมเป็นกราฟอัตราส่วนเดียว — ถ้ากราฟฝั่งใดฝั่งหนึ่งไม่ขึ้น ให้กดลิงก์ "เปิดอัตราส่วนที่ TradingView" เพื่อดูแบบเต็มที่เว็บ TradingView โดยตรง</li>
+      <li>ไม่มีตัวเลข Premium/Discount % คำนวณให้อัตโนมัติในหน้านี้ (ไม่สามารถอ่านค่าตัวเลขจาก TradingView iframe ข้าม origin ได้) — ต้องเทียบด้วยตาจาก 2 กราฟ หรือกดลิงก์ไปดูอัตราส่วนที่ TradingView โดยตรง</li>
+    </ul>
+  </div>
+
+  <footer>สร้างโดย Claude Code จากข้อมูลใน LLM Wiki ของโปรเจกต์ "investment with ai" — ไม่ใช่คำแนะนำการลงทุน ตรวจสอบ ratio และราคากับต้นทางก่อนตัดสินใจเสมอ</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var MASTER = [{"sym": "LOREAL80", "name": "L'Oréal S.A.", "market": "EU", "underlying_tv": "EURONEXT:OR", "fx_tv": "FX_IDC:EURTHB", "ratio": 10000.0, "ccy": "EUR", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "LVMH01", "name": "LVMH Moët Hennessy Louis Vuitton SE", "market": "EU", "underlying_tv": "EURONEXT:MC", "fx_tv": "FX_IDC:EURTHB", "ratio": 1600.0, "ccy": "EUR", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "NOVOB80", "name": "Novo Nordisk A/S Class B", "market": "EU", "underlying_tv": "OMXCOP:NOVO_B", "fx_tv": "FX_IDC:DKKTHB", "ratio": 1000.0, "ccy": "DKK", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "SANOFI80", "name": "Sanofi S.A.", "market": "EU", "underlying_tv": "EURONEXT:SAN", "fx_tv": "FX_IDC:EURTHB", "ratio": 1000.0, "ccy": "EUR", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "BABA80", "name": "Alibaba Group Holding Ltd.", "market": "HK", "underlying_tv": "HKEX:9988", "fx_tv": "FX_IDC:HKDTHB", "ratio": 100.0, "ccy": "HKD", "confirmed": true, "conflict": true, "conflict_note": "CSV says ratio 100.0, xlsx says 1000.0 -- unresolved"}, {"sym": "CATL01", "name": "Contemporary Amperex Technology Co., Ltd.", "market": "HK", "underlying_tv": "HKEX:3750", "fx_tv": "FX_IDC:HKDTHB", "ratio": 440.0, "ccy": "HKD", "confirmed": true, "conflict": false, "conflict_note": null, "user_provided": true}, {"sym": "GEELY80", "name": "Geely Automobile Holdings Ltd.", "market": "HK", "underlying_tv": "HKEX:0175", "fx_tv": "FX_IDC:HKDTHB", "ratio": 10.0, "ccy": "HKD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "JD80", "name": "JD.com, Inc.", "market": "HK", "underlying_tv": "HKEX:9618", "fx_tv": "FX_IDC:HKDTHB", "ratio": 100.0, "ccy": "HKD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "MEITUAN19", "name": "Meituan", "market": "HK", "underlying_tv": "HKEX:3690", "fx_tv": "FX_IDC:HKDTHB", "ratio": 300.0, "ccy": "HKD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "MEITUAN80", "name": "Meituan", "market": "HK", "underlying_tv": "HKEX:3690", "fx_tv": "FX_IDC:HKDTHB", "ratio": 100.0, "ccy": "HKD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "TENCENT19", "name": "Tencent Holdings Ltd.", "market": "HK", "underlying_tv": "HKEX:0700", "fx_tv": "FX_IDC:HKDTHB", "ratio": 200.0, "ccy": "HKD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "TRIPCOM80", "name": "Trip.com Group Ltd.", "market": "HK", "underlying_tv": "HKEX:9961", "fx_tv": "FX_IDC:HKDTHB", "ratio": 1000.0, "ccy": "HKD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "XIAOMI80", "name": "Xiaomi Corporation", "market": "HK", "underlying_tv": "HKEX:1810", "fx_tv": "FX_IDC:HKDTHB", "ratio": 10.0, "ccy": "HKD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "NINTENDO19", "name": "Nintendo Co., Ltd.", "market": "JP", "underlying_tv": "TSE:7974", "fx_tv": "FX_IDC:JPYTHB", "ratio": 100.0, "ccy": "JPY", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "SMFG19", "name": "Sumitomo Mitsui Financial Group, Inc.", "market": "JP", "underlying_tv": "TSE:8316", "fx_tv": "FX_IDC:JPYTHB", "ratio": 100.0, "ccy": "JPY", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "SONY80", "name": "Sony Group Corporation", "market": "JP", "underlying_tv": "TSE:6758", "fx_tv": "FX_IDC:JPYTHB", "ratio": 200.0, "ccy": "JPY", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "SIA19", "name": "Singapore Airlines Ltd.", "market": "SG", "underlying_tv": "SGX:C6L", "fx_tv": "FX_IDC:SGDTHB", "ratio": 100.0, "ccy": "SGD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "SINGTEL80", "name": "Singapore Telecommunications Ltd.", "market": "SG", "underlying_tv": "SGX:Z74", "fx_tv": "FX_IDC:SGDTHB", "ratio": 10.0, "ccy": "SGD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "AAPL80", "name": "Apple Inc.", "market": "US", "underlying_tv": "NASDAQ:AAPL", "fx_tv": "FX_IDC:USDTHB", "ratio": 1000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "ADBE06", "name": "Adobe Inc.", "market": "US", "underlying_tv": "NASDAQ:ADBE", "fx_tv": "FX_IDC:USDTHB", "ratio": 3000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "AMD80", "name": "Advanced Micro Devices, Inc.", "market": "US", "underlying_tv": "NASDAQ:AMD", "fx_tv": "FX_IDC:USDTHB", "ratio": 5000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "AMZN80", "name": "Amazon.com, Inc.", "market": "US", "underlying_tv": "NASDAQ:AMZN", "fx_tv": "FX_IDC:USDTHB", "ratio": 4000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "BDX06", "name": "Becton, Dickinson and Company", "market": "US", "underlying_tv": "NYSE:BDX", "fx_tv": "FX_IDC:USDTHB", "ratio": 3000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "BKNG80", "name": "Booking Holdings Inc.", "market": "US", "underlying_tv": "NASDAQ:BKNG", "fx_tv": "FX_IDC:USDTHB", "ratio": 50000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "BRKB80", "name": "Berkshire Hathaway Inc. Class B", "market": "US", "underlying_tv": "NYSE:BRK.B", "fx_tv": "FX_IDC:USDTHB", "ratio": 10000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "CRWD80", "name": "CrowdStrike Holdings, Inc.", "market": "US", "underlying_tv": "NASDAQ:CRWD", "fx_tv": "FX_IDC:USDTHB", "ratio": 4000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "GOOG80", "name": "Alphabet Inc. Class C", "market": "US", "underlying_tv": "NASDAQ:GOOG", "fx_tv": "FX_IDC:USDTHB", "ratio": 2000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "JPMUS06", "name": "JPMorgan Chase & Co.", "market": "US", "underlying_tv": "NYSE:JPM", "fx_tv": "FX_IDC:USDTHB", "ratio": 3000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "KO80", "name": "The Coca‑Cola Company", "market": "US", "underlying_tv": "NYSE:KO", "fx_tv": "FX_IDC:USDTHB", "ratio": 1000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "MA80", "name": "Mastercard Incorporated", "market": "US", "underlying_tv": "NYSE:MA", "fx_tv": "FX_IDC:USDTHB", "ratio": 10000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "META80", "name": "Meta Platforms, Inc.", "market": "US", "underlying_tv": "NASDAQ:META", "fx_tv": "FX_IDC:USDTHB", "ratio": 8000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "MS06", "name": "Morgan Stanley", "market": "US", "underlying_tv": "NYSE:MS", "fx_tv": "FX_IDC:USDTHB", "ratio": 1499.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "MSFT80", "name": "Microsoft Corporation", "market": "US", "underlying_tv": "NASDAQ:MSFT", "fx_tv": "FX_IDC:USDTHB", "ratio": 2000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "NFLX80", "name": "Netflix, Inc.", "market": "US", "underlying_tv": "NASDAQ:NFLX", "fx_tv": "FX_IDC:USDTHB", "ratio": 2000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "NIKE80", "name": "NIKE, Inc.", "market": "US", "underlying_tv": "NYSE:NKE", "fx_tv": "FX_IDC:USDTHB", "ratio": 2000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "NVDA80", "name": "NVIDIA Corporation", "market": "US", "underlying_tv": "NASDAQ:NVDA", "fx_tv": "FX_IDC:USDTHB", "ratio": 200.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "PEP80", "name": "PepsiCo, Inc.", "market": "US", "underlying_tv": "NASDAQ:PEP", "fx_tv": "FX_IDC:USDTHB", "ratio": 5000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "SBUX80", "name": "Starbucks Corporation", "market": "US", "underlying_tv": "NASDAQ:SBUX", "fx_tv": "FX_IDC:USDTHB", "ratio": 2000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "VISA80", "name": "Visa Inc.", "market": "US", "underlying_tv": "NYSE:V", "fx_tv": "FX_IDC:USDTHB", "ratio": 10000.0, "ccy": "USD", "confirmed": true, "conflict": false, "conflict_note": null}, {"sym": "ADVANT23", "name": "6857", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "AIA23", "name": "1299", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ANTA13", "name": "2020", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ASEMI24", "name": "3119", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "BIDU80", "name": "9888", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "BILIBILI01", "name": "9626", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "BIREN23", "name": "6082", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CAMBRI80", "name": "688256", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CHHONGQ19", "name": "1378", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CMBANK23", "name": "3968", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CNBIO24", "name": "2820", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CNEV24", "name": "2845", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CNROBOAI23", "name": "2807", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CNSEMI23", "name": "3191", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CNTECH01", "name": "3088", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CYPC80", "name": "600900", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GAC03", "name": "2238", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GANFENG23", "name": "1772", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GDS23", "name": "9698", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GEELY06", "name": "175", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GIGA23", "name": "3986", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GOLD03", "name": "2840", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "HAIERS19", "name": "6690", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "HANSOH19", "name": "3692", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "HKTECH13", "name": "3032", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "HORIZON23", "name": "9660", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "HUAHONG23", "name": "1347", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "IFLYTEK80", "name": "002230", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "JDHEAL19", "name": "6618", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "JLMAG80", "name": "6680", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "KINGSOFT23", "name": "3888", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "KUAISH80", "name": "1024", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "LENOVO13", "name": "992", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "LPGOLD13", "name": "6181", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MAOGEP80", "name": "1318", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MIDEA80", "name": "300", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MNSO80", "name": "9896", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NAURA80", "name": "002371", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NETEASE80", "name": "9999", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NONGFU80", "name": "9633", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "PETROCN80", "name": "857", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "PINGAN80", "name": "2318", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "POPMART80", "name": "9992", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SENSE23", "name": "20", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SINOBIO19", "name": "1177", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SMIC23", "name": "981", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "STAR5001", "name": "3151", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SUNNY19", "name": "2382", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "TENCENT80", "name": "700", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "TME23", "name": "1698", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "UBTECH23", "name": "9880", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "WUXI06", "name": "2269", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "WUXIAT80", "name": "2359", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "XPENG03", "name": "9868", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ZAI23", "name": "2513", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ZIJIN80", "name": "2899", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ZJINNO80", "name": "300308", "market": "HK", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ABBV80", "name": "ABBV", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ABNB06", "name": "ABNB", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ADBE03", "name": "ADBE", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "AFRM03", "name": "AFRM", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ALAB01", "name": "ALAB", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "AMAT23", "name": "AMAT", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "AMGN06", "name": "AMGN", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ANET23", "name": "ANET", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "APLD03", "name": "APLD", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "APPL03", "name": "APP", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ASTS03", "name": "ASTS", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "AVGO80", "name": "AVGO", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "AXP06", "name": "AXP", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "BAC03", "name": "BAC", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "BOEING80", "name": "BA", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CAT19", "name": "CAT", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CCJ23", "name": "CCJ", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CDNS23", "name": "CDNS", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CEG23", "name": "CEG", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "COHR23", "name": "COHR", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "COIN80", "name": "COIN", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "COSTCO19", "name": "COST", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CRDO23", "name": "CRDO", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CRM01", "name": "CRM", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CRSP03", "name": "CRSP", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CRWV03", "name": "CRWV", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "CSCO06", "name": "CSCO", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "DASH03", "name": "DASH", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "DDOG19", "name": "DDOG", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "DELL19", "name": "DELL", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "DISNEY19", "name": "DIS", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "EOSE03", "name": "EOSE", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ESTEE80", "name": "EL", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ETN23", "name": "ETN", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "EXPE06", "name": "EXPE", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "FABRINET23", "name": "FN", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "FCX23", "name": "FCX", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GEV23", "name": "GEV", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GOLDUS19", "name": "GLD", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GOOGL19", "name": "GOOGL", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "GRAB80", "name": "GRAB", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "HIMS03", "name": "HIMS", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "HOOD06", "name": "HOOD", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "IBM06", "name": "IBM", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "INTEL03", "name": "INTC", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "IONQ03", "name": "IONQ", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ISRG01", "name": "ISRG", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "JNJ03", "name": "JNJ", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "KLAC23", "name": "KLAC", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "LITE23", "name": "LITE", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "LLY80", "name": "LLY", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "LRCX23", "name": "LRCX", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "LULU06", "name": "LULU", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MELI06", "name": "MELI", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MICRON23", "name": "MU", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MNST06", "name": "MNST", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MP80", "name": "MP", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MPWR23", "name": "MPWR", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "MRVL23", "name": "MRVL", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NBIS03", "name": "NBIS", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NDAQ06", "name": "NDAQ", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NEE80", "name": "NEE", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NEM06", "name": "NEM", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NOW19", "name": "NOW", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "NVTS03", "name": "NVTS", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "OKLO23", "name": "OKLO", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ON23", "name": "ON", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ONON03", "name": "ONON", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "ORCL01", "name": "ORCL", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "PANW80", "name": "PANW", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "PFIZER19", "name": "PFE", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "PLTR06", "name": "PLTR", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "PYPL06", "name": "PYPL", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "QCOM06", "name": "QCOM", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "QQQM19", "name": "QQQM", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "RBLX06", "name": "RBLX", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "RGTI03", "name": "RGTI", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "RKLB03", "name": "RKLB", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SEAGATE23", "name": "STX", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SHOP06", "name": "SHOP", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SMCI03", "name": "SMCI", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SNDK03", "name": "SNDK", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SNOW06", "name": "SNOW", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SOFI23", "name": "SOFI", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SPOT06", "name": "SPOT", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SYM23", "name": "SYM", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "SYNP23", "name": "SYNP", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "TER23", "name": "TER", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "TRVUS06", "name": "TRV", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "TSEMI23", "name": "TSEM", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "TSLA80", "name": "TSLA", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "UBER06", "name": "UBER", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "UNH19", "name": "UNH", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "VRT23", "name": "VRT", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}, {"sym": "WMT06", "name": "WMT", "market": "US", "underlying_tv": null, "fx_tv": null, "ratio": null, "ccy": null, "confirmed": false}];
+  var MASTER_BY_SYM = {};
+  MASTER.forEach(function(r){ MASTER_BY_SYM[r.sym] = r; });
+
+  var LS_ACTIVE = 'dr_monitor_active_v1';
+  var LS_USERINFO = 'dr_monitor_userinfo_v1';
+
+  function loadActive(){
+    var raw = localStorage.getItem(LS_ACTIVE);
+    if(raw){ try { return JSON.parse(raw); } catch(e){} }
+    return MASTER.filter(function(r){ return r.confirmed; }).map(function(r){ return r.sym; });
+  }
+  function saveActive(list){ localStorage.setItem(LS_ACTIVE, JSON.stringify(list)); }
+
+  function loadUserInfo(){
+    var raw = localStorage.getItem(LS_USERINFO);
+    if(raw){ try { return JSON.parse(raw); } catch(e){} }
+    return {};
+  }
+  function saveUserInfo(info){ localStorage.setItem(LS_USERINFO, JSON.stringify(info)); }
+
+  var active = loadActive();
+  var userInfo = loadUserInfo();
+
+  var CCY_FX = {USD:'FX_IDC:USDTHB', HKD:'FX_IDC:HKDTHB', JPY:'FX_IDC:JPYTHB', SGD:'FX_IDC:SGDTHB',
+                EUR:'FX_IDC:EURTHB', DKK:'FX_IDC:DKKTHB', CHF:'FX_IDC:CHFTHB', CNY:'FX_IDC:CNYTHB'};
+
+  function getRowData(sym){
+    var base = MASTER_BY_SYM[sym] || {sym:sym, name:sym, market:'?', confirmed:false};
+    var info = userInfo[sym];
+    if(info){
+      return Object.assign({}, base, info, {confirmed:true, userSupplied:true});
+    }
+    return base;
+  }
+
+  function tvScript(containerId, symbol, theme){
+    return '<scr' + 'ipt type="text/javascript" src="https://s3.tradingview.com/tv.js"></scr' + 'ipt>' +
+      '<scr' + 'ipt type="text/javascript">new TradingView.widget({' +
+      '"autosize":true,"symbol":"' + symbol.replace(/"/g,'\\"') + '","interval":"D",' +
+      '"timezone":"Asia/Bangkok","theme":"' + theme + '","style":"1","locale":"th",' +
+      '"hide_top_toolbar":true,"hide_legend":true,"allow_symbol_change":false,' +
+      '"save_image":false,"container_id":"' + containerId + '"});</scr' + 'ipt>';
+  }
+
+  function currentTheme(){
+    var t = document.documentElement.getAttribute('data-theme');
+    if(t) return t;
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  function fairSymbol(d){
+    return d.underlying_tv + '*' + d.fx_tv + '/' + d.ratio;
+  }
+  function ratioChartUrl(d){
+    var expr = 'SET:' + d.sym + '/(' + d.underlying_tv + '*' + d.fx_tv + '/' + d.ratio + '.0)';
+    return 'https://th.tradingview.com/chart/?symbol=' + encodeURIComponent(expr);
+  }
+
+  function marketBadge(m){ return '<span class="badge market-' + m + '">' + m + '</span>'; }
+
+  function renderRow(sym, idx){
+    var d = getRowData(sym);
+    var theme = currentTheme();
+    var html = '<div class="row-card" data-sym="' + sym + '">';
+    html += '<div class="row-head"><div>';
+    html += '<span class="row-title">' + d.sym + '</span> ';
+    html += marketBadge(d.market || '?');
+    if(d.confirmed && !d.conflict) html += ' <span class="badge ok">ratio ' + d.ratio + (d.userSupplied?' (คุณกรอกเอง)':'') + '</span>';
+    if(d.conflict) html += ' <span class="badge conflict">⚠️ ratio ขัดแย้ง</span>';
+    if(!d.confirmed) html += ' <span class="badge warn">⚠️ ต้องกรอก ratio</span>';
+    html += '<div class="row-sub">' + (d.name || '') + '</div>';
+    html += '</div><div class="row-actions"><button class="btn small remove-btn" data-sym="' + sym + '">✕ เอาออก</button></div></div>';
+
+    if(d.conflict){
+      html += '<div class="conflict-note">' + d.conflict_note + '</div>';
+    }
+
+    if(d.confirmed && !d.conflict){
+      var actualId = 'tv_actual_' + idx;
+      var fairId = 'tv_fair_' + idx;
+      html += '<div class="charts">';
+      html += '<div><p class="chart-label">ราคาจริง (SET:' + d.sym + ')</p><div class="chart-box" id="' + actualId + '"></div></div>';
+      html += '<div><p class="chart-label">Fair Price (' + fairSymbol(d) + ')</p><div class="chart-box" id="' + fairId + '"></div></div>';
+      html += '</div>';
+      html += '<a class="ext-link" target="_blank" rel="noopener" href="' + ratioChartUrl(d) + '">เปิดอัตราส่วน (ราคาจริง / Fair) แบบเต็มที่ TradingView ↗</a>';
+    } else {
+      var soloId = 'tv_solo_' + idx;
+      html += '<div class="charts" style="grid-template-columns:1fr;">';
+      html += '<div><p class="chart-label">ราคาจริง (SET:' + d.sym + ')</p><div class="chart-box" id="' + soloId + '"></div></div>';
+      html += '</div>';
+      html += '<div class="fill-form">';
+      html += '<label>Exchange:Ticker หุ้นแม่<input type="text" class="f-underlying" placeholder="เช่น NASDAQ:AAPL, HKEX:3750"></label>';
+      html += '<label>สกุลเงิน<select class="f-ccy"><option value="">-</option>' + Object.keys(CCY_FX).map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('') + '</select></label>';
+      html += '<label>อัตราแปลงสภาพ (DR ต่อ 1 หุ้นแม่)<input type="number" class="f-ratio" placeholder="เช่น 440" step="any"></label>';
+      html += '<button class="btn primary small save-info-btn" data-sym="' + sym + '">บันทึก</button>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function initWidgets(){
+    active.forEach(function(sym, i){
+      var d = getRowData(sym);
+      var theme = currentTheme();
+      if(d.confirmed && !d.conflict){
+        var actualEl = document.getElementById('tv_actual_' + i);
+        var fairEl = document.getElementById('tv_fair_' + i);
+        if(actualEl) injectWidget(actualEl, 'SET:' + d.sym, theme);
+        if(fairEl) injectWidget(fairEl, fairSymbol(d), theme);
+      } else if(!d.conflict) {
+        var soloEl = document.getElementById('tv_solo_' + i);
+        if(soloEl) injectWidget(soloEl, 'SET:' + d.sym, theme);
+      }
+    });
+  }
+
+  function injectWidget(container, symbol, theme){
+    container.innerHTML = '';
+    var div = document.createElement('div');
+    div.id = container.id + '_inner';
+    div.style.height = '100%';
+    div.style.width = '100%';
+    container.appendChild(div);
+    var s1 = document.createElement('script');
+    s1.src = 'https://s3.tradingview.com/tv.js';
+    s1.onload = function(){
+      /* global TradingView */
+      new TradingView.widget({
+        autosize: true, symbol: symbol, interval: 'D', timezone: 'Asia/Bangkok',
+        theme: theme, style: '1', locale: 'th', hide_top_toolbar: true, hide_legend: true,
+        allow_symbol_change: false, save_image: false, container_id: div.id
+      });
+    };
+    container.appendChild(s1);
+  }
+
+  function renderAll(){
+    var container = document.getElementById('monitor-list');
+    container.innerHTML = active.map(renderRow).join('');
+    initWidgets();
+    document.querySelectorAll('.remove-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var sym = btn.getAttribute('data-sym');
+        active = active.filter(function(s){ return s !== sym; });
+        saveActive(active);
+        renderAll();
+      });
+    });
+    document.querySelectorAll('.save-info-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var sym = btn.getAttribute('data-sym');
+        var card = btn.closest('.row-card');
+        var underlying = card.querySelector('.f-underlying').value.trim();
+        var ccy = card.querySelector('.f-ccy').value;
+        var ratio = parseFloat(card.querySelector('.f-ratio').value);
+        if(!underlying || !ccy || !ratio){
+          alert('กรอกให้ครบ: Exchange:Ticker, สกุลเงิน, ratio');
+          return;
+        }
+        userInfo[sym] = {underlying_tv: underlying, ccy: ccy, fx_tv: CCY_FX[ccy], ratio: ratio};
+        saveUserInfo(userInfo);
+        renderAll();
+      });
+    });
+  }
+
+  function renderBrowse(){
+    var tbody = document.getElementById('browse-tbody');
+    document.getElementById('browse-count').textContent = MASTER.length;
+    tbody.innerHTML = MASTER.map(function(d){
+      var inActive = active.indexOf(d.sym) !== -1;
+      var status = d.confirmed ? '✓ ratio ' + d.ratio : '⚠️ ต้องกรอก ratio';
+      if(d.conflict) status = '⚠️ ratio ขัดแย้ง';
+      return '<tr><td>' + d.sym + '</td><td>' + (d.name||'') + '</td><td>' + (d.market||'?') + '</td><td>' + status + '</td>' +
+        '<td><button class="btn small browse-add-btn" data-sym="' + d.sym + '" ' + (inActive?'disabled':'') + '>' + (inActive?'อยู่ใน monitor แล้ว':'+ เพิ่ม') + '</button></td></tr>';
+    }).join('');
+    document.querySelectorAll('.browse-add-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var sym = btn.getAttribute('data-sym');
+        if(active.indexOf(sym) === -1){
+          active.push(sym);
+          saveActive(active);
+          renderAll();
+          renderBrowse();
+        }
+      });
+    });
+  }
+
+  var datalist = document.getElementById('dr-datalist');
+  datalist.innerHTML = MASTER.map(function(d){ return '<option value="' + d.sym + '">' + d.sym + ' — ' + (d.name||'') + '</option>'; }).join('');
+
+  document.getElementById('add-btn').addEventListener('click', function(){
+    var input = document.getElementById('add-input');
+    var sym = input.value.trim().toUpperCase();
+    if(!sym) return;
+    if(active.indexOf(sym) === -1){ active.push(sym); saveActive(active); }
+    input.value = '';
+    renderAll();
+    renderBrowse();
+  });
+  document.getElementById('add-input').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ document.getElementById('add-btn').click(); }
+  });
+  document.getElementById('browse-btn').addEventListener('click', function(){
+    document.getElementById('browse-panel').classList.toggle('show');
+  });
+  document.getElementById('toggle-theme').addEventListener('click', function(){
+    var root = document.documentElement;
+    var cur = root.getAttribute('data-theme');
+    if(cur === 'dark'){ root.setAttribute('data-theme','light'); }
+    else if(cur === 'light'){ root.removeAttribute('data-theme'); }
+    else { root.setAttribute('data-theme','dark'); }
+    renderAll();
+  });
+
+  renderAll();
+  renderBrowse();
+
+})();
+</script>
+</body>
+</html>
