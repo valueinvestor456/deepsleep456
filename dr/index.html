@@ -54,10 +54,20 @@
   .search-row input[type=text]{flex:1;min-width:260px;}
   .section-title{font-size:15px;font-weight:600;margin:0 0 10px;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
-  th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--grid);}
+  th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap;}
   th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left;}
   th{color:var(--text-secondary);font-weight:600;font-size:12px;}
   td{color:var(--text-primary);font-variant-numeric:tabular-nums;}
+  @media (max-width:640px){
+    body{padding:10px;}
+    .card{padding:12px 14px;}
+    h1{font-size:18px;}
+    .subtitle{font-size:12px;}
+    table{font-size:12px;}
+    th,td{padding:6px 7px;}
+    .group-title{font-size:13px;}
+    .search-row input[type=text]{min-width:0;}
+  }
   .prem-pos{color:var(--critical);font-weight:600;}
   .prem-neg{color:var(--good);font-weight:600;}
   .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
@@ -106,7 +116,7 @@
     <p class="section-title">Top 20 Premium สูงสุด — DR แพงกว่า Fair Price มากที่สุด</p>
     <div style="overflow-x:auto;">
       <table id="top-premium-table">
-        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>ราคาจริง (THB)</th><th>Fair Price (THB)</th><th>Premium</th><th></th></tr></thead>
+        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>จริง</th><th>Fair</th><th>Premium</th><th></th></tr></thead>
         <tbody id="top-premium-tbody"></tbody>
       </table>
     </div>
@@ -116,7 +126,7 @@
     <p class="section-title">Top 20 Discount สูงสุด — DR ถูกกว่า Fair Price มากที่สุด</p>
     <div style="overflow-x:auto;">
       <table id="top-discount-table">
-        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>ราคาจริง (THB)</th><th>Fair Price (THB)</th><th>Discount</th><th></th></tr></thead>
+        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>จริง</th><th>Fair</th><th>Discount</th><th></th></tr></thead>
         <tbody id="top-discount-tbody"></tbody>
       </table>
     </div>
@@ -242,10 +252,9 @@
       var items = groups[key];
       var d0 = items[0];
       var rows = items.map(function(d){
-        return '<tr><td><b>' + d.sym + '</b></td><td>' + (d.ratio_used ? d.ratio_used.toLocaleString() + ' : 1' : 'n/a') + '</td>' +
+        return '<tr><td><b>' + d.sym + '</b></td>' +
           '<td>' + fmt(d.actual_price) + '</td><td>' + fmt(d.fair_price) + '</td>' +
-          '<td class="' + premClass(d.premium_pct) + '">' + premLabel(d.premium_pct) + '</td>' +
-          '<td>' + (d.ratio_confirmed_live === false ? '<span class="badge warn">ratio ปรับแล้ว</span>' : '') + '</td></tr>';
+          '<td class="' + premClass(d.premium_pct) + '">' + premLabel(d.premium_pct) + '</td></tr>';
       }).join('');
       var peStr = '';
       if(d0.pe_ratio !== null && d0.pe_ratio !== undefined || d0.forward_pe !== null && d0.forward_pe !== undefined){
@@ -253,7 +262,7 @@
           ' &middot; Fwd P/E: ' + (d0.forward_pe != null ? d0.forward_pe.toFixed(1) : 'n/a') + '</span>';
       }
       return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span> <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + '</div>' +
-        '<div style="overflow-x:auto;"><table><thead><tr><th>DR ticker</th><th>Ratio</th><th>ราคาจริง (THB)</th><th>Fair Price (THB)</th><th>Premium/Discount</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+        '<div style="overflow-x:auto;"><table><thead><tr><th>DR</th><th>จริง (THB)</th><th>Fair (THB)</th><th>Prem/Disc</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     }).join('');
   }
 
