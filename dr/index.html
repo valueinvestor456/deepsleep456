@@ -69,13 +69,18 @@
     th,td{padding:6px 7px;}
     .group-title{font-size:13px;}
     .search-row input[type=text]{min-width:0;}
-    /* wide leaderboard tables collapse into stacked cards instead of scrolling */
+    /* wide leaderboard tables collapse into compact 2-column card grids instead of scrolling */
     .table-scroll{overflow-x:visible;}
     .stack-mobile thead{display:none;}
-    .stack-mobile, .stack-mobile tbody, .stack-mobile tr, .stack-mobile td{display:block;width:auto;max-width:100%;}
-    .stack-mobile tr{border:1px solid var(--border);border-radius:10px;margin-bottom:10px;padding:8px 10px;overflow:hidden;}
-    .stack-mobile td{border-bottom:none;padding:3px 0;white-space:normal;text-align:left;overflow-wrap:anywhere;}
-    .stack-mobile .mobile-label{display:inline;color:var(--text-muted);font-weight:600;margin-right:6px;}
+    .stack-mobile, .stack-mobile tbody{display:block;width:auto;max-width:100%;}
+    .stack-mobile tr{
+      display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;align-items:baseline;
+      border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:8px 10px;overflow:hidden;
+    }
+    .stack-mobile td{border-bottom:none;padding:2px 0;white-space:normal;text-align:left;overflow-wrap:anywhere;font-size:12.5px;}
+    .stack-mobile td:nth-child(1){grid-column:1 / -1;font-size:14px;font-weight:600;}
+    .stack-mobile td:nth-child(8){grid-column:1 / -1;margin-top:4px;}
+    .stack-mobile .mobile-label{display:inline;color:var(--text-muted);font-weight:600;margin-right:4px;}
   }
   .prem-pos{color:var(--critical);font-weight:600;}
   .prem-neg{color:var(--good);font-weight:600;}
