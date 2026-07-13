@@ -1,0 +1,39 @@
+name: Telegram DR bot fallback (PC-off mode)
+
+# Answers /dr queries via Telegram even when the main PC (running the full
+# telegram-bot/bridge.py in the "investment with ai" project) is off. Only
+# handles /dr -- everything else needs the full project + Claude CLI.
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # every 5 min; Telegram getUpdates offset makes this safe to overlap with the PC bot
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  poll:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: python scripts/telegram_dr_bot.py
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+      - name: Commit offset if changed
+        run: |
+          if git diff --quiet -- scripts/telegram_dr_bot_state.json; then
+            echo "offset unchanged, skipping commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add scripts/telegram_dr_bot_state.json
+          git commit -m "Telegram DR bot: advance offset [skip ci]"
+          git push
