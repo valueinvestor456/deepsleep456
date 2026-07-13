@@ -203,9 +203,20 @@
 
   var TV_EXCH_TO_SA = {HKEX:'hkg', TSE:'tyo', SGX:'sgx', EURONEXT:'epa', SIX:'swx', SSE:'sha', SZSE:'she'};
 
+  // Per-DR manual override for a fundamental link, for cases stockanalysis.com/
+  // Vietstock don't cover well (e.g. an ETF whose own fund manager page is the
+  // best source). Add more here as they come up.
+  var FUNDAMENTAL_OVERRIDE = {
+    'FUEVFVND01': 'https://www.dragoncapital.com.vn/individual/vi/product/a0eJ2000001XA0ZIAW/vndiamond#overview'
+  };
+
   function fundamentalUrl(d){
+    if(FUNDAMENTAL_OVERRIDE[d.sym]) return FUNDAMENTAL_OVERRIDE[d.sym];
     if(d.market === 'US'){
       return 'https://stockanalysis.com/stocks/' + encodeURIComponent(d.yahoo_u.toLowerCase()) + '/';
+    }
+    if(d.yahoo_u && d.yahoo_u.endsWith('.VN')){
+      return 'https://finance.vietstock.vn/' + encodeURIComponent(d.yahoo_u.slice(0, -3)) + '-x.htm';
     }
     if(d.underlying_tv && d.underlying_tv.indexOf(':') !== -1){
       var parts = d.underlying_tv.split(':');
@@ -229,8 +240,14 @@
   }
 
   function chartButton(d){
-    if(!d.underlying_tv) return '';
-    var url = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(d.underlying_tv);
+    // Link to the DR's own TradingView symbol (SET:<sym>) rather than an
+    // underlying-formula chart -- TradingView lists Thai DRs directly
+    // (confirmed e.g. SET:CATL01, SET:FUEVFVND01), and this works uniformly
+    // regardless of whether underlying_tv could be resolved for the mother
+    // stock's exchange (many new markets added 2026-07-13 -- Vietnam,
+    // Taiwan, Xetra, LSE -- aren't in TV_EXCH_TO_SA, so relying on
+    // underlying_tv left those with no chart link at all).
+    var url = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent('SET:' + d.sym);
     return '<a class="btn small" target="_blank" rel="noopener" href="' + url + '">📈 กราฟ</a>';
   }
 
