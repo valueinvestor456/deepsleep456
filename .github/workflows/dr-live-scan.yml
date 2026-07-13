@@ -1,0 +1,42 @@
+name: DR live scan (SET trading hours)
+
+# Continuously rescans all DR tickers and republishes dr/index.html +
+# dr/dr-data.json while the Thai market is open, instead of relying on a
+# stale manual scan. See scripts/dr_scan/scan_and_publish.py for the loop
+# logic (concurrent scanning + market-hours awareness + publish-per-cycle).
+#
+# Two triggers cover the ~6.5h SET session (a single job caps at 6h):
+#   09:58 ICT (02:58 UTC) -- covers market open through ~15:58 ICT
+#   15:30 ICT (08:30 UTC) -- top-up run for the last half hour, queues
+#                            behind the first job via the concurrency group
+#                            if it's somehow still running
+on:
+  schedule:
+    - cron: "58 2 * * 1-5"
+    - cron: "30 8 * * 1-5"
+  workflow_dispatch:
+
+concurrency:
+  group: dr-live-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - run: python scripts/dr_scan/scan_and_publish.py

@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>DR Fair Price Monitor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#c9972c; --series-3:#a09d94;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --card-radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --series-2:#d9ab45; --series-3:#6f6d66;
+    }
+  }
+  :root[data-theme="dark"]{
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-2:#d9ab45; --series-3:#6f6d66;
+  }
+  :root[data-theme="light"]{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#c9972c; --series-3:#a09d94;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px;line-height:1.5;overflow-x:hidden;}
+  .wrap{max-width:1200px;margin:0 auto;}
+  header.page{margin-bottom:20px;}
+  h1{font-size:22px;margin:0 0 4px;}
+  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 2px;}
+  .meta{color:var(--text-muted);font-size:12px;}
+  .card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--card-radius);padding:18px 20px;margin-bottom:16px;}
+  .alert{background:var(--surface-1);border:1px solid var(--border);border-left:4px solid var(--warning);border-radius:var(--card-radius);padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;}
+  .alert .icon{font-size:20px;line-height:1;}
+  .alert .title{font-weight:600;font-size:14px;margin-bottom:4px;}
+  .alert .body{font-size:13px;color:var(--text-secondary);}
+  .btn{background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary);font-size:13px;padding:8px 14px;border-radius:8px;cursor:pointer;display:inline-block;text-decoration:none;}
+  .btn:hover{color:var(--text-primary);}
+  .btn.primary{background:var(--series-1);color:#fff;border-color:var(--series-1);}
+  input[type=text]{background:var(--page);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);padding:10px 12px;font-size:14px;}
+  .search-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .search-row input[type=text]{flex:1;min-width:260px;}
+  .section-title{font-size:15px;font-weight:600;margin:0 0 10px;}
+  .table-scroll{overflow-x:auto;}
+  .mobile-label{display:none;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap;}
+  th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left;}
+  th{color:var(--text-secondary);font-weight:600;font-size:12px;}
+  td{color:var(--text-primary);font-variant-numeric:tabular-nums;}
+  @media (max-width:640px){
+    body{padding:10px;}
+    .card{padding:12px 14px;}
+    h1{font-size:18px;}
+    .subtitle{font-size:12px;}
+    table{font-size:12px;}
+    th,td{padding:6px 7px;}
+    .group-title{font-size:13px;}
+    .search-row input[type=text]{min-width:0;}
+    /* wide leaderboard tables collapse into compact 2-column card grids instead of scrolling */
+    .table-scroll{overflow-x:visible;}
+    .stack-mobile thead{display:none;}
+    .stack-mobile, .stack-mobile tbody{display:block;width:auto;max-width:100%;}
+    .stack-mobile tr{
+      display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;align-items:baseline;
+      border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:8px 10px;overflow:hidden;
+    }
+    .stack-mobile td{border-bottom:none;padding:2px 0;white-space:normal;text-align:left;overflow-wrap:anywhere;font-size:12.5px;}
+    .stack-mobile td:nth-child(1){grid-column:1 / -1;font-size:14px;font-weight:600;}
+    .stack-mobile td:nth-child(8){grid-column:1 / -1;margin-top:4px;}
+    .stack-mobile .mobile-label{display:inline;color:var(--text-muted);font-weight:600;margin-right:4px;}
+  }
+  .prem-pos{color:var(--critical);font-weight:600;}
+  .prem-neg{color:var(--good);font-weight:600;}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .badge.market-US{background:rgba(42,120,214,0.15);color:var(--series-1);}
+  .badge.market-HK{background:rgba(201,151,44,0.15);color:var(--series-2);}
+  .badge.market-JP,.badge.market-SG,.badge.market-EU{background:rgba(160,157,148,0.2);color:var(--text-secondary);}
+  .badge.warn{background:rgba(250,178,25,0.15);color:#a06d00;}
+  .group-title{font-size:14px;font-weight:600;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+  .group-title .u-price{font-weight:400;color:var(--text-muted);font-size:12px;}
+  .dr-row-link{color:var(--series-1);text-decoration:none;font-weight:600;}
+  .dr-row-link:hover{text-decoration:underline;}
+  .stop-box{border:1px solid var(--border);border-left:4px solid var(--warning);border-radius:var(--card-radius);padding:14px 18px;background:var(--surface-1);}
+  .stop-box .title{font-weight:600;font-size:13px;margin-bottom:6px;}
+  .stop-box ul{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--text-secondary);}
+  footer{font-size:11px;color:var(--text-muted);margin-top:24px;text-align:center;}
+  .hidden{display:none !important;}
+  .no-match{color:var(--text-muted);font-size:13px;padding:20px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>DR Fair Price Monitor — เทียบราคาจริง vs Fair Price (Arbitrage)</h1>
+    <p class="subtitle">Fair Price = ราคาหุ้นแม่ &times; อัตราแลกเปลี่ยน &divide; อัตราแปลงสภาพ (ratio) — ดึงราคาจริง+ratio สดจาก SET, ราคาหุ้นแม่/FX จาก Yahoo Finance</p>
+    <p class="meta" id="meta-line">อัปเดต: <span id="scan-time"></span> <button class="btn small" id="toggle-theme" style="margin-left:8px;">สลับโหมดสี</button></p>
+  </header>
+
+  <div class="alert">
+    <div class="icon">⚠️</div>
+    <div>
+      <div class="title">ข้อมูลเป็น snapshot ไม่ใช่ real-time</div>
+      <div class="body">ราคาและ ratio ดึงจาก SET (ราคาปิดล่าสุด) + ราคาหุ้นแม่/FX จาก Yahoo Finance ณ เวลาที่ scan — ต้องเทียบกับราคาจริงในกระดานอีกครั้งก่อนตัดสินใจซื้อขายจริงเสมอ ครอบคลุม 334 DR จาก 462 DR ทั้งหมดที่มีบน SET (รายชื่อทั้งหมดดึงจาก filter dropdown ของหน้า marketdata เอง) — เหลือ ~129 ตัวที่หา mapping หุ้นแม่ไม่ได้ ส่วนใหญ่เป็นหุ้นญี่ปุ่น/เวียดนาม/ETF ที่ต้องมี exchange code ที่แน่นอน ไม่อยากเดา</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">ค้นหาตามหุ้นอ้างอิง หรือ DR ticker</p>
+    <div class="search-row">
+      <input type="text" id="search-input" placeholder="พิมพ์ชื่อหุ้นแม่ (เช่น Apple, CATL) หรือ DR ticker (เช่น CATL01)">
+      <button class="btn" id="clear-search">ล้างการค้นหา</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Top 20 Premium สูงสุด — DR แพงกว่า Fair Price มากที่สุด</p>
+    <div class="table-scroll">
+      <table id="top-premium-table" class="stack-mobile">
+        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>จริง</th><th>Fair</th><th>Premium</th><th></th></tr></thead>
+        <tbody id="top-premium-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Top 20 Discount สูงสุด — DR ถูกกว่า Fair Price มากที่สุด</p>
+    <div class="table-scroll">
+      <table id="top-discount-table" class="stack-mobile">
+        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>จริง</th><th>Fair</th><th>Discount</th><th></th></tr></thead>
+        <tbody id="top-discount-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">ทั้งหมด (จัดกลุ่มตามหุ้นแม่)</p>
+    <div id="grouped-list"></div>
+    <div class="no-match hidden" id="no-match-msg">ไม่พบ DR หรือหุ้นแม่ที่ตรงกับคำค้นหา — อาจยังไม่ได้ scan ไว้ในระบบ</div>
+  </div>
+
+  <div class="card stop-box">
+    <div class="title">🛑 STOP — จุดตรวจสอบก่อนเชื่อ</div>
+    <ul>
+      <li><b>Ratio ทุกตัวดึงสดจาก SET</b> (`exerciseRatio` ในหน้า factsheet ของแต่ละ DR) ไม่เคยใช้ค่าที่เก็บไว้เก่าเลย — ระหว่างพัฒนาเวอร์ชันแรก (39 DR) พบว่าไฟล์เก่าของโปรเจกต์ (raw/dr/) มี ratio ผิด/ล้าสมัยถึง 7 ตัว (เช่น CRWD80: เก่า 4,000 จริง 250 — ถ้าใช้ค่าเก่าจะได้ Premium ผิดเป็น +1500% แทนที่จะเป็น +0.15% จริง) จึงยึดหลักไม่เชื่อไฟล์เก็บไว้แบบ static เด็ดขาด</li>
+      <li>ราคาหุ้นแม่และอัตราแลกเปลี่ยนมาจาก Yahoo Finance chart API (public, ไม่ใช้ API key) — อาจมี delay 15-20 นาทีสำหรับบางตลาด</li>
+      <li>ราคา DR จาก SET เป็นราคาปิดล่าสุด (`marketDateTime` ต่อแถว) ไม่ใช่ real-time ระหว่างเวลาทำการ</li>
+      <li><b>รายชื่อ DR ทั้งหมด (462 ตัว) มาจาก filter dropdown ของหน้า set.or.th/.../dr/marketdata เอง</b> — ยืนยันแล้วว่าครบทุก issuer variant จริง (เช่น MSFT01/03/06/19/23/80 ทั้ง 6 ตัว, MICRON01/03/19/23/80 ทั้ง 5 ตัว) ไม่ใช่ list ที่กรองเฉพาะบาง issuer — จาก 462 ตัว resolve mapping หุ้นแม่ได้ 334 ตัว เหลือ 129 ตัวที่ไม่รวมเพราะไม่มี exchange code ที่แน่นอน (ส่วนใหญ่เป็นหุ้นญี่ปุ่น/เวียดนาม และ ETF/index) — ไม่รวมเพราะไม่อยากเดา ticker ผิด ไม่ใช่เพราะไม่มีอยู่จริง</li>
+      <li>3 ตัว (ADVANT23, NESTLE80, SYNP23) มี Yahoo ticker แต่ดึงราคาไม่สำเร็จระหว่าง scan — แสดงราคาจริงได้แต่ไม่มี Fair Price</li>
+      <li>หน้านี้เป็น static snapshot (ไม่ auto-refresh) — ต้องขอให้ scan ใหม่ (`.tools/scan_dr.py`) เพื่ออัปเดตราคา</li>
+      <li>Premium/Discount ที่เห็นเป็นตัวเลขดิบ ยังไม่หักค่าธรรมเนียมซื้อขาย/สเปรด/ภาษี — ต้องคำนวณต้นทุนจริงเพิ่มก่อนตัดสินใจ arbitrage</li>
+    </ul>
+  </div>
+
+  <footer>สร้างโดย Claude Code จากข้อมูลใน LLM Wiki ของโปรเจกต์ "investment with ai" — ไม่ใช่คำแนะนำการลงทุน ตรวจสอบราคาจริงกับต้นทางก่อนตัดสินใจเสมอ</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var DATA = __DATA_JSON__;
+
+  var latestScan = null;
+  DATA.forEach(function(d){
+    if(d.set_market_datetime && (!latestScan || d.set_market_datetime > latestScan)) latestScan = d.set_market_datetime;
+  });
+  document.getElementById('scan-time').textContent = latestScan ? latestScan.replace('T',' ').split('.')[0] : 'ไม่ทราบ';
+
+  function fmt(n, dec){
+    if(n === null || n === undefined) return 'n/a';
+    return n.toLocaleString('en-US', {minimumFractionDigits: dec||2, maximumFractionDigits: dec||2});
+  }
+  function premClass(p){ return p > 0 ? 'prem-pos' : (p < 0 ? 'prem-neg' : ''); }
+  function premLabel(p){
+    if(p === null || p === undefined) return 'n/a';
+    var sign = p > 0 ? '+' : '';
+    return sign + p.toFixed(2) + '%' + (p > 0 ? ' (premium)' : (p < 0 ? ' (discount)' : ''));
+  }
+
+  function rowMatchesQuery(d, q){
+    if(!q) return true;
+    q = q.toLowerCase();
+    return (d.sym||'').toLowerCase().includes(q) || (d.name||'').toLowerCase().includes(q) || (d.yahoo_u||'').toLowerCase().includes(q);
+  }
+
+  function underlyingPriceStr(d){
+    if(d.underlying_price === null || d.underlying_price === undefined) return 'n/a';
+    return d.underlying_price.toLocaleString('en-US',{maximumFractionDigits:2}) + ' ' + (d.ccy||'');
+  }
+
+  var TV_EXCH_TO_SA = {HKEX:'hkg', TSE:'tyo', SGX:'sgx', EURONEXT:'epa', SIX:'swx', SSE:'sha', SZSE:'she'};
+
+  function fundamentalUrl(d){
+    if(d.market === 'US'){
+      return 'https://stockanalysis.com/stocks/' + encodeURIComponent(d.yahoo_u.toLowerCase()) + '/';
+    }
+    if(d.underlying_tv && d.underlying_tv.indexOf(':') !== -1){
+      var parts = d.underlying_tv.split(':');
+      var saExch = TV_EXCH_TO_SA[parts[0]];
+      if(saExch) return 'https://stockanalysis.com/quote/' + saExch + '/' + encodeURIComponent(parts[1].toLowerCase()) + '/';
+    }
+    return null;
+  }
+
+  function underlyingLabel(d){
+    var text = escapeHtml(d.name) + ' (' + escapeHtml(d.yahoo_u) + ')';
+    var url = fundamentalUrl(d);
+    if(url){
+      return '<a href="' + url + '" target="_blank" rel="noopener">' + text + '</a>';
+    }
+    return text;
+  }
+
+  function escapeHtml(s){
+    return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function chartButton(d){
+    if(!d.underlying_tv) return '';
+    var url = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(d.underlying_tv);
+    return '<a class="btn small" target="_blank" rel="noopener" href="' + url + '">📈 กราฟ</a>';
+  }
+
+  function fundamentalNameLink(d){
+    var text = escapeHtml(d.name);
+    var url = fundamentalUrl(d);
+    if(url) return '<a href="' + url + '" target="_blank" rel="noopener">' + text + '</a>';
+    return text;
+  }
+
+  function mlabel(text){ return '<span class="mobile-label">' + text + '</span>'; }
+
+  function renderTopTable(tbodyId, rows, colClass, premLabel2){
+    var tbody = document.getElementById(tbodyId);
+    tbody.innerHTML = rows.map(function(d){
+      return '<tr><td><b>' + d.sym + '</b></td><td>' + mlabel('หุ้นแม่:') + fundamentalNameLink(d) + '</td><td>' + mlabel('ราคาหุ้นแม่:') + underlyingPriceStr(d) + '</td>' +
+        '<td>' + mlabel('ตลาด:') + '<span class="badge market-' + d.market + '">' + d.market + '</span></td>' +
+        '<td>' + mlabel('ราคาจริง:') + fmt(d.actual_price) + '</td><td>' + mlabel('Fair:') + fmt(d.fair_price) + '</td>' +
+        '<td class="' + colClass + '">' + mlabel(premLabel2 + ':') + (d.premium_pct > 0 ? '+' : '') + d.premium_pct.toFixed(2) + '%</td>' +
+        '<td>' + chartButton(d) + '</td></tr>';
+    }).join('') || '<tr><td colspan="8" class="no-match">ไม่มีข้อมูล</td></tr>';
+  }
+
+  function renderTopPremium(filtered){
+    var rows = filtered.filter(function(d){ return d.premium_pct > 0; });
+    rows.sort(function(a,b){ return b.premium_pct - a.premium_pct; });
+    renderTopTable('top-premium-tbody', rows.slice(0, 20), 'prem-pos', 'Premium');
+  }
+
+  function renderTopDiscount(filtered){
+    var rows = filtered.filter(function(d){ return d.premium_pct < 0; });
+    rows.sort(function(a,b){ return a.premium_pct - b.premium_pct; });
+    renderTopTable('top-discount-tbody', rows.slice(0, 20), 'prem-neg', 'Discount');
+  }
+
+  function renderGrouped(filtered){
+    var groups = {};
+    filtered.forEach(function(d){
+      var key = d.yahoo_u + '|' + d.name;
+      if(!groups[key]) groups[key] = [];
+      groups[key].push(d);
+    });
+    var container = document.getElementById('grouped-list');
+    var keys = Object.keys(groups).sort(function(a,b){ return groups[b].length - groups[a].length; });
+    document.getElementById('no-match-msg').classList.toggle('hidden', keys.length > 0);
+    container.innerHTML = keys.map(function(key){
+      var items = groups[key];
+      var d0 = items[0];
+      var rows = items.map(function(d){
+        return '<tr><td><b>' + d.sym + '</b></td>' +
+          '<td>' + fmt(d.actual_price) + '</td><td>' + fmt(d.fair_price) + '</td>' +
+          '<td class="' + premClass(d.premium_pct) + '">' + premLabel(d.premium_pct) + '</td></tr>';
+      }).join('');
+      var peStr = '';
+      if(d0.pe_ratio !== null && d0.pe_ratio !== undefined || d0.forward_pe !== null && d0.forward_pe !== undefined){
+        peStr = ' <span class="u-price">P/E: ' + (d0.pe_ratio != null ? d0.pe_ratio.toFixed(1) : 'n/a') +
+          ' &middot; Fwd P/E: ' + (d0.forward_pe != null ? d0.forward_pe.toFixed(1) : 'n/a') + '</span>';
+      }
+      return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span> <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + '</div>' +
+        '<div style="overflow-x:auto;"><table><thead><tr><th>DR</th><th>จริง (THB)</th><th>Fair (THB)</th><th>Prem/Disc</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    }).join('');
+  }
+
+  function renderAll(){
+    var q = document.getElementById('search-input').value.trim();
+    var filtered = DATA.filter(function(d){ return rowMatchesQuery(d, q); });
+    renderTopPremium(filtered);
+    renderTopDiscount(filtered);
+    renderGrouped(filtered);
+  }
+
+  document.getElementById('search-input').addEventListener('input', renderAll);
+  document.getElementById('clear-search').addEventListener('click', function(){
+    document.getElementById('search-input').value = '';
+    renderAll();
+  });
+  document.getElementById('toggle-theme').addEventListener('click', function(){
+    var root = document.documentElement;
+    var cur = root.getAttribute('data-theme');
+    if(cur === 'dark'){ root.setAttribute('data-theme','light'); }
+    else if(cur === 'light'){ root.removeAttribute('data-theme'); }
+    else { root.setAttribute('data-theme','dark'); }
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
