@@ -54,7 +54,6 @@
   .search-row input[type=text]{flex:1;min-width:260px;}
   .section-title{font-size:15px;font-weight:600;margin:0 0 10px;}
   .table-scroll{overflow-x:auto;}
-  .mobile-label{display:none;}
   table{width:100%;border-collapse:collapse;font-size:13px;}
   th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--grid);white-space:nowrap;}
   th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left;}
@@ -69,18 +68,6 @@
     th,td{padding:6px 7px;}
     .group-title{font-size:13px;}
     .search-row input[type=text]{min-width:0;}
-    /* wide leaderboard tables collapse into compact 2-column card grids instead of scrolling */
-    .table-scroll{overflow-x:visible;}
-    .stack-mobile thead{display:none;}
-    .stack-mobile, .stack-mobile tbody{display:block;width:auto;max-width:100%;}
-    .stack-mobile tr{
-      display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;align-items:baseline;
-      border:1px solid var(--border);border-radius:10px;margin-bottom:8px;padding:8px 10px;overflow:hidden;
-    }
-    .stack-mobile td{border-bottom:none;padding:2px 0;white-space:normal;text-align:left;overflow-wrap:anywhere;font-size:12.5px;}
-    .stack-mobile td:nth-child(1){grid-column:1 / -1;font-size:14px;font-weight:600;}
-    .stack-mobile td:nth-child(8){grid-column:1 / -1;margin-top:4px;}
-    .stack-mobile .mobile-label{display:inline;color:var(--text-muted);font-weight:600;margin-right:4px;}
   }
   .prem-pos{color:var(--critical);font-weight:600;}
   .prem-neg{color:var(--good);font-weight:600;}
@@ -128,22 +115,12 @@
 
   <div class="card">
     <p class="section-title">Top 20 Premium สูงสุด — DR แพงกว่า Fair Price มากที่สุด</p>
-    <div class="table-scroll">
-      <table id="top-premium-table" class="stack-mobile">
-        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>จริง</th><th>Fair</th><th>Premium</th><th></th></tr></thead>
-        <tbody id="top-premium-tbody"></tbody>
-      </table>
-    </div>
+    <div id="top-premium-list"></div>
   </div>
 
   <div class="card">
     <p class="section-title">Top 20 Discount สูงสุด — DR ถูกกว่า Fair Price มากที่สุด</p>
-    <div class="table-scroll">
-      <table id="top-discount-table" class="stack-mobile">
-        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>จริง</th><th>Fair</th><th>Discount</th><th></th></tr></thead>
-        <tbody id="top-discount-tbody"></tbody>
-      </table>
-    </div>
+    <div id="top-discount-list"></div>
   </div>
 
   <div class="card">
@@ -234,36 +211,37 @@
     return '<a class="btn small" target="_blank" rel="noopener" href="' + url + '">📈 กราฟ</a>';
   }
 
-  function fundamentalNameLink(d){
-    var text = escapeHtml(d.name);
-    var url = fundamentalUrl(d);
-    if(url) return '<a href="' + url + '" target="_blank" rel="noopener">' + text + '</a>';
-    return text;
+  function renderGroupBlock(items){
+    var d0 = items[0];
+    var rows = items.map(function(d){
+      return '<tr><td><b>' + d.sym + '</b></td>' +
+        '<td>' + fmt(d.actual_price) + '</td><td>' + fmt(d.fair_price) + '</td>' +
+        '<td class="' + premClass(d.premium_pct) + '">' + premLabel(d.premium_pct) + '</td></tr>';
+    }).join('');
+    var peStr = '';
+    if(d0.pe_ratio !== null && d0.pe_ratio !== undefined || d0.forward_pe !== null && d0.forward_pe !== undefined){
+      peStr = ' <span class="u-price">P/E: ' + (d0.pe_ratio != null ? d0.pe_ratio.toFixed(1) : 'n/a') +
+        ' &middot; Fwd P/E: ' + (d0.forward_pe != null ? d0.forward_pe.toFixed(1) : 'n/a') + '</span>';
+    }
+    return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span> <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + '</div>' +
+      '<div class="table-scroll"><table><thead><tr><th>DR</th><th>จริง (THB)</th><th>Fair (THB)</th><th>Prem/Disc</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
-  function mlabel(text){ return '<span class="mobile-label">' + text + '</span>'; }
-
-  function renderTopTable(tbodyId, rows, colClass, premLabel2){
-    var tbody = document.getElementById(tbodyId);
-    tbody.innerHTML = rows.map(function(d){
-      return '<tr><td><b>' + d.sym + '</b></td><td>' + mlabel('หุ้นแม่:') + fundamentalNameLink(d) + '</td><td>' + mlabel('ราคาหุ้นแม่:') + underlyingPriceStr(d) + '</td>' +
-        '<td>' + mlabel('ตลาด:') + '<span class="badge market-' + d.market + '">' + d.market + '</span></td>' +
-        '<td>' + mlabel('ราคาจริง:') + fmt(d.actual_price) + '</td><td>' + mlabel('Fair:') + fmt(d.fair_price) + '</td>' +
-        '<td class="' + colClass + '">' + mlabel(premLabel2 + ':') + (d.premium_pct > 0 ? '+' : '') + d.premium_pct.toFixed(2) + '%</td>' +
-        '<td>' + chartButton(d) + '</td></tr>';
-    }).join('') || '<tr><td colspan="8" class="no-match">ไม่มีข้อมูล</td></tr>';
+  function renderTopList(containerId, rows){
+    var container = document.getElementById(containerId);
+    container.innerHTML = rows.map(function(d){ return renderGroupBlock([d]); }).join('') || '<p class="no-match">ไม่มีข้อมูล</p>';
   }
 
   function renderTopPremium(filtered){
     var rows = filtered.filter(function(d){ return d.premium_pct > 0; });
     rows.sort(function(a,b){ return b.premium_pct - a.premium_pct; });
-    renderTopTable('top-premium-tbody', rows.slice(0, 20), 'prem-pos', 'Premium');
+    renderTopList('top-premium-list', rows.slice(0, 20));
   }
 
   function renderTopDiscount(filtered){
     var rows = filtered.filter(function(d){ return d.premium_pct < 0; });
     rows.sort(function(a,b){ return a.premium_pct - b.premium_pct; });
-    renderTopTable('top-discount-tbody', rows.slice(0, 20), 'prem-neg', 'Discount');
+    renderTopList('top-discount-list', rows.slice(0, 20));
   }
 
   function renderGrouped(filtered){
@@ -276,22 +254,7 @@
     var container = document.getElementById('grouped-list');
     var keys = Object.keys(groups).sort(function(a,b){ return groups[b].length - groups[a].length; });
     document.getElementById('no-match-msg').classList.toggle('hidden', keys.length > 0);
-    container.innerHTML = keys.map(function(key){
-      var items = groups[key];
-      var d0 = items[0];
-      var rows = items.map(function(d){
-        return '<tr><td><b>' + d.sym + '</b></td>' +
-          '<td>' + fmt(d.actual_price) + '</td><td>' + fmt(d.fair_price) + '</td>' +
-          '<td class="' + premClass(d.premium_pct) + '">' + premLabel(d.premium_pct) + '</td></tr>';
-      }).join('');
-      var peStr = '';
-      if(d0.pe_ratio !== null && d0.pe_ratio !== undefined || d0.forward_pe !== null && d0.forward_pe !== undefined){
-        peStr = ' <span class="u-price">P/E: ' + (d0.pe_ratio != null ? d0.pe_ratio.toFixed(1) : 'n/a') +
-          ' &middot; Fwd P/E: ' + (d0.forward_pe != null ? d0.forward_pe.toFixed(1) : 'n/a') + '</span>';
-      }
-      return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span> <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + '</div>' +
-        '<div style="overflow-x:auto;"><table><thead><tr><th>DR</th><th>จริง (THB)</th><th>Fair (THB)</th><th>Prem/Disc</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-    }).join('');
+    container.innerHTML = keys.map(function(key){ return renderGroupBlock(groups[key]); }).join('');
   }
 
   function renderAll(){
