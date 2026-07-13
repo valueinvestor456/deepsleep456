@@ -274,7 +274,13 @@
       groups[key].push(d);
     });
     var container = document.getElementById('grouped-list');
-    var keys = Object.keys(groups).sort(function(a,b){ return groups[b].length - groups[a].length; });
+    var keys = Object.keys(groups).sort(function(a,b){
+      var fa = groups[a][0].forward_pe, fb = groups[b][0].forward_pe;
+      if(fa == null && fb == null) return 0;
+      if(fa == null) return 1;
+      if(fb == null) return -1;
+      return fa - fb;
+    });
     document.getElementById('no-match-msg').classList.toggle('hidden', keys.length > 0);
     container.innerHTML = keys.map(function(key){
       var items = groups[key];
