@@ -97,12 +97,31 @@ def get_yahoo_price(ticker):
 TV_EXCH_TO_SA = {'HKEX': 'hkg', 'TSE': 'tyo', 'SGX': 'sgx', 'EURONEXT': 'epa', 'SIX': 'swx', 'SSE': 'sha', 'SZSE': 'she'}
 
 
+def get_pe_vietstock(vn_ticker):
+    """Vietstock (finance.vietstock.vn/<TICKER>-x.htm -- slug suffix after
+    the ticker is ignored server-side) embeds a JSON blob with a "PE" field
+    (trailing P/E, confirmed against known values for FPT/GAS/HPG/MSN/MWG/
+    VCB/VHM/VNM). There's also an "FEPS" field that could numerically be a
+    forward P/E but nothing on the page confirms its meaning -- not
+    trusted, left as None. stockanalysis.com has no Vietnam/HOSE coverage."""
+    try:
+        html_text = fetch(f"https://finance.vietstock.vn/{vn_ticker}-x.htm")
+        m = re.search(r'"PE":"([\d.\-]*)"', html_text)
+        if m and m.group(1):
+            return float(m.group(1)), None
+    except Exception:
+        pass
+    return None, None
+
+
 def get_pe_ratios(yahoo_ticker, underlying_tv=None):
     """Non-US markets use /quote/<exchange-code>/<raw-ticker>/; everything
     else (US, or an exchange TV_EXCH_TO_SA doesn't cover) falls back to
     /stocks/<yahoo-ticker>/ -- must be `if not url`, not `else`, since the
     underlying_tv branch can run and still fail to produce a url (exchange
     not in the map) without the string itself being colon-less."""
+    if yahoo_ticker.endswith('.VN'):
+        return get_pe_vietstock(yahoo_ticker[:-3])
     url = None
     if underlying_tv and ':' in underlying_tv:
         tv_exch, raw_ticker = underlying_tv.split(':', 1)
