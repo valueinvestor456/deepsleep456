@@ -80,6 +80,21 @@ def save_offset(offset):
         json.dump({"offset": offset}, f)
 
 
+TV_EXCH_TO_SA = {"HKEX": "hkg", "TSE": "tyo", "SGX": "sgx", "EURONEXT": "epa", "SIX": "swx", "SSE": "sha", "SZSE": "she"}
+
+
+def fundamental_url(d):
+    if d.get("market") == "US":
+        return f"https://stockanalysis.com/stocks/{d['yahoo_u'].lower()}/"
+    tv = d.get("underlying_tv") or ""
+    if ":" in tv:
+        exch, ticker = tv.split(":", 1)
+        sa = TV_EXCH_TO_SA.get(exch)
+        if sa:
+            return f"https://stockanalysis.com/quote/{sa}/{ticker.lower()}/"
+    return None
+
+
 def cmd_dr(arg):
     if not arg:
         return "ใช้แบบ: /dr คำค้นหา เช่น /dr msft หรือ /dr CATL01"
@@ -127,8 +142,8 @@ def cmd_dr(arg):
         price_line = f"{u_price:,.2f} {ccy}" if u_price is not None else "n/a"
         name_esc = html.escape(d0.get('name', ''))
         key_esc = html.escape(key)
-        if d0.get("market") == "US":
-            fa_url = f"https://stockanalysis.com/stocks/{key.lower()}/"
+        fa_url = fundamental_url(d0)
+        if fa_url:
             label = f'<a href="{fa_url}">{name_esc} ({key_esc})</a>'
         else:
             label = f"{name_esc} ({key_esc})"
