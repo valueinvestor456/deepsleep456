@@ -2,14 +2,26 @@
 """
 Always-on fallback for the DR /dr command, for when the full Telegram bridge
 (telegram-bot/bridge.py in the "investment with ai" project) isn't running
-because the PC is off. Runs as a GitHub Actions cron job every 5 minutes --
-NOT a long-poll loop, one check-and-exit per invocation.
+because the PC is off.
+
+Runs as a genuine long-poll loop (getUpdates with a 25s timeout, replies
+arrive within ~1-2s of being sent) inside a single GitHub Actions job, not
+a brief check-and-exit -- hosted runners cap a job at 6h, so this exits
+cleanly at 5.5h and the workflow's cron schedule + concurrency group starts
+the next run to pick the loop back up, seamlessly. Offset is committed back
+to the repo immediately after every reply, not just at exit, so a killed
+run never re-answers a message it already handled.
 
 Only handles /dr <keyword>. Everything else (/ingest, /dashboard, /query,
 /publish) needs the full project and Claude CLI, which don't exist on this
 runner, so those get a short "PC bot only" reply instead.
 
-Reads dr/data.json (published alongside dr/index.html by the project's
+NOTE: if the PC bridge is ALSO running at the same time as this loop, both
+are genuinely long-polling the same bot token, so /dr will very likely get
+answered twice (once by each). Harmless, just noisy -- stop one of them if
+that's annoying.
+
+Reads dr/dr-data.json (published alongside dr/index.html by the project's
 .tools/build_dr_page.py) -- this script never rescans live itself.
 
 Env vars required (set as GitHub Actions secrets):
@@ -19,7 +31,9 @@ import html
 import json
 import os
 import re
+import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -191,35 +205,79 @@ def handle_command(text):
     return f"คำสั่ง {cmd} ต้องรอ PC หลักเปิดอยู่ — ตอนนี้ใช้ได้แค่ /dr คำค้นหา"
 
 
-def main():
-    offset = load_offset()
+def git_commit_state():
+    """Persist the offset immediately after processing a message, not just at
+    exit -- so a killed/cancelled run never re-answers something it already
+    replied to. Silently no-ops if nothing changed.
+
+    This runs mid-loop over a period of hours, during which other workflows
+    (e.g. the hourly market-data refresh) can push to main -- so a plain
+    `git push` can get rejected as non-fast-forward. Rebase-and-retry once;
+    if that still fails, log and move on, the next successful commit in a
+    later loop iteration will carry the offset forward instead."""
     try:
-        resp = api_call("getUpdates", {"offset": offset, "timeout": 5}, timeout=15)
+        diff = subprocess.run(["git", "diff", "--quiet", "--", STATE_PATH], cwd=REPO_DIR)
+        if diff.returncode == 0:
+            return  # unchanged
+        subprocess.run(["git", "add", STATE_PATH], cwd=REPO_DIR, check=True)
+        subprocess.run(["git", "commit", "-m", "Telegram DR bot: advance offset [skip ci]"], cwd=REPO_DIR, check=True)
+        push = subprocess.run(["git", "push"], cwd=REPO_DIR)
+        if push.returncode != 0:
+            subprocess.run(["git", "pull", "--rebase"], cwd=REPO_DIR, check=True)
+            subprocess.run(["git", "push"], cwd=REPO_DIR, check=True)
     except Exception as e:
-        print("getUpdates error:", e)
-        return
+        print("git_commit_state error (offset saved locally, will retry next commit):", e)
 
-    for update in resp.get("result", []):
-        offset = update["update_id"] + 1
-        msg = update.get("message")
-        if not msg:
-            continue
-        chat_id = msg.get("chat", {}).get("id")
-        text = msg.get("text", "")
-        if chat_id != ALLOWED_CHAT_ID or not text:
-            continue
-        print(f"> {text}")
+
+def main():
+    # GitHub Actions hosted runners cap a single job at 6h; stop with margin
+    # so this run can exit cleanly and the next scheduled run picks up the
+    # poll loop again (see workflow's cron cadence + concurrency group).
+    deadline = time.monotonic() + 5.5 * 3600
+    offset = load_offset()
+    print(f"Long-poll loop starting, offset={offset}")
+
+    while time.monotonic() < deadline:
         try:
-            reply = handle_command(text)
+            resp = api_call("getUpdates", {"offset": offset, "timeout": 25}, timeout=35)
         except Exception as e:
-            reply = f"[error] {e}"
-        if isinstance(reply, dict):
-            send_message(chat_id, reply["text"], buttons=reply.get("buttons"), parse_mode=reply.get("parse_mode"))
-        else:
-            send_message(chat_id, reply)
-        print(f"< replied")
+            print("getUpdates error:", e)
+            time.sleep(5)
+            continue
 
+        updates = resp.get("result", [])
+        if not updates:
+            continue  # long-poll timed out with nothing new; immediately re-poll
+
+        replied = False
+        for update in updates:
+            offset = update["update_id"] + 1
+            msg = update.get("message")
+            if not msg:
+                continue
+            chat_id = msg.get("chat", {}).get("id")
+            text = msg.get("text", "")
+            if chat_id != ALLOWED_CHAT_ID or not text:
+                continue
+            print(f"[{time.strftime('%H:%M:%S')}] > {text}")
+            try:
+                reply = handle_command(text)
+            except Exception as e:
+                reply = f"[error] {e}"
+            if isinstance(reply, dict):
+                send_message(chat_id, reply["text"], buttons=reply.get("buttons"), parse_mode=reply.get("parse_mode"))
+            else:
+                send_message(chat_id, reply)
+            print(f"[{time.strftime('%H:%M:%S')}] < replied")
+            replied = True
+
+        save_offset(offset)
+        if replied:
+            git_commit_state()
+
+    print("Approaching runtime cap, exiting cleanly for the next scheduled run to take over.")
     save_offset(offset)
+    git_commit_state()
 
 
 if __name__ == "__main__":

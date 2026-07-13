@@ -1,12 +1,20 @@
 name: Telegram DR bot fallback (PC-off mode)
 
 # Answers /dr queries via Telegram even when the main PC (running the full
-# telegram-bot/bridge.py in the "investment with ai" project) is off. Only
-# handles /dr -- everything else needs the full project + Claude CLI.
+# telegram-bot/bridge.py in the "investment with ai" project) is off.
+# Genuinely long-polls (not a brief check-and-exit) so replies arrive within
+# ~1-2s, same as the PC bot. A single job runs for up to 5.5h then exits
+# cleanly; the cron below just restarts the loop before GitHub's 6h hard cap.
+# concurrency ensures a restart queues behind an already-running loop instead
+# of two pollers racing each other.
 on:
   schedule:
-    - cron: "*/5 * * * *"   # every 5 min; Telegram getUpdates offset makes this safe to overlap with the PC bot
+    - cron: "0 */5 * * *"   # restart cadence (safety net), not the reply latency -- see script docstring
   workflow_dispatch:
+
+concurrency:
+  group: telegram-dr-bot
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -14,6 +22,7 @@ permissions:
 jobs:
   poll:
     runs-on: ubuntu-latest
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
 
@@ -21,19 +30,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
       - run: python scripts/telegram_dr_bot.py
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-
-      - name: Commit offset if changed
-        run: |
-          if git diff --quiet -- scripts/telegram_dr_bot_state.json; then
-            echo "offset unchanged, skipping commit"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add scripts/telegram_dr_bot_state.json
-          git commit -m "Telegram DR bot: advance offset [skip ci]"
-          git push
