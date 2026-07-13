@@ -171,7 +171,9 @@ def cmd_dr(arg):
             buttons.append((f"📈 ดูกราฟ {key}", url))
 
     if len(group_keys) > len(shown_groups):
-        lines.append(f"... และอีก {len(group_keys) - len(shown_groups)} หุ้นแม่ (ดูทั้งหมดที่ deepsleep456.com/dr)")
+        lines.append(f"... และอีก {len(group_keys) - len(shown_groups)} หุ้นแม่")
+    lines.append("")
+    lines.append('🌐 <a href="https://deepsleep456.com/dr">ดูทั้งหมดที่ deepsleep456.com/dr</a>')
     return {"text": "\n".join(lines).rstrip(), "buttons": buttons or None, "parse_mode": "HTML"}
 
 
