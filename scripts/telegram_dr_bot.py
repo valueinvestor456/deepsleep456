@@ -141,7 +141,9 @@ def wave_line(d0):
     risk = w.get("risk_pct")
     target_str = f"{target:,.2f} ({reward:+.2f}%)" if target is not None and reward is not None else "n/a"
     stop_str = f"{stop:,.2f} ({-abs(risk):.2f}%)" if stop is not None and risk is not None else "n/a"
-    return f"📐 {stage} — TP {target_str} · แนวรับ/ต้าน {stop_str} · R:R {rr}{status}"
+    elliott = w.get("elliott_label")
+    elliott_str = f" — 🌊 อาจอยู่ {html.escape(elliott)} (นับคลื่นเบื้องต้น ไม่ยืนยัน)" if elliott else ""
+    return f"📐 {stage}{elliott_str} — TP {target_str} · แนวรับ/ต้าน {stop_str} · R:R {rr}{status}"
 
 
 def cmd_dr(arg):

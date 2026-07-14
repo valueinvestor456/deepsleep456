@@ -143,7 +143,8 @@
     </div>
     <p class="u-price" style="margin-top:6px;">
       📊 Swing Stage / Reward-Risk คำนวณจาก pivot ราคา + Fibonacci retracement/extension (อัปเดตรายสัปดาห์ ไม่ใช่ real-time เหมือนราคา) —
-      <b>ไม่ใช่การนับคลื่น Elliott Wave ที่ยืนยันโดยนักวิเคราะห์</b> เป็นการประมาณด้วยอัลกอริทึมเท่านั้น ตีความคลาดเคลื่อนได้ ใช้เป็นข้อมูลประกอบ ไม่ใช่คำแนะนำการซื้อขาย
+      <b>ไม่ใช่การนับคลื่น Elliott Wave ที่ยืนยันโดยนักวิเคราะห์</b> เป็นการประมาณด้วยอัลกอริทึมเท่านั้น ตีความคลาดเคลื่อนได้ ใช้เป็นข้อมูลประกอบ ไม่ใช่คำแนะนำการซื้อขาย —
+      ป้าย "🌊 อาจอยู่ Wave N" (ถ้ามี) เป็นการเดาแบบ best-effort เพิ่มเติมตามกฎโครงสร้าง Elliott เบื้องต้น โชว์เฉพาะตอนที่ fit ได้ชัดเจนเท่านั้น ไม่ fit ก็ไม่โชว์ ไม่ใช่การยืนยันว่านับถูก
     </p>
   </div>
 
@@ -282,17 +283,20 @@
 
   function mlabel(text){ return '<span class="mobile-label">' + text + '</span>'; }
 
-  // "Swing Stage" / reward-risk display: deliberately NOT called Elliott
-  // Wave anywhere here -- see the methodology note in the search card and
-  // wiki/concepts/dr-fair-price-monitoring.md for why (a design review
-  // during this feature's build flagged that an automated pivot-detector
-  // mislabels routinely, not as a rare edge case, so a bare "Wave 3" claim
-  // would overclaim analytical authority it doesn't have -- the underlying
-  // technique, swing pivots -> Fibonacci targets, is legitimate and kept,
-  // only the branding changed). w.live_status is a cheap check done every
-  // live scan cycle (price already fetched for the fair-price calc) against
-  // the weekly-computed target/stop, so it can go stale between weekly
-  // wave_analysis.py runs even though the price itself is live.
+  // "Swing Stage" / reward-risk display: base labels are deliberately NOT
+  // called Elliott Wave -- see the methodology note in the search card and
+  // wiki/concepts/dr-fair-price-monitoring.md for why (an automated
+  // pivot-detector mislabels routinely, not as a rare edge case, so a bare
+  // "Wave 3" claim would overclaim analytical authority it doesn't have).
+  // w.elliott_label is an OPT-IN addition (per explicit user request after
+  // seeing the base labels) -- a best-effort Wave N guess shown ONLY when
+  // wave_analysis.py's elliott_count() found an internally-consistent fit
+  // against Elliott's structural rules; null/omitted otherwise, never
+  // forced. Still just one possible reading via one specific algorithm,
+  // not a verified analyst count. w.live_status is a cheap check done
+  // every live scan cycle (price already fetched for the fair-price calc)
+  // against the weekly-computed target/stop, so it can go stale between
+  // weekly wave_analysis.py runs even though the price itself is live.
   function waveInfoStr(d0){
     var w = d0.wave;
     if(!w) return '';
@@ -305,7 +309,8 @@
       statusNote = ' 🛑 ราคาทะลุ stop แล้ว (คำนวณไว้ตั้งแต่ ' + w.data_through + ')';
     }
     var rr = w.reward_risk_ratio != null ? w.reward_risk_ratio.toFixed(2) : 'n/a';
-    return '<span class="wave-line ' + statusClass + '">📐 ' + escapeHtml(w.stage_label) +
+    var elliottStr = w.elliott_label ? (' &middot; 🌊 อาจอยู่ ' + escapeHtml(w.elliott_label) + ' (นับคลื่นเบื้องต้น ไม่ยืนยัน)') : '';
+    return '<span class="wave-line ' + statusClass + '">📐 ' + escapeHtml(w.stage_label) + elliottStr +
       ' &middot; Target ' + fmt(w.target, 2) + ' (' + (w.reward_pct > 0 ? '+' : '') + w.reward_pct.toFixed(2) + '%)' +
       ' &middot; Stop ' + fmt(w.stop, 2) + ' (' + (w.risk_pct > 0 ? '-' : '+') + Math.abs(w.risk_pct).toFixed(2) + '%)' +
       ' &middot; R:R ' + rr +

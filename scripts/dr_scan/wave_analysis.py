@@ -140,6 +140,80 @@ def label_swing_structure(pivots, current_price):
         return 'retracing_from_low', STAGE_LABELS['retracing_from_low']
 
 
+def elliott_count(pivots):
+    """Best-effort Elliott Wave label ("Wave 2"/"Wave 3"/"Wave 4"/"Wave 5")
+    for the swing sequence ENDING AT the most recent confirmed/running
+    pivot extreme (pivots[-1]) -- i.e. "the recent structure looks like it
+    just completed Wave N" -- checked against Elliott's structural rules
+    for an impulse: wave 2 never fully retraces wave 1, wave 3 is never
+    the shortest of 1/3/5, wave 4 doesn't overlap wave 1's price
+    territory, each wave moves in the expected direction. Tries the
+    longest (most specific) window first (6 points = 5 legs = just
+    finished Wave 5) and falls back to shorter windows. Returns None --
+    not a guess -- if no window satisfies its rules; per explicit user
+    decision this is shown only when a fit is found, never forced. This
+    is ONE possible reading via ONE specific rule-checking algorithm, not
+    a verified analyst wave count -- real Elliott analysis routinely
+    finds multiple valid counts for the same chart; this only ever
+    reports the first internally-consistent one this heuristic finds.
+
+    Deliberately uses pivots[-1] (the swing's structural extreme) rather
+    than today's live price as the endpoint -- an earlier version swapped
+    in current_price directly, which silently dropped pivots[-1] from the
+    window entirely (since it replaced rather than appended), making the
+    count describe stale, disconnected structure instead of the most
+    recent real swing. This label is meant to combine with stage_label
+    (already shown alongside it), which separately says whether price is
+    now extending past that structural point or retracing from it -- e.g.
+    "Wave 3" + "Retracement from swing high" together read as "recent
+    structure looks like it just completed Wave 3, now pulling back",
+    which is coherent Elliott framing, not a contradiction."""
+    if len(pivots) < 3:
+        return None
+    pts = [p[2] for p in pivots]
+    n = len(pts)
+
+    if n >= 6:
+        p0, p1, p2, p3, p4, p5 = pts[-6:]
+        bullish = p1 > p0
+        len1, len3, len5 = abs(p1 - p0), abs(p3 - p2), abs(p5 - p4)
+        wave2_ok = (p2 > p0) if bullish else (p2 < p0)
+        wave4_ok = (p4 > p1) if bullish else (p4 < p1)
+        wave3_ok = len3 >= len1 or len3 >= len5
+        wave5_dir_ok = (p5 > p4) if bullish else (p5 < p4)
+        if wave2_ok and wave4_ok and wave3_ok and wave5_dir_ok:
+            return "Wave 5 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+
+    if n >= 5:
+        p0, p1, p2, p3, p4 = pts[-5:]
+        bullish = p1 > p0
+        len1, len3 = abs(p1 - p0), abs(p3 - p2)
+        wave2_ok = (p2 > p0) if bullish else (p2 < p0)
+        wave3_ok = len3 >= len1
+        wave3_dir_ok = (p3 > p1) if bullish else (p3 < p1)
+        wave4_dir_ok = (p4 < p3) if bullish else (p4 > p3)
+        if wave2_ok and wave3_ok and wave3_dir_ok and wave4_dir_ok:
+            return "Wave 4 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+
+    if n >= 4:
+        p0, p1, p2, p3 = pts[-4:]
+        bullish = p1 > p0
+        wave2_ok = (p2 > p0) if bullish else (p2 < p0)
+        wave3_dir_ok = (p3 > p2) if bullish else (p3 < p2)
+        if wave2_ok and wave3_dir_ok:
+            return "Wave 3 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+
+    if n >= 3:
+        p0, p1, p2 = pts[-3:]
+        bullish = p1 > p0
+        wave2_dir_ok = (p2 < p1) if bullish else (p2 > p1)
+        wave2_not_full_retrace = (p2 > p0) if bullish else (p2 < p0)
+        if wave2_dir_ok and wave2_not_full_retrace:
+            return "Wave 2 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+
+    return None
+
+
 FIB_EXTENSION = 1.618
 FIB_RETRACEMENT = 0.618
 
@@ -222,6 +296,7 @@ def analyze_ticker(ticker):
         return {"quality": "insufficient_history", "data_through": None}
     target, stop = compute_fib_levels(pivots, stage_key, current_price, atr_abs)
     reward_pct, risk_pct, ratio = compute_reward_risk(current_price, target, stop, stage_key)
+    elliott_label = elliott_count(pivots)
     # A "retracing" target is a fixed Fibonacci level (last swing's 61.8%
     # retracement); if price has already moved past it before this batch
     # ran, reward_pct comes out <=0 -- that's not a coding error, it means
@@ -244,6 +319,7 @@ def analyze_ticker(ticker):
         "reward_pct": reward_pct,
         "risk_pct": risk_pct,
         "reward_risk_ratio": ratio if quality == "ok" else None,
+        "elliott_label": elliott_label,
         "data_through": time.strftime("%Y-%m-%d", time.gmtime(dates[-1])),
     }
 
