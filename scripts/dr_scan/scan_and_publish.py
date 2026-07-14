@@ -144,6 +144,47 @@ def get_pe_ratios(yahoo_ticker, underlying_tv=None):
         return None, None
 
 
+WAVE_CACHE_PATH = os.path.join(SCRIPT_DIR, "wave_cache.json")
+_wave_cache = None
+
+
+def load_wave_cache():
+    """Loaded once per process (not per scan_one call/thread) -- wave_cache.json
+    is produced weekly by wave_analysis.py, a separate heavier batch job; the
+    live 30s scanner only ever reads it, never recomputes it."""
+    global _wave_cache
+    if _wave_cache is None:
+        try:
+            with open(WAVE_CACHE_PATH, encoding="utf-8") as f:
+                _wave_cache = json.load(f)
+        except Exception:
+            _wave_cache = {}
+    return _wave_cache
+
+
+def get_wave_info(yahoo_u, live_underlying_price):
+    """Joins cached swing/reward-risk data onto a row by underlying ticker,
+    plus a cheap live check: has the price already crossed the cached
+    target or stop since last week's batch ran? This is nearly free (the
+    live price is already fetched this cycle for the fair-price calc) and
+    keeps the wave data meaningfully useful between weekly refreshes
+    instead of silently going stale."""
+    w = load_wave_cache().get(yahoo_u)
+    if not w or w.get("quality") != "ok":
+        return None
+    info = dict(w)
+    target, stop, stage = w.get("target"), w.get("stop"), w.get("stage_key")
+    if live_underlying_price is not None and target is not None and stop is not None:
+        bullish = stage in ("extending_up", "retracing_from_low")
+        if (bullish and live_underlying_price <= stop) or (not bullish and live_underlying_price >= stop):
+            info["live_status"] = "stop_breached"
+        elif (bullish and live_underlying_price >= target) or (not bullish and live_underlying_price <= target):
+            info["live_status"] = "target_reached"
+        else:
+            info["live_status"] = "active"
+    return info
+
+
 def scan_one(d):
     sym = d['sym']
     try:
@@ -160,12 +201,13 @@ def scan_one(d):
         actual = setq['last'] if setq else None
         premium_pct = ((actual / fair - 1) * 100) if (actual and fair) else None
         pe, fwd_pe = get_pe_ratios(d['yahoo_u'], d.get('underlying_tv'))
+        wave = get_wave_info(d['yahoo_u'], u_price)
         row = dict(d)
         row.update({
             'actual_price': actual, 'underlying_price': u_price, 'fx_rate': fx_rate,
             'ratio_used': live_ratio, 'fair_price': round(fair, 4) if fair else None,
             'premium_pct': round(premium_pct, 2) if premium_pct is not None else None,
-            'pe_ratio': pe, 'forward_pe': fwd_pe,
+            'pe_ratio': pe, 'forward_pe': fwd_pe, 'wave': wave,
             'set_market_status': setq['marketStatus'] if setq else None,
             'set_market_datetime': setq['marketDateTime'] if setq else None,
         })

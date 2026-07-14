@@ -97,9 +97,21 @@ def save_offset(offset):
 TV_EXCH_TO_SA = {"HKEX": "hkg", "TSE": "tyo", "SGX": "sgx", "EURONEXT": "epa", "SIX": "swx", "SSE": "sha", "SZSE": "she"}
 
 
+# Same override table as scripts/dr_scan/page_template.html's FUNDAMENTAL_OVERRIDE
+# and telegram-bot/bridge.py's copy (kept in sync manually).
+FUNDAMENTAL_OVERRIDE = {
+    "FUEVFVND01": "https://www.dragoncapital.com.vn/individual/vi/product/a0eJ2000001XA0ZIAW/vndiamond#overview",
+}
+
+
 def fundamental_url(d):
+    if d["sym"] in FUNDAMENTAL_OVERRIDE:
+        return FUNDAMENTAL_OVERRIDE[d["sym"]]
     if d.get("market") == "US":
         return f"https://stockanalysis.com/stocks/{d['yahoo_u'].lower()}/"
+    yahoo_u = d.get("yahoo_u") or ""
+    if yahoo_u.endswith(".VN"):
+        return f"https://finance.vietstock.vn/{yahoo_u[:-3]}-x.htm"
     tv = d.get("underlying_tv") or ""
     if ":" in tv:
         exch, ticker = tv.split(":", 1)
@@ -107,6 +119,29 @@ def fundamental_url(d):
         if sa:
             return f"https://stockanalysis.com/quote/{sa}/{ticker.lower()}/"
     return None
+
+
+def wave_line(d0):
+    """Formats the swing-stage/reward-risk line for a Telegram reply.
+    Deliberately not called "Elliott Wave" -- see wave_analysis.py for why.
+    Returns "" if no wave data joined onto this row."""
+    w = d0.get("wave")
+    if not w:
+        return ""
+    status = ""
+    if w.get("live_status") == "target_reached":
+        status = f" ⚠️ ถึง target แล้ว (ข้อมูล ณ {w.get('data_through')})"
+    elif w.get("live_status") == "stop_breached":
+        status = f" 🛑 ทะลุ stop แล้ว (ข้อมูล ณ {w.get('data_through')})"
+    rr = f"{w['reward_risk_ratio']:.2f}" if w.get("reward_risk_ratio") is not None else "n/a"
+    stage = html.escape(w.get("stage_label", ""))
+    target = w.get("target")
+    stop = w.get("stop")
+    reward = w.get("reward_pct")
+    risk = w.get("risk_pct")
+    target_str = f"{target:,.2f} ({reward:+.2f}%)" if target is not None and reward is not None else "n/a"
+    stop_str = f"{stop:,.2f} ({-abs(risk):.2f}%)" if stop is not None and risk is not None else "n/a"
+    return f"📐 {stage} — TP {target_str} · แนวรับ/ต้าน {stop_str} · R:R {rr}{status}"
 
 
 def cmd_dr(arg):
@@ -167,6 +202,9 @@ def cmd_dr(arg):
             fwd_str = f"{d0['forward_pe']:.1f}" if d0.get("forward_pe") is not None else "n/a"
             pe_line = f" — P/E {pe_str} · Fwd P/E {fwd_str}"
         lines.append(f"📍 {label} — ราคาล่าสุด {price_line}{pe_line}")
+        wl = wave_line(d0)
+        if wl:
+            lines.append(wl)
         for r in items:
             actual = r.get("actual_price")
             fair = r.get("fair_price")
@@ -179,10 +217,8 @@ def cmd_dr(arg):
                 sign = "+" if (prem or 0) > 0 else ""
                 lines.append(f"  {sym_esc} — จริง {actual} vs Fair {fair} — {sign}{prem:.2f}% {direction}")
         lines.append("")
-        underlying_tv = d0.get("underlying_tv")
-        if underlying_tv:
-            url = "https://www.tradingview.com/chart/?symbol=" + urllib.parse.quote(underlying_tv)
-            buttons.append((f"📈 ดูกราฟ {key}", url))
+        url = "https://www.tradingview.com/chart/?symbol=" + urllib.parse.quote("SET:" + d0["sym"])
+        buttons.append((f"📈 ดูกราฟ {key}", url))
 
     if len(group_keys) > len(shown_groups):
         lines.append(f"... และอีก {len(group_keys) - len(shown_groups)} หุ้นแม่")

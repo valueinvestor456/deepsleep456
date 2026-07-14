@@ -49,9 +49,13 @@
   .btn{background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary);font-size:13px;padding:8px 14px;border-radius:8px;cursor:pointer;display:inline-block;text-decoration:none;}
   .btn:hover{color:var(--text-primary);}
   .btn.primary{background:var(--series-1);color:#fff;border-color:var(--series-1);}
-  input[type=text]{background:var(--page);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);padding:10px 12px;font-size:14px;}
+  input[type=text],select{background:var(--page);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);padding:10px 12px;font-size:14px;}
   .search-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .search-row input[type=text]{flex:1;min-width:260px;}
+  .wave-line{display:block;margin-top:4px;}
+  .wave-ok{color:var(--series-1);}
+  .wave-warn{color:var(--warning);}
+  .wave-breach{color:var(--critical);}
   .section-title{font-size:15px;font-weight:600;margin:0 0 10px;}
   .table-scroll{overflow-x:auto;}
   .mobile-label{display:none;}
@@ -124,6 +128,23 @@
       <input type="text" id="search-input" placeholder="พิมพ์ชื่อหุ้นแม่ (เช่น Apple, CATL) หรือ DR ticker (เช่น CATL01)">
       <button class="btn" id="clear-search">ล้างการค้นหา</button>
     </div>
+    <div class="search-row" style="margin-top:8px;">
+      <select id="swing-filter">
+        <option value="">Swing Stage: ทั้งหมด</option>
+        <option value="extending_up">Extending up-swing</option>
+        <option value="retracing_from_high">Retracement from swing high</option>
+        <option value="extending_down">Extending down-swing</option>
+        <option value="retracing_from_low">Retracement from swing low</option>
+      </select>
+      <select id="sort-select">
+        <option value="fwd_pe">เรียงตาม: Forward P/E ต่ำสุดก่อน</option>
+        <option value="reward_risk">เรียงตาม: Reward:Risk สูงสุดก่อน</option>
+      </select>
+    </div>
+    <p class="u-price" style="margin-top:6px;">
+      📊 Swing Stage / Reward-Risk คำนวณจาก pivot ราคา + Fibonacci retracement/extension (อัปเดตรายสัปดาห์ ไม่ใช่ real-time เหมือนราคา) —
+      <b>ไม่ใช่การนับคลื่น Elliott Wave ที่ยืนยันโดยนักวิเคราะห์</b> เป็นการประมาณด้วยอัลกอริทึมเท่านั้น ตีความคลาดเคลื่อนได้ ใช้เป็นข้อมูลประกอบ ไม่ใช่คำแนะนำการซื้อขาย
+    </p>
   </div>
 
   <div class="card">
@@ -162,6 +183,7 @@
       <li>6 ตัว (ADVANT19, ADVANT23, ADVANT80, NESTLE80, SYNP03, SYNP23) มี Yahoo ticker แต่ดึงราคาไม่สำเร็จระหว่าง scan — แสดงราคาจริงได้แต่ไม่มี Fair Price</li>
       <li>ระหว่างเวลาทำการ SET หน้านี้ auto-refresh ทุก ~30 วิผ่าน GitHub Actions (scripts/dr_scan/scan_and_publish.py) — นอกเวลาทำการเป็น static snapshot ของรอบสุดท้ายก่อนตลาดปิด ต้อง trigger manual (`.tools/scan_dr.py` + `.tools/build_dr_page.py` ในโปรเจกต์เอง) ถ้าต้องการอัปเดตนอกเวลาทำการ</li>
       <li>Premium/Discount ที่เห็นเป็นตัวเลขดิบ ยังไม่หักค่าธรรมเนียมซื้อขาย/สเปรด/ภาษี — ต้องคำนวณต้นทุนจริงเพิ่มก่อนตัดสินใจ arbitrage</li>
+      <li><b>Swing Stage / Target / Stop / Reward:Risk ไม่ใช่การนับคลื่น Elliott Wave ที่ยืนยันโดยนักวิเคราะห์</b> — คำนวณจาก pivot ราคาอัตโนมัติ (ZigZag แบบ threshold ปรับตามความผันผวน) + ฉายภาพ Fibonacci retracement/extension ล้วนๆ ไม่มีมนุษย์ตรวจสอบทีละตัว การนับคลื่นแบบ subjective จริงๆ แม้แต่นักวิเคราะห์มืออาชีพยังตีความไม่ตรงกันบนกราฟเดียวกัน — อัลกอริทึมนี้ตีความคลาดเคลื่อนได้เป็นเรื่องปกติ ไม่ใช่ edge case ใช้ประกอบการตัดสินใจเท่านั้น ไม่ใช่คำแนะนำซื้อขาย — คำนวณรายสัปดาห์ (ไม่ real-time เหมือนราคา) เก็บไว้ที่ `scripts/dr_scan/wave_cache.json` แสดงวันที่ข้อมูลล่าสุด (`ข้อมูล ณ ...`) ทุกครั้ง และ flag ทันทีถ้าราคาล่าสุดทะลุ target/stop ไปแล้วตั้งแต่คำนวณครั้งก่อน</li>
     </ul>
   </div>
 
@@ -260,6 +282,36 @@
 
   function mlabel(text){ return '<span class="mobile-label">' + text + '</span>'; }
 
+  // "Swing Stage" / reward-risk display: deliberately NOT called Elliott
+  // Wave anywhere here -- see the methodology note in the search card and
+  // wiki/concepts/dr-fair-price-monitoring.md for why (a design review
+  // during this feature's build flagged that an automated pivot-detector
+  // mislabels routinely, not as a rare edge case, so a bare "Wave 3" claim
+  // would overclaim analytical authority it doesn't have -- the underlying
+  // technique, swing pivots -> Fibonacci targets, is legitimate and kept,
+  // only the branding changed). w.live_status is a cheap check done every
+  // live scan cycle (price already fetched for the fair-price calc) against
+  // the weekly-computed target/stop, so it can go stale between weekly
+  // wave_analysis.py runs even though the price itself is live.
+  function waveInfoStr(d0){
+    var w = d0.wave;
+    if(!w) return '';
+    var statusClass = 'wave-ok', statusNote = '';
+    if(w.live_status === 'target_reached'){
+      statusClass = 'wave-warn';
+      statusNote = ' ⚠️ ราคาถึง target แล้ว (คำนวณไว้ตั้งแต่ ' + w.data_through + ')';
+    } else if(w.live_status === 'stop_breached'){
+      statusClass = 'wave-breach';
+      statusNote = ' 🛑 ราคาทะลุ stop แล้ว (คำนวณไว้ตั้งแต่ ' + w.data_through + ')';
+    }
+    var rr = w.reward_risk_ratio != null ? w.reward_risk_ratio.toFixed(2) : 'n/a';
+    return '<span class="wave-line ' + statusClass + '">📐 ' + escapeHtml(w.stage_label) +
+      ' &middot; Target ' + fmt(w.target, 2) + ' (' + (w.reward_pct > 0 ? '+' : '') + w.reward_pct.toFixed(2) + '%)' +
+      ' &middot; Stop ' + fmt(w.stop, 2) + ' (' + (w.risk_pct > 0 ? '-' : '+') + Math.abs(w.risk_pct).toFixed(2) + '%)' +
+      ' &middot; R:R ' + rr +
+      ' <span class="u-price">ข้อมูล ณ ' + w.data_through + '</span>' + statusNote + '</span>';
+  }
+
   function renderTopTable(tbodyId, rows, colClass, premLabel2){
     var tbody = document.getElementById(tbodyId);
     tbody.innerHTML = rows.map(function(d){
@@ -291,7 +343,16 @@
       groups[key].push(d);
     });
     var container = document.getElementById('grouped-list');
+    var sortMode = document.getElementById('sort-select').value;
     var keys = Object.keys(groups).sort(function(a,b){
+      if(sortMode === 'reward_risk'){
+        var wa = groups[a][0].wave, wb = groups[b][0].wave;
+        var ra = wa ? wa.reward_risk_ratio : null, rb = wb ? wb.reward_risk_ratio : null;
+        if(ra == null && rb == null) return 0;
+        if(ra == null) return 1;
+        if(rb == null) return -1;
+        return rb - ra; // highest reward:risk first
+      }
       var fa = groups[a][0].forward_pe, fb = groups[b][0].forward_pe;
       if(fa == null && fb == null) return 0;
       if(fa == null) return 1;
@@ -312,14 +373,20 @@
         peStr = ' <span class="u-price">P/E: ' + (d0.pe_ratio != null ? d0.pe_ratio.toFixed(1) : 'n/a') +
           ' &middot; Fwd P/E: ' + (d0.forward_pe != null ? d0.forward_pe.toFixed(1) : 'n/a') + '</span>';
       }
-      return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span> <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + '</div>' +
+      return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span> <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + waveInfoStr(d0) + '</div>' +
         '<div style="overflow-x:auto;"><table><thead><tr><th>DR</th><th>จริง (THB)</th><th>Fair (THB)</th><th>Prem/Disc</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     }).join('');
   }
 
+  function rowMatchesSwing(d, stage){
+    if(!stage) return true;
+    return !!(d.wave && d.wave.stage_key === stage);
+  }
+
   function renderAll(){
     var q = document.getElementById('search-input').value.trim();
-    var filtered = DATA.filter(function(d){ return rowMatchesQuery(d, q); });
+    var stage = document.getElementById('swing-filter').value;
+    var filtered = DATA.filter(function(d){ return rowMatchesQuery(d, q) && rowMatchesSwing(d, stage); });
     renderTopPremium(filtered);
     renderTopDiscount(filtered);
     renderGrouped(filtered);
@@ -330,6 +397,8 @@
     document.getElementById('search-input').value = '';
     renderAll();
   });
+  document.getElementById('swing-filter').addEventListener('change', renderAll);
+  document.getElementById('sort-select').addEventListener('change', renderAll);
   document.getElementById('toggle-theme').addEventListener('click', function(){
     var root = document.documentElement;
     var cur = root.getAttribute('data-theme');
