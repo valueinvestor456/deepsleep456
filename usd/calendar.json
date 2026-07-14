@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-14T16:47:57Z",
+  "updated": "2026-07-14T21:35:32Z",
   "events": [
     {
       "title": "BusinessNZ Services Index",
@@ -390,7 +390,7 @@
       "country": "USD",
       "date": "2026-07-15T08:30:00-04:00",
       "impact": "High",
-      "forecast": "0.4%",
+      "forecast": "0.3%",
       "previous": "0.4%"
     },
     {
@@ -406,7 +406,7 @@
       "country": "USD",
       "date": "2026-07-15T08:30:00-04:00",
       "impact": "Low",
-      "forecast": "9.4",
+      "forecast": "9.3",
       "previous": "5.7"
     },
     {
@@ -454,7 +454,7 @@
       "country": "USD",
       "date": "2026-07-15T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "-2.4M",
+      "forecast": "-1.8M",
       "previous": "3.0M"
     },
     {
@@ -646,7 +646,7 @@
       "country": "USD",
       "date": "2026-07-16T10:00:00-04:00",
       "impact": "Low",
-      "forecast": "-0.4%",
+      "forecast": "-0.5%",
       "previous": "3.8%"
     },
     {
@@ -654,7 +654,7 @@
       "country": "USD",
       "date": "2026-07-16T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "45B",
       "previous": "61B"
     },
     {
