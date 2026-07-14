@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-13T18:22:03Z",
+  "updated": "2026-07-14T07:26:42Z",
   "events": [
     {
       "title": "BusinessNZ Services Index",
@@ -26,20 +26,20 @@
       "previous": ""
     },
     {
+      "title": "Federal Budget Balance",
+      "country": "USD",
+      "date": "2026-07-13T13:59:00-04:00",
+      "impact": "Low",
+      "forecast": "-135.8B",
+      "previous": "-292.6B"
+    },
+    {
       "title": "MPC Member Pill Speaks",
       "country": "GBP",
       "date": "2026-07-13T14:00:00-04:00",
       "impact": "Low",
       "forecast": "",
       "previous": ""
-    },
-    {
-      "title": "Federal Budget Balance",
-      "country": "USD",
-      "date": "2026-07-13T14:00:00-04:00",
-      "impact": "Low",
-      "forecast": "-135.8B",
-      "previous": "-292.6B"
     },
     {
       "title": "NZIER Business Confidence",
@@ -84,7 +84,7 @@
     {
       "title": "Trade Balance",
       "country": "CNY",
-      "date": "2026-07-13T22:03:00-04:00",
+      "date": "2026-07-13T22:31:00-04:00",
       "impact": "Low",
       "forecast": "810B",
       "previous": "724B"
@@ -92,7 +92,7 @@
     {
       "title": "USD-Denominated Trade Balance",
       "country": "CNY",
-      "date": "2026-07-13T22:04:00-04:00",
+      "date": "2026-07-13T22:31:00-04:00",
       "impact": "Low",
       "forecast": "119.5B",
       "previous": "105.4B"
