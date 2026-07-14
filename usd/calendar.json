@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-14T07:26:42Z",
+  "updated": "2026-07-14T16:47:57Z",
   "events": [
     {
       "title": "BusinessNZ Services Index",
@@ -128,22 +128,6 @@
       "impact": "Low",
       "forecast": "-0.5%",
       "previous": "-0.4%"
-    },
-    {
-      "title": "M2 Money Supply y/y",
-      "country": "CNY",
-      "date": "2026-07-14T04:03:00-04:00",
-      "impact": "Low",
-      "forecast": "8.5%",
-      "previous": "8.6%"
-    },
-    {
-      "title": "New Loans",
-      "country": "CNY",
-      "date": "2026-07-14T04:03:00-04:00",
-      "impact": "Low",
-      "forecast": "1950B",
-      "previous": "520B"
     },
     {
       "title": "BOE Gov Bailey Speaks",
@@ -354,6 +338,22 @@
       "previous": "0.1%"
     },
     {
+      "title": "M2 Money Supply y/y",
+      "country": "CNY",
+      "date": "2026-07-15T05:33:00-04:00",
+      "impact": "Low",
+      "forecast": "8.5%",
+      "previous": "8.6%"
+    },
+    {
+      "title": "New Loans",
+      "country": "CNY",
+      "date": "2026-07-15T05:33:00-04:00",
+      "impact": "Low",
+      "forecast": "1950B",
+      "previous": "520B"
+    },
+    {
       "title": "German 30-y Bond Auction",
       "country": "EUR",
       "date": "2026-07-15T05:34:00-04:00",
@@ -454,7 +454,7 @@
       "country": "USD",
       "date": "2026-07-15T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "-2.4M",
       "previous": "3.0M"
     },
     {
@@ -694,6 +694,14 @@
       "country": "USD",
       "date": "2026-07-16T19:00:00-04:00",
       "impact": "Low",
+      "forecast": "",
+      "previous": ""
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "date": "2026-07-16T21:00:00-04:00",
+      "impact": "Medium",
       "forecast": "",
       "previous": ""
     },
