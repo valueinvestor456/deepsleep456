@@ -304,18 +304,27 @@
     var statusClass = 'wave-ok', statusNote = '';
     if(w.live_status === 'target_reached'){
       statusClass = 'wave-warn';
-      statusNote = ' ⚠️ ราคาถึง target แล้ว (คำนวณไว้ตั้งแต่ ' + w.data_through + ')';
+      statusNote = ' ⚠️ ถึง target แล้ว';
     } else if(w.live_status === 'stop_breached'){
       statusClass = 'wave-breach';
-      statusNote = ' 🛑 ราคาทะลุ stop แล้ว (คำนวณไว้ตั้งแต่ ' + w.data_through + ')';
+      statusNote = ' 🛑 ทะลุ stop แล้ว';
     }
-    var rr = w.reward_risk_ratio != null ? w.reward_risk_ratio.toFixed(2) : 'n/a';
-    var elliottStr = w.elliott_label ? (' &middot; 🌊 ' + escapeHtml(w.elliott_label) + ' (Daily — เช็คกราฟหุ้นแม่ยืนยัน)') : '';
+    var elliottStr = w.elliott_label ? (' 🌊 ' + escapeHtml(w.elliott_label)) : '';
+    // แนวต้าน/แนวรับ = whichever of target/stop sits above/below current
+    // price, as a plain % distance -- not "target"/"stop" jargon, since
+    // which one is which flips depending on the bullish/bearish stage.
+    var levels = [w.target, w.stop].filter(function(v){ return v != null; });
+    var resistance = null, support = null;
+    levels.forEach(function(lv){
+      if(lv >= w.current_price){ if(resistance === null || lv < resistance) resistance = lv; }
+      else { if(support === null || lv > support) support = lv; }
+    });
+    var pct = function(lv){ return ((lv - w.current_price) / w.current_price * 100).toFixed(2); };
+    var resStr = resistance != null ? ('แนวต้าน +' + pct(resistance) + '%') : '';
+    var supStr = support != null ? ('แนวรับ ' + pct(support) + '%') : '';
+    var levelStr = [resStr, supStr].filter(Boolean).join(' &middot; ');
     return '<span class="wave-line ' + statusClass + '">📐 ' + escapeHtml(w.stage_label) + elliottStr +
-      ' &middot; Target ' + fmt(w.target, 2) + ' (' + (w.reward_pct > 0 ? '+' : '') + w.reward_pct.toFixed(2) + '%)' +
-      ' &middot; Stop ' + fmt(w.stop, 2) + ' (' + (w.risk_pct > 0 ? '-' : '+') + Math.abs(w.risk_pct).toFixed(2) + '%)' +
-      ' &middot; R:R ' + rr +
-      ' <span class="u-price">ข้อมูล ณ ' + w.data_through + '</span>' + statusNote + '</span>';
+      (levelStr ? ' &middot; ' + levelStr : '') + statusNote + '</span>';
   }
 
   function renderTopTable(tbodyId, rows, colClass, premLabel2){

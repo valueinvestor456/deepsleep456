@@ -130,20 +130,23 @@ def wave_line(d0):
         return ""
     status = ""
     if w.get("live_status") == "target_reached":
-        status = f" ⚠️ ถึง target แล้ว (ข้อมูล ณ {w.get('data_through')})"
+        status = " ⚠️ ถึง target แล้ว"
     elif w.get("live_status") == "stop_breached":
-        status = f" 🛑 ทะลุ stop แล้ว (ข้อมูล ณ {w.get('data_through')})"
-    rr = f"{w['reward_risk_ratio']:.2f}" if w.get("reward_risk_ratio") is not None else "n/a"
+        status = " 🛑 ทะลุ stop แล้ว"
     stage = html.escape(w.get("stage_label", ""))
-    target = w.get("target")
-    stop = w.get("stop")
-    reward = w.get("reward_pct")
-    risk = w.get("risk_pct")
-    target_str = f"{target:,.2f} ({reward:+.2f}%)" if target is not None and reward is not None else "n/a"
-    stop_str = f"{stop:,.2f} ({-abs(risk):.2f}%)" if stop is not None and risk is not None else "n/a"
     elliott = w.get("elliott_label")
-    elliott_str = f" — 🌊 {html.escape(elliott)} (Daily — เช็คกราฟหุ้นแม่ยืนยัน)" if elliott else ""
-    return f"📐 {stage}{elliott_str} — TP {target_str} · แนวรับ/ต้าน {stop_str} · R:R {rr}{status}"
+    elliott_str = f" 🌊 {html.escape(elliott)}" if elliott else ""
+    current = w.get("current_price")
+    levels = [v for v in (w.get("target"), w.get("stop")) if v is not None]
+    resistance = min((v for v in levels if current is not None and v >= current), default=None)
+    support = max((v for v in levels if current is not None and v < current), default=None)
+    parts = []
+    if resistance is not None:
+        parts.append(f"แนวต้าน +{(resistance - current) / current * 100:.2f}%")
+    if support is not None:
+        parts.append(f"แนวรับ {(support - current) / current * 100:.2f}%")
+    level_str = " · " + " · ".join(parts) if parts else ""
+    return f"📐 {stage}{elliott_str}{level_str}{status}"
 
 
 def cmd_dr(arg):
