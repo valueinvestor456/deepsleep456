@@ -122,20 +122,21 @@ def fundamental_url(d):
 
 
 def wave_line(d0):
-    """Formats the swing-stage/reward-risk line for a Telegram reply.
-    Deliberately not called "Elliott Wave" -- see wave_analysis.py for why.
-    Returns "" if no wave data joined onto this row."""
+    """Formats the Elliott Wave / support-resistance line for a Telegram
+    reply. Only rendered when elliott_count() (wave_analysis.py) found a
+    real motive (1-5) or corrective (A-B-C) fit -- the generic "Extending
+    up-swing"/"Retracement from swing high" phrasing was cut per user
+    feedback (not useful on its own). Returns "" otherwise."""
     w = d0.get("wave")
-    if not w:
+    elliott = w.get("elliott_label") if w else None
+    if not w or not elliott:
         return ""
     status = ""
     if w.get("live_status") == "target_reached":
         status = " ⚠️ ถึง target แล้ว"
     elif w.get("live_status") == "stop_breached":
         status = " 🛑 ทะลุ stop แล้ว"
-    stage = html.escape(w.get("stage_label", ""))
-    elliott = w.get("elliott_label")
-    elliott_str = f" 🌊 {html.escape(elliott)}" if elliott else ""
+    elliott_str = html.escape(elliott)
     current = w.get("current_price")
     levels = [v for v in (w.get("target"), w.get("stop")) if v is not None]
     resistance = min((v for v in levels if current is not None and v >= current), default=None)
@@ -146,7 +147,7 @@ def wave_line(d0):
     if support is not None:
         parts.append(f"แนวรับ {(support - current) / current * 100:.2f}%")
     level_str = " · " + " · ".join(parts) if parts else ""
-    return f"📐 {stage}{elliott_str}{level_str}{status}"
+    return f"🌊 {elliott_str}{level_str}{status}"
 
 
 def cmd_dr(arg):

@@ -140,48 +140,79 @@ def label_swing_structure(pivots, current_price):
         return 'retracing_from_low', STAGE_LABELS['retracing_from_low']
 
 
-def elliott_count(pivots):
-    """Best-effort Elliott Wave label ("Wave 2"/"Wave 3"/"Wave 4"/"Wave 5")
-    for the swing sequence ENDING AT the most recent confirmed/running
-    pivot extreme (pivots[-1]) -- i.e. "the recent structure looks like it
-    just completed Wave N" -- checked against Elliott's structural rules
-    for an impulse: wave 2 never fully retraces wave 1, wave 3 is never
-    the shortest of 1/3/5, wave 4 doesn't overlap wave 1's price
-    territory, each wave moves in the expected direction. Tries the
-    longest (most specific) window first (6 points = 5 legs = just
-    finished Wave 5) and falls back to shorter windows. Returns None --
-    not a guess -- if no window satisfies its rules; per explicit user
-    decision this is shown only when a fit is found, never forced. This
-    is ONE possible reading via ONE specific rule-checking algorithm, not
-    a verified analyst wave count -- real Elliott analysis routinely
-    finds multiple valid counts for the same chart; this only ever
-    reports the first internally-consistent one this heuristic finds.
+def _valid_impulse(p0, p1, p2, p3, p4, p5):
+    """The 3 inviolable Elliott rules for a 5-wave motive sequence (see
+    technical-analysis skill's elliott-wave.md): wave 2 never fully
+    retraces wave 1, wave 3 is never the shortest of 1/3/5, wave 4 never
+    overlaps wave 1's price territory. Returns (is_valid, bullish)."""
+    bullish = p1 > p0
+    len1, len3, len5 = abs(p1 - p0), abs(p3 - p2), abs(p5 - p4)
+    wave2_ok = (p2 > p0) if bullish else (p2 < p0)
+    wave4_ok = (p4 > p1) if bullish else (p4 < p1)
+    wave3_ok = len3 >= len1 or len3 >= len5
+    wave5_dir_ok = (p5 > p4) if bullish else (p5 < p4)
+    return (wave2_ok and wave4_ok and wave3_ok and wave5_dir_ok), bullish
 
-    Deliberately uses pivots[-1] (the swing's structural extreme) rather
-    than today's live price as the endpoint -- an earlier version swapped
-    in current_price directly, which silently dropped pivots[-1] from the
-    window entirely (since it replaced rather than appended), making the
-    count describe stale, disconnected structure instead of the most
-    recent real swing. This label is meant to combine with stage_label
-    (already shown alongside it), which separately says whether price is
-    now extending past that structural point or retracing from it -- e.g.
-    "Wave 3" + "Retracement from swing high" together read as "recent
-    structure looks like it just completed Wave 3, now pulling back",
-    which is coherent Elliott framing, not a contradiction."""
+
+def elliott_count(pivots):
+    """Best-effort Elliott Wave label for the swing sequence ENDING AT the
+    most recent confirmed/running pivot extreme (pivots[-1]). Per real
+    Elliott convention (technical-analysis skill's elliott-wave.md):
+    waves 1/3/5 (numbered) label the motive/impulse sequence that moves
+    WITH the larger trend; waves A/B/C (lettered) label the corrective
+    sequence that follows a COMPLETED 5-wave impulse, moving against it.
+    A "Wave 3" and a "Wave B" are structurally different things, not two
+    names for the same thing -- this checks for a completed impulse
+    (6 points) followed by a forming correction (7-9 points) BEFORE
+    falling back to shorter "impulse still in progress" windows, so a
+    genuine post-impulse correction gets labeled A/B/C, not misread as
+    Wave 2/3/4 of a phantom new impulse.
+
+    Returns None -- not a guess -- if no window satisfies its rules; per
+    explicit user decision this is shown only when a fit is found, never
+    forced. This is ONE possible reading via ONE specific rule-checking
+    algorithm, not a verified analyst wave count -- real Elliott analysis
+    routinely finds multiple valid counts for the same chart.
+
+    Uses pivots[-1] (the swing's own structural extreme), not today's
+    live price, as the sequence endpoint -- keeps the count anchored to
+    real confirmed/running pivots rather than an arbitrary live tick."""
     if len(pivots) < 3:
         return None
     pts = [p[2] for p in pivots]
     n = len(pts)
 
+    # --- Corrective A-B-C: requires a completed impulse (6 pts) first ---
+    if n >= 9:
+        valid, bullish = _valid_impulse(*pts[-9:-3])
+        if valid:
+            p5, pA, pB, pC = pts[-4], pts[-3], pts[-2], pts[-1]
+            a_ok = (pA < p5) if bullish else (pA > p5)
+            c_ok = (pC < pB) if bullish else (pC > pB)
+            if a_ok and c_ok:
+                return "Wave C (ปรับฐานคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+
+    if n >= 8:
+        valid, bullish = _valid_impulse(*pts[-8:-2])
+        if valid:
+            p5, pA, pB = pts[-3], pts[-2], pts[-1]
+            a_ok = (pA < p5) if bullish else (pA > p5)
+            b_ok = (pB > pA) if bullish else (pB < pA)
+            if a_ok and b_ok:
+                return "Wave B (ปรับฐานคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+
+    if n >= 7:
+        valid, bullish = _valid_impulse(*pts[-7:-1])
+        if valid:
+            p5, pA = pts[-2], pts[-1]
+            a_ok = (pA < p5) if bullish else (pA > p5)
+            if a_ok:
+                return "Wave A (ปรับฐานคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+
+    # --- Motive impulse still in progress ---
     if n >= 6:
-        p0, p1, p2, p3, p4, p5 = pts[-6:]
-        bullish = p1 > p0
-        len1, len3, len5 = abs(p1 - p0), abs(p3 - p2), abs(p5 - p4)
-        wave2_ok = (p2 > p0) if bullish else (p2 < p0)
-        wave4_ok = (p4 > p1) if bullish else (p4 < p1)
-        wave3_ok = len3 >= len1 or len3 >= len5
-        wave5_dir_ok = (p5 > p4) if bullish else (p5 < p4)
-        if wave2_ok and wave4_ok and wave3_ok and wave5_dir_ok:
+        valid, bullish = _valid_impulse(*pts[-6:])
+        if valid:
             return "Wave 5 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
 
     if n >= 5:

@@ -175,6 +175,13 @@ def get_wave_info(yahoo_u, live_underlying_price):
     info = dict(w)
     target, stop, stage = w.get("target"), w.get("stop"), w.get("stage_key")
     if live_underlying_price is not None and target is not None and stop is not None:
+        # Overwrite the cached (last-week) current_price with today's live
+        # price -- otherwise every consumer of info["current_price"] (the
+        # แนวรับ/แนวต้าน % displays) silently shows distances from a stale
+        # snapshot even after live_status below correctly flags a breach
+        # against the live price. Caught via user report: a row showed
+        # "stop breached" next to percentages that didn't reflect it.
+        info["current_price"] = live_underlying_price
         bullish = stage in ("extending_up", "retracing_from_low")
         if (bullish and live_underlying_price <= stop) or (not bullish and live_underlying_price >= stop):
             info["live_status"] = "stop_breached"

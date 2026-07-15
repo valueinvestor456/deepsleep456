@@ -300,7 +300,12 @@
   // weekly wave_analysis.py runs even though the price itself is live.
   function waveInfoStr(d0){
     var w = d0.wave;
-    if(!w) return '';
+    // Only render when a real Elliott Wave label was found -- the generic
+    // "Extending up-swing"/"Retracement from swing high" phrasing was cut
+    // per user feedback (not useful on its own); stage_key/stage_label
+    // still exist in the data for internal bullish/bearish direction
+    // logic, just no longer shown as text.
+    if(!w || !w.elliott_label) return '';
     var statusClass = 'wave-ok', statusNote = '';
     if(w.live_status === 'target_reached'){
       statusClass = 'wave-warn';
@@ -309,7 +314,6 @@
       statusClass = 'wave-breach';
       statusNote = ' 🛑 ทะลุ stop แล้ว';
     }
-    var elliottStr = w.elliott_label ? (' 🌊 ' + escapeHtml(w.elliott_label)) : '';
     // แนวต้าน/แนวรับ = whichever of target/stop sits above/below current
     // price, as a plain % distance -- not "target"/"stop" jargon, since
     // which one is which flips depending on the bullish/bearish stage.
@@ -323,7 +327,7 @@
     var resStr = resistance != null ? ('แนวต้าน +' + pct(resistance) + '%') : '';
     var supStr = support != null ? ('แนวรับ ' + pct(support) + '%') : '';
     var levelStr = [resStr, supStr].filter(Boolean).join(' &middot; ');
-    return '<span class="wave-line ' + statusClass + '">📐 ' + escapeHtml(w.stage_label) + elliottStr +
+    return '<span class="wave-line ' + statusClass + '">🌊 ' + escapeHtml(w.elliott_label) +
       (levelStr ? ' &middot; ' + levelStr : '') + statusNote + '</span>';
   }
 
