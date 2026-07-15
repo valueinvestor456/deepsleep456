@@ -263,15 +263,16 @@
   }
 
   function chartButton(d){
-    // Link to the DR's own TradingView symbol (SET:<sym>) rather than an
-    // underlying-formula chart -- TradingView lists Thai DRs directly
-    // (confirmed e.g. SET:CATL01, SET:FUEVFVND01), and this works uniformly
-    // regardless of whether underlying_tv could be resolved for the mother
-    // stock's exchange (many new markets added 2026-07-13 -- Vietnam,
-    // Taiwan, Xetra, LSE -- aren't in TV_EXCH_TO_SA, so relying on
-    // underlying_tv left those with no chart link at all).
-    var url = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent('SET:' + d.sym);
-    return '<a class="btn small" target="_blank" rel="noopener" href="' + url + '">📈 กราฟ</a>';
+    // Link to the UNDERLYING's own TradingView chart (not the DR) -- this
+    // is what the Swing Stage/Wave analysis is actually computed from, so
+    // it's what needs checking when verifying a wave count. Falls back to
+    // the DR's own SET:<sym> chart only if underlying_tv couldn't be
+    // resolved (should be rare now that TV_EXCH covers every market this
+    // project maps -- see .tools/build_dr_master.py).
+    var symbol = d.underlying_tv || ('SET:' + d.sym);
+    var url = 'https://www.tradingview.com/chart/?symbol=' + encodeURIComponent(symbol);
+    var label = d.underlying_tv ? '📈 กราฟหุ้นแม่' : '📈 กราฟ';
+    return '<a class="btn small" target="_blank" rel="noopener" href="' + url + '">' + label + '</a>';
   }
 
   function fundamentalNameLink(d){
@@ -309,7 +310,7 @@
       statusNote = ' 🛑 ราคาทะลุ stop แล้ว (คำนวณไว้ตั้งแต่ ' + w.data_through + ')';
     }
     var rr = w.reward_risk_ratio != null ? w.reward_risk_ratio.toFixed(2) : 'n/a';
-    var elliottStr = w.elliott_label ? (' &middot; 🌊 อาจอยู่ ' + escapeHtml(w.elliott_label) + ' (นับคลื่นเบื้องต้น ไม่ยืนยัน)') : '';
+    var elliottStr = w.elliott_label ? (' &middot; 🌊 ' + escapeHtml(w.elliott_label) + ' (Daily — เช็คกราฟหุ้นแม่ยืนยัน)') : '';
     return '<span class="wave-line ' + statusClass + '">📐 ' + escapeHtml(w.stage_label) + elliottStr +
       ' &middot; Target ' + fmt(w.target, 2) + ' (' + (w.reward_pct > 0 ? '+' : '') + w.reward_pct.toFixed(2) + '%)' +
       ' &middot; Stop ' + fmt(w.stop, 2) + ' (' + (w.risk_pct > 0 ? '-' : '+') + Math.abs(w.risk_pct).toFixed(2) + '%)' +

@@ -142,7 +142,7 @@ def wave_line(d0):
     target_str = f"{target:,.2f} ({reward:+.2f}%)" if target is not None and reward is not None else "n/a"
     stop_str = f"{stop:,.2f} ({-abs(risk):.2f}%)" if stop is not None and risk is not None else "n/a"
     elliott = w.get("elliott_label")
-    elliott_str = f" — 🌊 อาจอยู่ {html.escape(elliott)} (นับคลื่นเบื้องต้น ไม่ยืนยัน)" if elliott else ""
+    elliott_str = f" — 🌊 {html.escape(elliott)} (Daily — เช็คกราฟหุ้นแม่ยืนยัน)" if elliott else ""
     return f"📐 {stage}{elliott_str} — TP {target_str} · แนวรับ/ต้าน {stop_str} · R:R {rr}{status}"
 
 
@@ -219,8 +219,9 @@ def cmd_dr(arg):
                 sign = "+" if (prem or 0) > 0 else ""
                 lines.append(f"  {sym_esc} — จริง {actual} vs Fair {fair} — {sign}{prem:.2f}% {direction}")
         lines.append("")
-        url = "https://www.tradingview.com/chart/?symbol=" + urllib.parse.quote("SET:" + d0["sym"])
-        buttons.append((f"📈 ดูกราฟ {key}", url))
+        symbol = d0.get("underlying_tv") or ("SET:" + d0["sym"])
+        url = "https://www.tradingview.com/chart/?symbol=" + urllib.parse.quote(symbol)
+        buttons.append((f"📈 กราฟหุ้นแม่ {key}", url))
 
     if len(group_keys) > len(shown_groups):
         lines.append(f"... และอีก {len(group_keys) - len(shown_groups)} หุ้นแม่")
