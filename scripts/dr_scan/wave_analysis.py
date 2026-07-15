@@ -54,6 +54,15 @@ def fetch_history(ticker, range_="1y", interval="1d"):
     return list(dates), list(closes), list(volumes)
 
 
+# Scaling factor applied to atr_frac to get the actual ZigZag pivot
+# threshold -- a bare 1.0x ATR (the previous default) let ordinary daily
+# noise register as swing pivots on low-volatility names. 1.5-2.0x is the
+# commonly recommended band for ATR-based ZigZag; 1.75x (the midpoint) is
+# used as this module's default. Kept as a module-level constant (not
+# hardcoded inline) so it can be tuned without hunting through the code.
+ZIGZAG_ATR_MULT = 1.75
+
+
 def atr_stats(closes, period=14):
     """Close-to-close volatility proxy (we only have daily close from the
     chart API, not high/low, so this is a close-only proxy -- not a
@@ -62,7 +71,11 @@ def atr_stats(closes, period=14):
     atr_frac keeps pivot "degree" comparable across very different
     volatility profiles in this ticker set (US megacaps down to thin
     HK-listed ETFs) -- a fixed % over-segments low-vol large caps and
-    under-segments volatile thin small-caps."""
+    under-segments volatile thin small-caps. Callers wanting the actual
+    ZigZag threshold should multiply atr_frac by ZIGZAG_ATR_MULT (done in
+    analyze_ticker) -- atr_abs is returned un-scaled since it's also used
+    directly for the stop-loss distance (STOP_ATR_MULT), a separate
+    concern from the pivot-detection threshold."""
     if len(closes) < period + 1:
         return None, None
     tr = [abs(closes[i] - closes[i - 1]) for i in range(1, len(closes))]
@@ -154,8 +167,75 @@ def _valid_impulse(p0, p1, p2, p3, p4, p5):
     return (wave2_ok and wave4_ok and wave3_ok and wave5_dir_ok), bullish
 
 
+# English descriptive names for the explicit-labeling schema. "Wave 1" is
+# listed for completeness even though this module never emits it in
+# practice (see elliott_count's n>=3 floor below) -- with only the very
+# first leg formed there's nothing yet to structurally distinguish "start
+# of a new impulse" from noise, so labeling it would be a pure guess.
+WAVE_DESCRIPTIONS = {
+    '1': 'Initial Impulse', '2': 'Correction', '3': 'Strong Impulse',
+    '4': 'Correction', '5': 'Final Impulse',
+    'A': 'Initial Correction', 'B': 'Corrective Bounce',
+    'C': 'Final Correction/Capitulation',
+}
+
+# Fibonacci proportion bands -- SOFT scoring criteria (see fib_score below),
+# not hard pass/fail gates, except FIB_WAVEB_RETRACE_MAX which is enforced
+# as a hard cap. Real impulses commonly extend wave 1 or wave 5 instead of
+# wave 3 (per elliott-wave.md: wave 3 extends most often, but wave 5 and
+# even wave 1 extending are established, non-rare cases) -- treating
+# "wave 3 >= 161.8% of wave 1" as a required hard gate would reject a
+# large share of genuinely valid impulses that just happen to extend a
+# different wave. The user's spec itself frames this section as "lower
+# confidence score OR do not label as confirmed" -- scoring implements
+# that without the false-negative cost of a blanket hard requirement.
+FIB_WAVE2_RETRACE = (0.5, 0.786)
+FIB_WAVE3_EXT_MIN = 1.618
+FIB_WAVE4_RETRACE = (0.236, 0.382)
+FIB_WAVEB_RETRACE_IDEAL = (0.382, 0.618)
+FIB_WAVEB_RETRACE_MAX = 0.85  # hard cap -- beyond this it's an irregular/expanded pattern, not a plain "B"
+FIB_WAVEC_EXT = (1.0, 1.618)
+MIN_FIB_SCORE = 0.34  # roughly "at least 1 of the ~3 applicable checks passed"
+
+
+def _in_band(value, band):
+    return band[0] <= value <= band[1]
+
+
+def _score_impulse_fib(p0, p1, p2, p3, p4, up_to):
+    """Fraction of the Fibonacci proportion checks relevant to a
+    Wave-2/3/4/5 fit that this specific sequence satisfies (see band
+    comments above). Only scores ratios the count has actually reached --
+    a Wave 2 fit has no wave 3/4 yet to compare."""
+    len1 = abs(p1 - p0)
+    if not len1:
+        return 1.0
+    checks = [_in_band(abs(p2 - p1) / len1, FIB_WAVE2_RETRACE)]
+    if up_to in ('3', '4', '5'):
+        checks.append(abs(p3 - p2) / len1 >= FIB_WAVE3_EXT_MIN)
+    len3 = abs(p3 - p2)
+    if len3 and up_to in ('4', '5'):
+        checks.append(_in_band(abs(p4 - p3) / len3, FIB_WAVE4_RETRACE))
+    return sum(checks) / len(checks)
+
+
+def _score_corrective_fib(p5, pA, pB, pC, up_to):
+    """Same idea for a Wave A/B/C fit: Wave B should retrace 38.2-61.8%% of
+    Wave A (ideal band; the 85% hard cap is enforced separately, not here),
+    Wave C should extend 100-161.8% of Wave A."""
+    lenA = abs(pA - p5)
+    if not lenA:
+        return 1.0
+    checks = []
+    if pB is not None:
+        checks.append(_in_band(abs(pB - pA) / lenA, FIB_WAVEB_RETRACE_IDEAL))
+    if pC is not None and pB is not None:
+        checks.append(_in_band(abs(pC - pB) / lenA, FIB_WAVEC_EXT))
+    return sum(checks) / len(checks) if checks else 1.0
+
+
 def elliott_count(pivots):
-    """Best-effort Elliott Wave label for the swing sequence ENDING AT the
+    """Best-effort Elliott Wave read for the swing sequence ENDING AT the
     most recent confirmed/running pivot extreme (pivots[-1]). Per real
     Elliott convention (technical-analysis skill's elliott-wave.md):
     waves 1/3/5 (numbered) label the motive/impulse sequence that moves
@@ -168,7 +248,8 @@ def elliott_count(pivots):
     genuine post-impulse correction gets labeled A/B/C, not misread as
     Wave 2/3/4 of a phantom new impulse.
 
-    Returns None -- not a guess -- if no window satisfies its rules; per
+    Returns None -- not a guess -- if no window satisfies its structural
+    rules AND its Fibonacci proportion score clears MIN_FIB_SCORE; per
     explicit user decision this is shown only when a fit is found, never
     forced. This is ONE possible reading via ONE specific rule-checking
     algorithm, not a verified analyst wave count -- real Elliott analysis
@@ -176,11 +257,30 @@ def elliott_count(pivots):
 
     Uses pivots[-1] (the swing's own structural extreme), not today's
     live price, as the sequence endpoint -- keeps the count anchored to
-    real confirmed/running pivots rather than an arbitrary live tick."""
+    real confirmed/running pivots rather than an arbitrary live tick.
+
+    Returns a dict {current_wave, wave_stage, elliott_label, fib_score} or
+    None. elliott_label keeps the exact pre-existing Thai-language format
+    ("Wave C (ปรับฐานคลื่นใหญ่ขาลง)") for backward compatibility with the
+    UI (which parses the leading "Wave X" out of it for the wave filter)
+    and both Telegram bots; current_wave/wave_stage are new additions."""
     if len(pivots) < 3:
         return None
     pts = [p[2] for p in pivots]
     n = len(pts)
+
+    def build(key, bullish, fib_score):
+        thai_dir = "ขาขึ้น" if bullish else "ขาลง"
+        if key in ('A', 'B', 'C'):
+            label = f"Wave {key} (ปรับฐานคลื่นใหญ่{thai_dir})"
+        else:
+            label = f"Wave {key} (ของคลื่นใหญ่{thai_dir})"
+        return {
+            'current_wave': key,
+            'wave_stage': f"Wave {key} ({WAVE_DESCRIPTIONS[key]})",
+            'elliott_label': label,
+            'fib_score': round(fib_score, 2),
+        }
 
     # --- Corrective A-B-C: requires a completed impulse (6 pts) first ---
     if n >= 9:
@@ -189,8 +289,12 @@ def elliott_count(pivots):
             p5, pA, pB, pC = pts[-4], pts[-3], pts[-2], pts[-1]
             a_ok = (pA < p5) if bullish else (pA > p5)
             c_ok = (pC < pB) if bullish else (pC > pB)
-            if a_ok and c_ok:
-                return "Wave C (ปรับฐานคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+            lenA = abs(pA - p5)
+            b_within_cap = lenA == 0 or abs(pB - pA) / lenA <= FIB_WAVEB_RETRACE_MAX
+            if a_ok and c_ok and b_within_cap:
+                score = _score_corrective_fib(p5, pA, pB, pC, 'C')
+                if score >= MIN_FIB_SCORE:
+                    return build('C', bullish, score)
 
     if n >= 8:
         valid, bullish = _valid_impulse(*pts[-8:-2])
@@ -198,8 +302,12 @@ def elliott_count(pivots):
             p5, pA, pB = pts[-3], pts[-2], pts[-1]
             a_ok = (pA < p5) if bullish else (pA > p5)
             b_ok = (pB > pA) if bullish else (pB < pA)
-            if a_ok and b_ok:
-                return "Wave B (ปรับฐานคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+            lenA = abs(pA - p5)
+            b_within_cap = lenA == 0 or abs(pB - pA) / lenA <= FIB_WAVEB_RETRACE_MAX
+            if a_ok and b_ok and b_within_cap:
+                score = _score_corrective_fib(p5, pA, pB, None, 'B')
+                if score >= MIN_FIB_SCORE:
+                    return build('B', bullish, score)
 
     if n >= 7:
         valid, bullish = _valid_impulse(*pts[-7:-1])
@@ -207,13 +315,16 @@ def elliott_count(pivots):
             p5, pA = pts[-2], pts[-1]
             a_ok = (pA < p5) if bullish else (pA > p5)
             if a_ok:
-                return "Wave A (ปรับฐานคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+                return build('A', bullish, 1.0)  # nothing to score yet (only wave A exists)
 
     # --- Motive impulse still in progress ---
     if n >= 6:
         valid, bullish = _valid_impulse(*pts[-6:])
         if valid:
-            return "Wave 5 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+            p0, p1, p2, p3, p4 = pts[-6:-1]
+            score = _score_impulse_fib(p0, p1, p2, p3, p4, '5')
+            if score >= MIN_FIB_SCORE:
+                return build('5', bullish, score)
 
     if n >= 5:
         p0, p1, p2, p3, p4 = pts[-5:]
@@ -224,7 +335,9 @@ def elliott_count(pivots):
         wave3_dir_ok = (p3 > p1) if bullish else (p3 < p1)
         wave4_dir_ok = (p4 < p3) if bullish else (p4 > p3)
         if wave2_ok and wave3_ok and wave3_dir_ok and wave4_dir_ok:
-            return "Wave 4 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+            score = _score_impulse_fib(p0, p1, p2, p3, p4, '4')
+            if score >= MIN_FIB_SCORE:
+                return build('4', bullish, score)
 
     if n >= 4:
         p0, p1, p2, p3 = pts[-4:]
@@ -232,7 +345,9 @@ def elliott_count(pivots):
         wave2_ok = (p2 > p0) if bullish else (p2 < p0)
         wave3_dir_ok = (p3 > p2) if bullish else (p3 < p2)
         if wave2_ok and wave3_dir_ok:
-            return "Wave 3 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+            score = _score_impulse_fib(p0, p1, p2, p3, p3, '3')
+            if score >= MIN_FIB_SCORE:
+                return build('3', bullish, score)
 
     if n >= 3:
         p0, p1, p2 = pts[-3:]
@@ -240,7 +355,9 @@ def elliott_count(pivots):
         wave2_dir_ok = (p2 < p1) if bullish else (p2 > p1)
         wave2_not_full_retrace = (p2 > p0) if bullish else (p2 < p0)
         if wave2_dir_ok and wave2_not_full_retrace:
-            return "Wave 2 (ของคลื่นใหญ่" + ("ขาขึ้น" if bullish else "ขาลง") + ")"
+            score = _score_impulse_fib(p0, p1, p2, p2, p2, '2')
+            if score >= MIN_FIB_SCORE:
+                return build('2', bullish, score)
 
     return None
 
@@ -320,14 +437,14 @@ def analyze_ticker(ticker):
     if trading_days < MIN_TRADING_DAYS:
         return {"quality": "insufficient_history", "data_through": None}
     atr_abs, atr_frac = atr_stats(closes)
-    pivots = detect_pivots(closes, dates, atr_frac) if atr_frac else []
+    pivots = detect_pivots(closes, dates, atr_frac * ZIGZAG_ATR_MULT) if atr_frac else []
     current_price = closes[-1]
     stage_key, stage_label = label_swing_structure(pivots, current_price)
     if stage_key is None:
         return {"quality": "insufficient_history", "data_through": None}
     target, stop = compute_fib_levels(pivots, stage_key, current_price, atr_abs)
     reward_pct, risk_pct, ratio = compute_reward_risk(current_price, target, stop, stage_key)
-    elliott_label = elliott_count(pivots)
+    wave = elliott_count(pivots)
     # A "retracing" target is a fixed Fibonacci level (last swing's 61.8%
     # retracement); if price has already moved past it before this batch
     # ran, reward_pct comes out <=0 -- that's not a coding error, it means
@@ -342,6 +459,7 @@ def analyze_ticker(ticker):
         quality = "stop_breached"
     return {
         "quality": quality,
+        "invalidated": quality in ("target_reached", "stop_breached"),
         "stage_key": stage_key,
         "stage_label": stage_label,
         "current_price": current_price,
@@ -350,7 +468,15 @@ def analyze_ticker(ticker):
         "reward_pct": reward_pct,
         "risk_pct": risk_pct,
         "reward_risk_ratio": ratio if quality == "ok" else None,
-        "elliott_label": elliott_label,
+        # elliott_label kept exactly as before (Thai-formatted string) for
+        # backward compatibility with the UI's wave-filter regex parse and
+        # both Telegram bots. current_wave/wave_stage/fib_score are new,
+        # additive fields -- nothing existing reads them yet, so their
+        # presence can't break anything.
+        "elliott_label": wave["elliott_label"] if wave else None,
+        "current_wave": wave["current_wave"] if wave else None,
+        "wave_stage": wave["wave_stage"] if wave else None,
+        "fib_score": wave["fib_score"] if wave else None,
         "data_through": time.strftime("%Y-%m-%d", time.gmtime(dates[-1])),
     }
 
@@ -377,7 +503,11 @@ def build_wave_cache():
     for i, ticker in enumerate(underlyings):
         try:
             result = analyze_ticker(ticker)
+            # calculated_at is the exact requested field name; computed_at
+            # is kept too (identical value) since it already existed and
+            # nothing needs to stop reading it.
             result["computed_at"] = now_iso
+            result["calculated_at"] = now_iso
             cache[ticker] = result
             if result.get("quality") == "ok":
                 ok += 1
