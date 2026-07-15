@@ -52,6 +52,8 @@
   input[type=text],select{background:var(--page);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);padding:10px 12px;font-size:14px;}
   .search-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .search-row input[type=text]{flex:1;min-width:260px;}
+  .search-row select{min-width:0;flex:0 1 auto;}
+  .search-row #pe-max-filter{flex:0 1 140px;min-width:100px;width:auto;}
   .wave-line{display:block;margin-top:4px;}
   .wave-ok{color:var(--series-1);}
   .wave-warn{color:var(--warning);}
@@ -73,6 +75,9 @@
     th,td{padding:6px 7px;}
     .group-title{font-size:13px;}
     .search-row input[type=text]{min-width:0;}
+    /* filter controls stack full-width instead of cramming into a row --
+       simpler and more robust than fine-tuning flex-shrink at this width */
+    .search-row select, .search-row #pe-max-filter{flex:1 1 100%;width:100%;}
     /* wide leaderboard tables collapse into compact 2-column card grids instead of scrolling */
     .table-scroll{overflow-x:visible;}
     .stack-mobile thead{display:none;}
@@ -129,13 +134,29 @@
       <button class="btn" id="clear-search">ล้างการค้นหา</button>
     </div>
     <div class="search-row" style="margin-top:8px;">
-      <select id="swing-filter">
-        <option value="">Swing Stage: ทั้งหมด</option>
-        <option value="extending_up">Extending up-swing</option>
-        <option value="retracing_from_high">Retracement from swing high</option>
-        <option value="extending_down">Extending down-swing</option>
-        <option value="retracing_from_low">Retracement from swing low</option>
+      <select id="wave-filter">
+        <option value="">Wave: ทั้งหมด</option>
+        <option value="1">Wave 1</option>
+        <option value="2">Wave 2</option>
+        <option value="3">Wave 3</option>
+        <option value="4">Wave 4</option>
+        <option value="5">Wave 5</option>
+        <option value="A">Wave A</option>
+        <option value="B">Wave B</option>
+        <option value="C">Wave C</option>
       </select>
+      <select id="market-filter">
+        <option value="">ตลาด: ทั้งหมด</option>
+        <option value="US">US</option>
+        <option value="HK">HK</option>
+        <option value="JP">JP</option>
+        <option value="SG">SG</option>
+        <option value="VN">VN</option>
+        <option value="TW">TW</option>
+        <option value="EU">EU</option>
+        <option value="CN">CN</option>
+      </select>
+      <input type="text" id="pe-max-filter" placeholder="P/E สูงสุด เช่น 20" inputmode="decimal">
       <select id="sort-select">
         <option value="fwd_pe">เรียงตาม: Forward P/E ต่ำสุดก่อน</option>
         <option value="reward_risk">เรียงตาม: Reward:Risk สูงสุดก่อน</option>
@@ -144,7 +165,7 @@
     <p class="u-price" style="margin-top:6px;">
       📊 Swing Stage / Reward-Risk คำนวณจาก pivot ราคา + Fibonacci retracement/extension (อัปเดตรายสัปดาห์ ไม่ใช่ real-time เหมือนราคา) —
       <b>ไม่ใช่การนับคลื่น Elliott Wave ที่ยืนยันโดยนักวิเคราะห์</b> เป็นการประมาณด้วยอัลกอริทึมเท่านั้น ตีความคลาดเคลื่อนได้ ใช้เป็นข้อมูลประกอบ ไม่ใช่คำแนะนำการซื้อขาย —
-      ป้าย "🌊 อาจอยู่ Wave N" (ถ้ามี) เป็นการเดาแบบ best-effort เพิ่มเติมตามกฎโครงสร้าง Elliott เบื้องต้น โชว์เฉพาะตอนที่ fit ได้ชัดเจนเท่านั้น ไม่ fit ก็ไม่โชว์ ไม่ใช่การยืนยันว่านับถูก
+      ป้าย "🌊 Wave N" (ถ้ามี) เป็นการเดาแบบ best-effort ตามกฎโครงสร้าง Elliott เบื้องต้น (เลข 1-5 = คลื่นหลักตามเทรนด์ใหญ่, ตัวอักษร A/B/C = คลื่นปรับฐานหลังคลื่นหลักจบ) โชว์เฉพาะตอนที่ fit ได้ชัดเจนเท่านั้น ไม่ fit ก็ไม่โชว์ ไม่ใช่การยืนยันว่านับถูก — filter ด้านบนกรองได้ตาม Wave / ตลาด / P/E สูงสุด
     </p>
   </div>
 
@@ -397,15 +418,38 @@
     }).join('');
   }
 
-  function rowMatchesSwing(d, stage){
-    if(!stage) return true;
-    return !!(d.wave && d.wave.stage_key === stage);
+  // Filters by the short wave key (e.g. "3", "A") parsed out of the full
+  // elliott_label string ("Wave 3 (ของคลื่นใหญ่ขาขึ้น)") -- no separate
+  // short-key field exists in the data, so this is client-side parsing
+  // rather than a backend schema change.
+  function rowMatchesWave(d, waveKey){
+    if(!waveKey) return true;
+    var label = d.wave && d.wave.elliott_label;
+    if(!label) return false;
+    var m = label.match(/^Wave (\w+)/);
+    return !!(m && m[1] === waveKey);
+  }
+
+  function rowMatchesMarket(d, market){
+    if(!market) return true;
+    return d.market === market;
+  }
+
+  function rowMatchesPeMax(d, peMaxStr){
+    if(!peMaxStr) return true;
+    var peMax = parseFloat(peMaxStr);
+    if(isNaN(peMax)) return true;
+    return d.pe_ratio != null && d.pe_ratio <= peMax;
   }
 
   function renderAll(){
     var q = document.getElementById('search-input').value.trim();
-    var stage = document.getElementById('swing-filter').value;
-    var filtered = DATA.filter(function(d){ return rowMatchesQuery(d, q) && rowMatchesSwing(d, stage); });
+    var waveKey = document.getElementById('wave-filter').value;
+    var market = document.getElementById('market-filter').value;
+    var peMaxStr = document.getElementById('pe-max-filter').value.trim();
+    var filtered = DATA.filter(function(d){
+      return rowMatchesQuery(d, q) && rowMatchesWave(d, waveKey) && rowMatchesMarket(d, market) && rowMatchesPeMax(d, peMaxStr);
+    });
     renderTopPremium(filtered);
     renderTopDiscount(filtered);
     renderGrouped(filtered);
@@ -416,7 +460,9 @@
     document.getElementById('search-input').value = '';
     renderAll();
   });
-  document.getElementById('swing-filter').addEventListener('change', renderAll);
+  document.getElementById('wave-filter').addEventListener('change', renderAll);
+  document.getElementById('market-filter').addEventListener('change', renderAll);
+  document.getElementById('pe-max-filter').addEventListener('input', renderAll);
   document.getElementById('sort-select').addEventListener('change', renderAll);
   document.getElementById('toggle-theme').addEventListener('click', function(){
     var root = document.documentElement;
