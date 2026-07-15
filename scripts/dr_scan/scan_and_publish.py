@@ -87,9 +87,31 @@ def get_set_quote(sym):
 
 
 def get_yahoo_price(ticker):
+    """Returns the most recent tradeable reference price -- NOT always
+    regularMarketPrice. During Thai daytime, US markets are closed for
+    the regular session (regularMarketPrice freezes at the prior close
+    until the next regular open) but pre-market/after-hours trading
+    continues; SET itself references this OTC/extended-hours price for
+    its own live fair-value on US-underlying DRs during that window
+    (confirmed by the user independently), so using a frozen
+    regularMarketPrice there was silently stale versus what SET itself
+    uses. Picks whichever of regular/post/pre-market carries the latest
+    timestamp Yahoo reports -- falls back to regularMarketPrice alone
+    for tickers/markets with no extended-hours fields at all (the vast
+    majority of non-US underlyings)."""
     try:
         raw = fetch(f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}")
-        return json.loads(raw)['chart']['result'][0]['meta'].get('regularMarketPrice')
+        meta = json.loads(raw)['chart']['result'][0]['meta']
+        candidates = [
+            (meta.get('regularMarketTime'), meta.get('regularMarketPrice')),
+            (meta.get('postMarketTime'), meta.get('postMarketPrice')),
+            (meta.get('preMarketTime'), meta.get('preMarketPrice')),
+        ]
+        candidates = [(t, p) for t, p in candidates if t is not None and p is not None]
+        if not candidates:
+            return meta.get('regularMarketPrice')
+        candidates.sort(key=lambda tp: tp[0])
+        return candidates[-1][1]
     except Exception:
         return None
 
