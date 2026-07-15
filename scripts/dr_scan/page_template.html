@@ -96,8 +96,11 @@
   .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
   .badge.market-US{background:rgba(42,120,214,0.15);color:var(--series-1);}
   .badge.market-HK{background:rgba(201,151,44,0.15);color:var(--series-2);}
-  .badge.market-JP,.badge.market-SG,.badge.market-EU{background:rgba(160,157,148,0.2);color:var(--text-secondary);}
+  .badge.market-JP,.badge.market-SG,.badge.market-EU,.badge.market-VN,.badge.market-TW,.badge.market-CN{background:rgba(160,157,148,0.2);color:var(--text-secondary);}
   .badge.warn{background:rgba(250,178,25,0.15);color:#a06d00;}
+  .badge.night-badge{background:rgba(80,70,180,0.15);color:#6a4cd4;}
+  .badge.spread-badge{background:rgba(211,66,66,0.15);color:var(--critical);}
+  .pager{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:14px;flex-wrap:wrap;}
   .group-title{font-size:14px;font-weight:600;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
   .group-title .u-price{font-weight:400;color:var(--text-muted);font-size:12px;}
   .dr-row-link{color:var(--series-1);text-decoration:none;font-weight:600;}
@@ -190,9 +193,16 @@
   </div>
 
   <div class="card">
+    <p class="section-title">หุ้นแม่เดียวกัน แต่ Premium/Discount ต่างกันมาก</p>
+    <p class="u-price" style="margin:-4px 0 10px;">เมื่อ DR หลายตัวอ้างอิงหุ้นแม่ตัวเดียวกัน ปกติควรมี Premium/Discount ใกล้เคียงกัน — ถ้าห่างกันมาก อาจมีตัวหนึ่งราคาผิดปกติเทียบกับอีกตัว (เฉพาะหุ้นแม่ที่มี DR &ge; 2 ตัว เรียงตามส่วนต่างมากสุดก่อน)</p>
+    <div id="divergence-list"></div>
+  </div>
+
+  <div class="card">
     <p class="section-title">ทั้งหมด (จัดกลุ่มตามหุ้นแม่)</p>
     <div id="grouped-list"></div>
     <div class="no-match hidden" id="no-match-msg">ไม่พบ DR หรือหุ้นแม่ที่ตรงกับคำค้นหา — อาจยังไม่ได้ scan ไว้ในระบบ</div>
+    <div class="pager" id="grouped-pager"></div>
   </div>
 
   <div class="card stop-box">
@@ -375,16 +385,45 @@
     renderTopTable('top-discount-tbody', rows.slice(0, 20), 'prem-neg', 'Discount');
   }
 
-  function renderGrouped(filtered){
+  function groupByUnderlying(filtered){
     var groups = {};
     filtered.forEach(function(d){
       var key = d.yahoo_u + '|' + d.name;
       if(!groups[key]) groups[key] = [];
       groups[key].push(d);
     });
-    var container = document.getElementById('grouped-list');
-    var sortMode = document.getElementById('sort-select').value;
-    var keys = Object.keys(groups).sort(function(a,b){
+    return groups;
+  }
+
+  // Shared renderer for one underlying's block, used by both the paginated
+  // "ทั้งหมด" list and the premium-divergence section -- extraHeaderHtml
+  // lets a caller append something (e.g. a spread badge) to the title line.
+  function renderGroupBlock(items, extraHeaderHtml){
+    var d0 = items[0];
+    var rows = items.map(function(d){
+      return '<tr><td><b>' + d.sym + '</b></td>' +
+        '<td>' + fmt(d.actual_price) + '</td><td>' + fmt(d.fair_price) + '</td>' +
+        '<td class="' + premClass(d.premium_pct) + '">' + premLabel(d.premium_pct) + '</td></tr>';
+    }).join('');
+    var peStr = '';
+    if(d0.pe_ratio !== null && d0.pe_ratio !== undefined || d0.forward_pe !== null && d0.forward_pe !== undefined){
+      peStr = ' <span class="u-price">P/E: ' + (d0.pe_ratio != null ? d0.pe_ratio.toFixed(1) : 'n/a') +
+        ' &middot; Fwd P/E: ' + (d0.forward_pe != null ? d0.forward_pe.toFixed(1) : 'n/a') + '</span>';
+    }
+    // All US-underlying DRs on SET trade during both Day and Night Session
+    // (to match NYSE/Nasdaq hours) -- confirmed via SET's own marketStatus
+    // field returning "Night" for these outside Thai daytime, vs "Closed"
+    // for non-US DRs at the same moment. This is a structural fact of the
+    // market/exchange, not something that varies per ticker, so it's
+    // derived from d0.market rather than the live (time-dependent)
+    // set_market_status value.
+    var nightBadge = d0.market === 'US' ? ' <span class="badge night-badge" title="DR หุ้นสหรัฐฯ เทรดได้ทั้ง Day Session และ Night Session">🌙 Night Session</span>' : '';
+    return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span>' + nightBadge + ' <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + waveInfoStr(d0) + (extraHeaderHtml || '') + '</div>' +
+      '<div style="overflow-x:auto;"><table><thead><tr><th>DR</th><th>จริง (THB)</th><th>Fair (THB)</th><th>Prem/Disc</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  function sortGroupKeys(groups, sortMode){
+    return Object.keys(groups).sort(function(a,b){
       if(sortMode === 'reward_risk'){
         var wa = groups[a][0].wave, wb = groups[b][0].wave;
         var ra = wa ? wa.reward_risk_ratio : null, rb = wb ? wb.reward_risk_ratio : null;
@@ -399,23 +438,71 @@
       if(fb == null) return -1;
       return fa - fb;
     });
+  }
+
+  var GROUPED_PAGE_SIZE = 20;
+  var groupedPage = 1;
+  var lastGroupedFiltered = [];
+
+  function renderGroupedPager(totalKeys, totalPages){
+    var el = document.getElementById('grouped-pager');
+    if(totalPages <= 1){ el.innerHTML = ''; return; }
+    el.innerHTML =
+      '<button class="btn small" id="pg-prev"' + (groupedPage <= 1 ? ' disabled' : '') + '>← ก่อนหน้า</button>' +
+      '<span class="u-price">หน้า ' + groupedPage + ' / ' + totalPages + ' (' + totalKeys + ' หุ้นแม่)</span>' +
+      '<button class="btn small" id="pg-next"' + (groupedPage >= totalPages ? ' disabled' : '') + '>ถัดไป →</button>';
+    var prevBtn = document.getElementById('pg-prev'), nextBtn = document.getElementById('pg-next');
+    if(prevBtn) prevBtn.addEventListener('click', function(){
+      groupedPage--;
+      renderGrouped(lastGroupedFiltered);
+      document.getElementById('grouped-list').scrollIntoView({block:'start'});
+    });
+    if(nextBtn) nextBtn.addEventListener('click', function(){
+      groupedPage++;
+      renderGrouped(lastGroupedFiltered);
+      document.getElementById('grouped-list').scrollIntoView({block:'start'});
+    });
+  }
+
+  function renderGrouped(filtered){
+    lastGroupedFiltered = filtered;
+    var groups = groupByUnderlying(filtered);
+    var container = document.getElementById('grouped-list');
+    var sortMode = document.getElementById('sort-select').value;
+    var keys = sortGroupKeys(groups, sortMode);
     document.getElementById('no-match-msg').classList.toggle('hidden', keys.length > 0);
-    container.innerHTML = keys.map(function(key){
+    var totalPages = Math.max(1, Math.ceil(keys.length / GROUPED_PAGE_SIZE));
+    if(groupedPage > totalPages) groupedPage = totalPages;
+    if(groupedPage < 1) groupedPage = 1;
+    var startIdx = (groupedPage - 1) * GROUPED_PAGE_SIZE;
+    var pageKeys = keys.slice(startIdx, startIdx + GROUPED_PAGE_SIZE);
+    container.innerHTML = pageKeys.map(function(key){ return renderGroupBlock(groups[key]); }).join('');
+    renderGroupedPager(keys.length, totalPages);
+  }
+
+  // "Same underlying, big premium/discount spread" -- surfaces underlyings
+  // with 2+ DR variants whose premium_pct disagree a lot with each other.
+  // Normally same-underlying DRs should trade at similar premium/discount
+  // (same fair-price formula, same underlying price); a wide spread means
+  // one variant is priced very differently from a sibling DR tracking the
+  // identical stock, which is a more specific signal than either DR's
+  // premium alone.
+  function renderDivergence(filtered){
+    var groups = groupByUnderlying(filtered);
+    var withSpread = Object.keys(groups).map(function(key){
       var items = groups[key];
-      var d0 = items[0];
-      var rows = items.map(function(d){
-        return '<tr><td><b>' + d.sym + '</b></td>' +
-          '<td>' + fmt(d.actual_price) + '</td><td>' + fmt(d.fair_price) + '</td>' +
-          '<td class="' + premClass(d.premium_pct) + '">' + premLabel(d.premium_pct) + '</td></tr>';
-      }).join('');
-      var peStr = '';
-      if(d0.pe_ratio !== null && d0.pe_ratio !== undefined || d0.forward_pe !== null && d0.forward_pe !== undefined){
-        peStr = ' <span class="u-price">P/E: ' + (d0.pe_ratio != null ? d0.pe_ratio.toFixed(1) : 'n/a') +
-          ' &middot; Fwd P/E: ' + (d0.forward_pe != null ? d0.forward_pe.toFixed(1) : 'n/a') + '</span>';
-      }
-      return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span> <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + waveInfoStr(d0) + '</div>' +
-        '<div style="overflow-x:auto;"><table><thead><tr><th>DR</th><th>จริง (THB)</th><th>Fair (THB)</th><th>Prem/Disc</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-    }).join('');
+      var prems = items.map(function(d){ return d.premium_pct; }).filter(function(p){ return p != null; });
+      if(items.length < 2 || prems.length < 2) return null;
+      var spread = Math.max.apply(null, prems) - Math.min.apply(null, prems);
+      return {items: items, spread: spread};
+    }).filter(Boolean);
+    withSpread.sort(function(a,b){ return b.spread - a.spread; });
+    var top = withSpread.slice(0, 20);
+    var container = document.getElementById('divergence-list');
+    container.innerHTML = top.map(function(g){
+      var badge = ' <span class="badge spread-badge">Spread ' + g.spread.toFixed(2) + ' pp</span>';
+      return renderGroupBlock(g.items, badge);
+    }).join('') || '<p class="no-match">ไม่มีหุ้นแม่ที่มี DR ตั้งแต่ 2 ตัวขึ้นไปในผลการค้นหานี้</p>';
   }
 
   // Filters by the short wave key (e.g. "3", "A") parsed out of the full
@@ -450,8 +537,10 @@
     var filtered = DATA.filter(function(d){
       return rowMatchesQuery(d, q) && rowMatchesWave(d, waveKey) && rowMatchesMarket(d, market) && rowMatchesPeMax(d, peMaxStr);
     });
+    groupedPage = 1; // any filter/search/sort change starts back at page 1
     renderTopPremium(filtered);
     renderTopDiscount(filtered);
+    renderDivergence(filtered);
     renderGrouped(filtered);
   }
 
