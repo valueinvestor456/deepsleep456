@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-16T07:48:48Z",
+  "updated": "2026-07-16T16:51:38Z",
   "events": [
     {
       "title": "BusinessNZ Services Index",
@@ -580,7 +580,7 @@
     {
       "title": "10-y Bond Auction",
       "country": "GBP",
-      "date": "2026-07-16T05:33:00-04:00",
+      "date": "2026-07-16T05:02:00-04:00",
       "impact": "Low",
       "forecast": "",
       "previous": "4.93|3.3"
