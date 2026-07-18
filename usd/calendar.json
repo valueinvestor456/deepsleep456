@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-17T19:33:53Z",
+  "updated": "2026-07-18T03:33:35Z",
   "events": [
     {
       "title": "BusinessNZ Services Index",
@@ -784,14 +784,6 @@
       "impact": "Medium",
       "forecast": "",
       "previous": "4.6%"
-    },
-    {
-      "title": "Treasury Currency Report",
-      "country": "USD",
-      "date": "2026-07-17T16:30:00-04:00",
-      "impact": "Low",
-      "forecast": "",
-      "previous": ""
     }
   ]
 }
