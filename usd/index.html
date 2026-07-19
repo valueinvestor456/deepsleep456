@@ -124,6 +124,7 @@
       <div class="score-label">USD/THB Spot (realtime)</div>
       <div class="spot-big" id="spot">—</div>
       <div class="spot-meta" id="spotMeta">กำลังโหลด…</div>
+      <div class="spot-meta" id="trendEMA50">Trend (EMA50): —</div>
       <div class="row" style="margin-top:4px"><span class="label">แก้ spot เอง</span>
         <input type="number" id="spotOverride" step="0.001" placeholder="auto"></div>
     </div>
@@ -132,6 +133,12 @@
       <div class="score-big" id="scoreBig">—</div>
       <div class="verdict-text" id="scoreVerdict">—</div>
       <div class="spot-meta" id="fairBias">FairBias 5d: —</div>
+    </div>
+    <div style="text-align:right">
+      <div class="score-label">Futures ยุติธรรม (CIP)</div>
+      <div class="score-big" id="cipFairTop" style="font-size:26px">—</div>
+      <div class="verdict-text" id="cipVerdictTop">—</div>
+      <div class="spot-meta" id="cipBasisTop">—</div>
     </div>
   </div>
 
@@ -435,7 +442,7 @@
     var k = num("kSens"); if (k === null) k = 0.30;
     if (S){
       var fair = S * (1 - (score/100) * (k/100));
-      $("fairBias").textContent = "FairBias 5d: " + fair.toFixed(3) + " (k=" + k + "% ยังไม่ validate)";
+      $("fairBias").textContent = "FairBias 5d: " + fair.toFixed(3) + " (k=" + k + "%, fit 10y walk-forward OLS — นัยสำคัญเฉพาะ horizon 1 วัน (53.1%, p=0.008), 5 วันนี้ยังไม่มีสัญญาณพิสูจน์แล้ว)";
     } else { $("fairBias").textContent = "FairBias 5d: —"; }
 
     // gauge + bars
@@ -516,14 +523,18 @@
       cipFair = S * (1 + iTH/100*t) / (1 + iUS/100*t);
     }
     $("cipFair").textContent = fmt(cipFair, 4);
-    var fut = num("fut"), v = $("cipVerdict");
+    $("cipFairTop").textContent = fmt(cipFair, 4);
+    var fut = num("fut"), v = $("cipVerdict"), vTop = $("cipVerdictTop");
     var TICK_SIZE = 0.01, TICK_VALUE_THB = 10; // TFEX USD futures spec: 1 contract = 1,000 USD
     if (cipFair && fut && fut > 0){
       var basis = fut - cipFair;
-      $("cipBasis").textContent = (basis >= 0 ? "+" : "") + basis.toFixed(4) + " THB (" + (basis/0.01).toFixed(1) + " ticks)";
+      var basisText = (basis >= 0 ? "+" : "") + basis.toFixed(4) + " THB (" + (basis/0.01).toFixed(1) + " ticks)";
+      $("cipBasis").textContent = basisText;
+      $("cipBasisTop").textContent = basisText;
       if (basis > 0.03){ v.textContent = "RICH — futures แพงกว่ายุติธรรม"; v.className = "value verdict-text bad"; }
       else if (basis < -0.03){ v.textContent = "CHEAP — futures ถูกกว่ายุติธรรม"; v.className = "value verdict-text good"; }
       else { v.textContent = "FAIR — อยู่ในกรอบต้นทุน"; v.className = "value verdict-text neutral"; }
+      vTop.textContent = v.textContent; vTop.className = "verdict-text " + (basis > 0.03 ? "bad" : (basis < -0.03 ? "good" : "neutral"));
 
       // P&L if price converges from the keyed futures price to fair value by settlement
       var priceDiff = cipFair - fut; // long profits if fair > entry
@@ -540,6 +551,7 @@
       $("cipPnlShortN").className = "value " + (-pnlN >= 0 ? "good" : "bad");
     } else {
       $("cipBasis").textContent = "—"; v.textContent = "ใส่ราคา futures เพื่อเทียบ"; v.className = "value verdict-text neutral";
+      $("cipBasisTop").textContent = "—"; vTop.textContent = "—"; vTop.className = "verdict-text neutral";
       ["cipPnlLong1","cipPnlShort1","cipPnlLongN","cipPnlShortN"].forEach(function(id){ $(id).textContent = "—"; $(id).className = "value"; });
     }
 
@@ -656,6 +668,16 @@
         }
         if (j.th_rate) apply("iTH", j.th_rate.last);
         if (j.us_rate) apply("iUS", j.us_rate.last);
+        // USD1! (TFEX USD futures) has no free API -- proxied by EMA(20)/
+        // EMA(50) of USD/THB spot (THB=X via yfinance, computed server-side
+        // hourly in scripts/fetch_market_data.py) since futures/spot track
+        // closely via CIP arbitrage. EMA20 vs EMA50 crossover is the trend.
+        if (j.usdthb_trend){
+          var tr = j.usdthb_trend, up = tr.direction === "up";
+          $("trendEMA50").textContent = "Trend (EMA20/50, USD1! proxy): " + (up ? "🟢 Uptrend" : "🔴 Downtrend") +
+            " (EMA20 " + tr.ema20.toFixed(3) + (up ? " > " : " < ") + "EMA50 " + tr.ema50.toFixed(3) + ")";
+          $("trendEMA50").className = "spot-meta " + (up ? "good" : "bad");
+        }
         if (j.th_cpi) apply("cpiTH1", j.th_cpi.last);
         if (j.us_cpi) apply("cpiUS1", j.us_cpi.last);
 

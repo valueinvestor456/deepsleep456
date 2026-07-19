@@ -108,6 +108,27 @@ def fetch_bdry() -> dict:
     return {"last": last, "pct": (last / prev - 1.0) * 100.0}
 
 
+def fetch_usdthb_trend() -> dict:
+    """EMA(20)/EMA(50) trend filter used as a USD1! (TFEX USD futures
+    continuous contract) proxy on the dashboard -- there's no free API for
+    TFEX futures themselves, but the price tracks USD/THB spot closely via
+    CIP arbitrage, so this uses THB=X daily closes instead. Trend direction
+    is the EMA20-vs-EMA50 crossover (the two numbers alone tell the story --
+    EMA20 above EMA50 means the shorter-term average is pulling up = uptrend)."""
+    hist = yf.Ticker("THB=X").history(period="6mo")
+    if len(hist) < 55:
+        raise ValueError(f"THB=X: got {len(hist)} rows, need >= 55 for EMA50")
+    closes = hist["Close"]
+    ema20 = float(closes.ewm(span=20, adjust=False).mean().iloc[-1])
+    ema50 = float(closes.ewm(span=50, adjust=False).mean().iloc[-1])
+    return {
+        "close": float(closes.iloc[-1]),
+        "ema20": ema20,
+        "ema50": ema50,
+        "direction": "up" if ema20 > ema50 else "down",
+    }
+
+
 def main():
     out = {"updated": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")}
     for key, url in SOURCES.items():
@@ -124,6 +145,13 @@ def main():
     except Exception as e:
         out["bdry"] = None
         print(f"[FAIL -> null] bdry: {type(e).__name__}: {e}")
+
+    try:
+        out["usdthb_trend"] = fetch_usdthb_trend()
+        print(f"[ok] usdthb_trend: {out['usdthb_trend']}")
+    except Exception as e:
+        out["usdthb_trend"] = None
+        print(f"[FAIL -> null] usdthb_trend: {type(e).__name__}: {e}")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(json.dumps(out), encoding="utf-8")

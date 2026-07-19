@@ -27,6 +27,7 @@ Reads dr/dr-data.json (published alongside dr/index.html by the project's
 Env vars required (set as GitHub Actions secrets):
   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 """
+import calendar
 import html
 import json
 import os
@@ -37,11 +38,13 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from datetime import date, timedelta
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 STATE_PATH = os.path.join(SCRIPT_DIR, "telegram_dr_bot_state.json")
 DATA_PATH = os.path.join(REPO_DIR, "dr", "dr-data.json")
+MARKET_DATA_PATH = os.path.join(REPO_DIR, "usd", "market-data.json")
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 ALLOWED_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
@@ -234,18 +237,131 @@ def cmd_dr(arg):
     return {"text": "\n".join(lines).rstrip(), "buttons": buttons or None, "parse_mode": "HTML"}
 
 
+# TFEX USD futures list quarterly (Mar/Jun/Sep/Dec). Same month-code table as
+# usd/index.html's TFEX_MONTH_CODES, inverted (0-indexed month -> letter).
+TFEX_QUARTER_MONTHS = [3, 6, 9, 12]
+MONTH_CODE_BY_IDX = {0: "F", 1: "G", 2: "H", 3: "J", 4: "K", 5: "M",
+                      6: "N", 7: "Q", 8: "U", 9: "V", 10: "X", 11: "Z"}
+
+
+def next_tfex_settlement(today=None):
+    """Nearest unexpired quarterly TFEX settlement, approximated the same way
+    as usd/index.html's updateSettlementFromSeries: last calendar day of the
+    contract month minus 2 days (no Thai holiday calendar) -- off by ~1-2
+    business days around weekends/holidays, treat as approximate."""
+    today = today or date.today()
+    y = today.year
+    while True:
+        for m in TFEX_QUARTER_MONTHS:
+            if y == today.year and m < today.month:
+                continue
+            last_day = calendar.monthrange(y, m)[1]
+            settlement = date(y, m, last_day) - timedelta(days=2)
+            if settlement >= today:
+                return settlement, y, m
+        y += 1
+
+
+def fetch_spot_usdthb():
+    """Same sources/order as usd/index.html's fetchAll(): open.er-api.com
+    first, api.frankfurter.dev as fallback."""
+    try:
+        with urllib.request.urlopen("https://open.er-api.com/v6/latest/USD", timeout=15) as resp:
+            j = json.loads(resp.read().decode("utf-8"))
+        thb = (j.get("rates") or {}).get("THB")
+        if thb:
+            return float(thb)
+    except Exception as e:
+        print("fetch_spot_usdthb (open.er-api.com) error:", e)
+    try:
+        url = "https://api.frankfurter.dev/v1/latest?base=USD&symbols=THB"
+        with urllib.request.urlopen(url, timeout=15) as resp:
+            j = json.loads(resp.read().decode("utf-8"))
+        thb = (j.get("rates") or {}).get("THB")
+        if thb:
+            return float(thb)
+    except Exception as e:
+        print("fetch_spot_usdthb (frankfurter.dev) error:", e)
+    return None
+
+
+def cmd_fut(arg=""):
+    """CIP futures fair value, same formula as usd/index.html's recalcAnchors():
+    cipFair = S * (1 + iTH/100*t) / (1 + iUS/100*t), t = days/365.
+    Interest rates come from usd/market-data.json (hourly TE scrape); spot is
+    fetched live. There's no free auto source for the actual traded futures
+    price (same limitation as the dashboard's own #fut input -- ราคา futures
+    จริง ไม่มี auto ฟรี), so "/fut" alone only reports the fair value estimate.
+    Pass the actual price you're seeing (e.g. "/fut 33.45" from your own
+    TradingView/broker) to get a basis + RICH/CHEAP/FAIR verdict too, same
+    thresholds as the dashboard's CIP section (+/-0.03 THB)."""
+    if not os.path.exists(MARKET_DATA_PATH):
+        return "[error] ยังไม่มีข้อมูล market-data.json บน repo นี้"
+    try:
+        with open(MARKET_DATA_PATH, "r", encoding="utf-8") as f:
+            md = json.load(f)
+    except Exception as e:
+        return f"[error] อ่าน market-data.json ไม่สำเร็จ: {e}"
+
+    i_th = (md.get("th_rate") or {}).get("last")
+    i_us = (md.get("us_rate") or {}).get("last")
+    if i_th is None or i_us is None:
+        return "[error] ไม่มีดอกเบี้ยไทย/สหรัฐใน market-data.json ตอนนี้"
+
+    fut_price = None
+    if arg.strip():
+        try:
+            fut_price = float(arg.strip())
+        except ValueError:
+            return f'[error] "{arg}" ไม่ใช่ตัวเลข — ใช้แบบ: /fut 33.45'
+
+    spot = fetch_spot_usdthb()
+    if spot is None:
+        return "[error] ดึงราคา USD/THB spot ไม่สำเร็จ (open.er-api.com และ frankfurter.dev ล่มทั้งคู่)"
+
+    settlement, y, m = next_tfex_settlement()
+    days = max((settlement - date.today()).days, 1)
+    t = days / 365.0
+    cip_fair = spot * (1 + i_th / 100 * t) / (1 + i_us / 100 * t)
+    series = f"USD{MONTH_CODE_BY_IDX[m - 1]}{y % 100:02d}"
+
+    lines = [
+        f"📐 Futures ยุติธรรม (CIP) — {series}",
+        f"Spot USD/THB: {spot:.4f}",
+        f"ดอกเบี้ยไทย {i_th:.2f}% / สหรัฐ {i_us:.2f}% · {days} วันถึง settlement (≈{settlement.strftime('%d %b %Y')})",
+        f"Futures ยุติธรรม: {cip_fair:.4f}",
+    ]
+    if fut_price is not None:
+        basis = fut_price - cip_fair
+        if basis > 0.03:
+            verdict = "🔴 RICH — futures แพงกว่ายุติธรรม"
+        elif basis < -0.03:
+            verdict = "🟢 CHEAP — futures ถูกกว่ายุติธรรม"
+        else:
+            verdict = "⚪ FAIR — อยู่ในกรอบต้นทุน"
+        lines.append(f"ราคาจริง: {fut_price:.4f} · Basis: {basis:+.4f} THB ({basis/0.01:+.1f} ticks) · {verdict}")
+    else:
+        lines.append("(ไม่มีราคา futures จริงแบบ auto ฟรี — ส่ง /fut <ราคา> เช่น /fut 33.45 เพื่อเทียบ basis)")
+
+    return "\n".join(lines)
+
+
 def handle_command(text):
     text = text.strip()
     if not text.startswith("/"):
-        return "พิมพ์ /dr คำค้นหา (เช่น /dr msft) — คำสั่งอื่นต้องรอ PC หลักเปิดอยู่"
+        return "พิมพ์ /dr คำค้นหา (เช่น /dr msft) หรือ /fut (futures fair value) — คำสั่งอื่นต้องรอ PC หลักเปิดอยู่"
     parts = text.split(maxsplit=1)
     cmd = parts[0].lower()
     arg = parts[1].strip() if len(parts) > 1 else ""
     if cmd == "/dr":
         return cmd_dr(arg)
+    if cmd == "/fut":
+        return cmd_fut(arg)
     if cmd in ("/help", "/start"):
-        return "ตอนนี้ PC หลักปิดอยู่ ใช้ได้แค่ /dr คำค้นหา (เช่น /dr nvda) — คำสั่งอื่น (/ingest /dashboard /query /publish) ต้องรอ PC เปิด"
-    return f"คำสั่ง {cmd} ต้องรอ PC หลักเปิดอยู่ — ตอนนี้ใช้ได้แค่ /dr คำค้นหา"
+        return ("ตอนนี้ PC หลักปิดอยู่ ใช้ได้แค่ /dr คำค้นหา (เช่น /dr nvda) และ /fut [ราคา] "
+                "(USD/THB futures fair value, ใส่ราคาเช่น /fut 33.45 เพื่อเทียบ basis) "
+                "— คำสั่งอื่น (/ingest /dashboard /query /publish) ต้องรอ PC เปิด")
+    return f"คำสั่ง {cmd} ต้องรอ PC หลักเปิดอยู่ — ตอนนี้ใช้ได้แค่ /dr คำค้นหา หรือ /fut"
 
 
 def git_commit_state():
