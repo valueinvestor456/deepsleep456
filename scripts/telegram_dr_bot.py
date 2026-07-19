@@ -38,13 +38,14 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, ".."))
 STATE_PATH = os.path.join(SCRIPT_DIR, "telegram_dr_bot_state.json")
 DATA_PATH = os.path.join(REPO_DIR, "dr", "dr-data.json")
 MARKET_DATA_PATH = os.path.join(REPO_DIR, "usd", "market-data.json")
+MANUAL_FUT_PATH = os.path.join(REPO_DIR, "usd", "manual-fut-price.json")
 
 TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 ALLOWED_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
@@ -340,6 +341,7 @@ def cmd_fut(arg=""):
         else:
             verdict = "⚪ FAIR — อยู่ในกรอบต้นทุน"
         lines.append(f"ราคาจริง: {fut_price:.4f} · Basis: {basis:+.4f} THB ({basis/0.01:+.1f} ticks) · {verdict}")
+        save_manual_fut_price(fut_price, series, cip_fair)
     else:
         lines.append("(ไม่มีราคา futures จริงแบบ auto ฟรี — ส่ง /fut <ราคา> เช่น /fut 33.45 เพื่อเทียบ basis)")
 
@@ -364,28 +366,53 @@ def handle_command(text):
     return f"คำสั่ง {cmd} ต้องรอ PC หลักเปิดอยู่ — ตอนนี้ใช้ได้แค่ /dr คำค้นหา หรือ /fut"
 
 
-def git_commit_state():
-    """Persist the offset immediately after processing a message, not just at
-    exit -- so a killed/cancelled run never re-answers something it already
-    replied to. Silently no-ops if nothing changed.
+def git_commit_path(path, message):
+    """Commit+push a single file immediately after it changes, not just at
+    exit -- so a killed/cancelled run never loses or re-does work. Silently
+    no-ops if nothing changed.
 
-    This runs mid-loop over a period of hours, during which other workflows
-    (e.g. the hourly market-data refresh) can push to main -- so a plain
-    `git push` can get rejected as non-fast-forward. Rebase-and-retry once;
-    if that still fails, log and move on, the next successful commit in a
-    later loop iteration will carry the offset forward instead."""
+    Stages first, then diffs the *staged* tree against HEAD (`git diff
+    --cached`) rather than the unstaged working tree -- `git diff --quiet`
+    never flags a brand-new untracked file as changed, so a file's very
+    first commit would otherwise silently never happen.
+
+    This can run alongside other workflows (e.g. the hourly market-data
+    refresh) pushing to main -- so a plain `git push` can get rejected as
+    non-fast-forward. Rebase-and-retry once; if that still fails, log and
+    move on, the next successful commit will carry this forward instead."""
     try:
-        diff = subprocess.run(["git", "diff", "--quiet", "--", STATE_PATH], cwd=REPO_DIR)
+        subprocess.run(["git", "add", path], cwd=REPO_DIR, check=True)
+        diff = subprocess.run(["git", "diff", "--cached", "--quiet", "--", path], cwd=REPO_DIR)
         if diff.returncode == 0:
             return  # unchanged
-        subprocess.run(["git", "add", STATE_PATH], cwd=REPO_DIR, check=True)
-        subprocess.run(["git", "commit", "-m", "Telegram DR bot: advance offset [skip ci]"], cwd=REPO_DIR, check=True)
+        subprocess.run(["git", "commit", "-m", message], cwd=REPO_DIR, check=True)
         push = subprocess.run(["git", "push"], cwd=REPO_DIR)
         if push.returncode != 0:
             subprocess.run(["git", "pull", "--rebase"], cwd=REPO_DIR, check=True)
             subprocess.run(["git", "push"], cwd=REPO_DIR, check=True)
     except Exception as e:
-        print("git_commit_state error (offset saved locally, will retry next commit):", e)
+        print(f"git_commit_path({path}) error (will retry next commit):", e)
+
+
+def git_commit_state():
+    git_commit_path(STATE_PATH, "Telegram DR bot: advance offset [skip ci]")
+
+
+def save_manual_fut_price(price, series, cip_fair):
+    """Persists the last /fut <price> submission (+ its basis vs CIP fair
+    value at the time) so other consumers -- e.g. the macro-telegram-bot
+    project's Macro Summary push -- can show the actual traded futures price
+    too, since there's no free automated source for it (see cmd_fut)."""
+    data = {
+        "price": price,
+        "series": series,
+        "cip_fair": cip_fair,
+        "basis": price - cip_fair,
+        "asof": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+    }
+    with open(MANUAL_FUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+    git_commit_path(MANUAL_FUT_PATH, "Manual futures price update via /fut [skip ci]")
 
 
 def main():
