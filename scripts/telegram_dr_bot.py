@@ -385,7 +385,11 @@ def git_commit_path(path, message):
         diff = subprocess.run(["git", "diff", "--cached", "--quiet", "--", path], cwd=REPO_DIR)
         if diff.returncode == 0:
             return  # unchanged
-        subprocess.run(["git", "commit", "-m", message], cwd=REPO_DIR, check=True)
+        # Pathspec-scoped commit: commits only this path's staged change, even
+        # if something else happens to be staged too (bit us once when other
+        # unrelated files were sitting staged locally -- a plain `git commit
+        # -m` with no pathspec swept them into this commit).
+        subprocess.run(["git", "commit", "-m", message, "--", path], cwd=REPO_DIR, check=True)
         push = subprocess.run(["git", "push"], cwd=REPO_DIR)
         if push.returncode != 0:
             subprocess.run(["git", "pull", "--rebase"], cwd=REPO_DIR, check=True)
