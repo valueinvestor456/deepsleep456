@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-21T03:46:26Z",
+  "updated": "2026-07-21T08:46:01Z",
   "events": [
     {
       "title": "Trade Balance",
@@ -138,12 +138,12 @@
       "previous": "4.9%"
     },
     {
-      "title": "Foreign Direct Investment ytd/y",
-      "country": "CNY",
-      "date": "2026-07-21T02:02:00-04:00",
+      "title": "German ZEW Economic Sentiment",
+      "country": "EUR",
+      "date": "2026-07-21T05:00:00-04:00",
       "impact": "Low",
-      "forecast": "",
-      "previous": "-8.6%"
+      "forecast": "15.1",
+      "previous": "10.5"
     },
     {
       "title": "ZEW Economic Sentiment",
@@ -152,14 +152,6 @@
       "impact": "Low",
       "forecast": "11.2",
       "previous": "9.5"
-    },
-    {
-      "title": "German ZEW Economic Sentiment",
-      "country": "EUR",
-      "date": "2026-07-21T05:00:00-04:00",
-      "impact": "Low",
-      "forecast": "15.1",
-      "previous": "10.5"
     },
     {
       "title": "German Buba President Nagel Speaks",
@@ -256,6 +248,14 @@
       "impact": "Low",
       "forecast": "3.0%",
       "previous": "3.1%"
+    },
+    {
+      "title": "Foreign Direct Investment ytd/y",
+      "country": "CNY",
+      "date": "2026-07-22T02:02:00-04:00",
+      "impact": "Low",
+      "forecast": "",
+      "previous": "-8.6%"
     },
     {
       "title": "HPI y/y",
