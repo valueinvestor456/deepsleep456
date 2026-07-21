@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-21T14:23:49Z",
+  "updated": "2026-07-21T19:52:23Z",
   "events": [
     {
       "title": "Trade Balance",
@@ -172,7 +172,7 @@
     {
       "title": "GDT Price Index",
       "country": "NZD",
-      "date": "2026-07-21T10:50:00-04:00",
+      "date": "2026-07-21T11:16:00-04:00",
       "impact": "Low",
       "forecast": "",
       "previous": "-4.9%"
@@ -270,7 +270,7 @@
       "country": "USD",
       "date": "2026-07-22T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "-2.0M",
       "previous": "-1.7M"
     },
     {
@@ -366,7 +366,7 @@
       "country": "USD",
       "date": "2026-07-23T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "29B",
       "previous": "41B"
     },
     {
