@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-22T03:47:48Z",
+  "updated": "2026-07-22T08:45:24Z",
   "events": [
     {
       "title": "Trade Balance",
@@ -138,20 +138,20 @@
       "previous": "4.9%"
     },
     {
-      "title": "German ZEW Economic Sentiment",
-      "country": "EUR",
-      "date": "2026-07-21T05:00:00-04:00",
-      "impact": "Low",
-      "forecast": "15.1",
-      "previous": "10.5"
-    },
-    {
       "title": "ZEW Economic Sentiment",
       "country": "EUR",
       "date": "2026-07-21T05:00:00-04:00",
       "impact": "Low",
       "forecast": "11.2",
       "previous": "9.5"
+    },
+    {
+      "title": "German ZEW Economic Sentiment",
+      "country": "EUR",
+      "date": "2026-07-21T05:00:00-04:00",
+      "impact": "Low",
+      "forecast": "15.1",
+      "previous": "10.5"
     },
     {
       "title": "German Buba President Nagel Speaks",
@@ -250,14 +250,6 @@
       "previous": "3.1%"
     },
     {
-      "title": "Foreign Direct Investment ytd/y",
-      "country": "CNY",
-      "date": "2026-07-22T02:02:00-04:00",
-      "impact": "Low",
-      "forecast": "",
-      "previous": "-8.6%"
-    },
-    {
       "title": "HPI y/y",
       "country": "GBP",
       "date": "2026-07-22T04:30:00-04:00",
@@ -274,6 +266,14 @@
       "previous": "-1.7M"
     },
     {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "date": "2026-07-22T15:00:00-04:00",
+      "impact": "Medium",
+      "forecast": "",
+      "previous": ""
+    },
+    {
       "title": "Employment Change",
       "country": "AUD",
       "date": "2026-07-22T21:30:00-04:00",
@@ -288,6 +288,14 @@
       "impact": "High",
       "forecast": "4.4%",
       "previous": "4.4%"
+    },
+    {
+      "title": "Foreign Direct Investment ytd/y",
+      "country": "CNY",
+      "date": "2026-07-23T02:02:00-04:00",
+      "impact": "Low",
+      "forecast": "",
+      "previous": "-8.6%"
     },
     {
       "title": "CBI Industrial Order Expectations",
