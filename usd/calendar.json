@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-21T19:52:23Z",
+  "updated": "2026-07-22T03:47:48Z",
   "events": [
     {
       "title": "Trade Balance",
@@ -204,7 +204,7 @@
     {
       "title": "Credit Card Spending y/y",
       "country": "NZD",
-      "date": "2026-07-21T23:00:00-04:00",
+      "date": "2026-07-21T23:03:00-04:00",
       "impact": "Low",
       "forecast": "",
       "previous": "5.1%"
