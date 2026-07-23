@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T14:33:32Z",
+  "updated": "2026-07-23T19:46:43Z",
   "events": [
     {
       "title": "Trade Balance",
@@ -290,6 +290,14 @@
       "previous": "4.4%"
     },
     {
+      "title": "Foreign Direct Investment ytd/y",
+      "country": "CNY",
+      "date": "2026-07-23T04:56:00-04:00",
+      "impact": "Low",
+      "forecast": "",
+      "previous": "-8.6%"
+    },
+    {
       "title": "CBI Industrial Order Expectations",
       "country": "GBP",
       "date": "2026-07-23T06:00:00-04:00",
@@ -432,14 +440,6 @@
       "impact": "Medium",
       "forecast": "-0.3%",
       "previous": "1.2%"
-    },
-    {
-      "title": "Foreign Direct Investment ytd/y",
-      "country": "CNY",
-      "date": "2026-07-24T02:02:00-04:00",
-      "impact": "Low",
-      "forecast": "",
-      "previous": "-8.6%"
     },
     {
       "title": "French Flash Manufacturing PMI",
