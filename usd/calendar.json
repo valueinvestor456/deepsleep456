@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-23T19:46:43Z",
+  "updated": "2026-07-24T03:45:09Z",
   "events": [
     {
       "title": "Trade Balance",
@@ -380,7 +380,7 @@
     {
       "title": "Treasury Currency Report",
       "country": "USD",
-      "date": "2026-07-23T16:30:00-04:00",
+      "date": "2026-07-23T16:00:00-04:00",
       "impact": "Low",
       "forecast": "",
       "previous": ""
