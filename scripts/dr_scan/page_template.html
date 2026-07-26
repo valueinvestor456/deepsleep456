@@ -62,7 +62,6 @@
   .fund-line .fund-tag{font-weight:600;}
   .fund-cheap-good .fund-tag{color:var(--series-1);}
   .fund-good-only .fund-tag,.fund-cheap-only .fund-tag{color:var(--text-secondary);}
-  .fund-footnote{display:block;font-size:11px;opacity:0.7;margin-top:2px;}
   .section-title{font-size:15px;font-weight:600;margin:0 0 10px;}
   .table-scroll{overflow-x:auto;}
   .mobile-label{display:none;}
@@ -221,6 +220,7 @@
       <li>ระหว่างเวลาทำการ SET หน้านี้ auto-refresh ทุก ~30 วิผ่าน GitHub Actions (scripts/dr_scan/scan_and_publish.py) — นอกเวลาทำการเป็น static snapshot ของรอบสุดท้ายก่อนตลาดปิด ต้อง trigger manual (`.tools/scan_dr.py` + `.tools/build_dr_page.py` ในโปรเจกต์เอง) ถ้าต้องการอัปเดตนอกเวลาทำการ</li>
       <li>Premium/Discount ที่เห็นเป็นตัวเลขดิบ ยังไม่หักค่าธรรมเนียมซื้อขาย/สเปรด/ภาษี — ต้องคำนวณต้นทุนจริงเพิ่มก่อนตัดสินใจ arbitrage</li>
       <li><b>Swing Stage / Target / Stop / Reward:Risk ไม่ใช่การนับคลื่น Elliott Wave ที่ยืนยันโดยนักวิเคราะห์</b> — คำนวณจาก pivot ราคาอัตโนมัติ (ZigZag แบบ threshold ปรับตามความผันผวน) + ฉายภาพ Fibonacci retracement/extension ล้วนๆ ไม่มีมนุษย์ตรวจสอบทีละตัว การนับคลื่นแบบ subjective จริงๆ แม้แต่นักวิเคราะห์มืออาชีพยังตีความไม่ตรงกันบนกราฟเดียวกัน — อัลกอริทึมนี้ตีความคลาดเคลื่อนได้เป็นเรื่องปกติ ไม่ใช่ edge case ใช้ประกอบการตัดสินใจเท่านั้น ไม่ใช่คำแนะนำซื้อขาย — คำนวณรายสัปดาห์ (ไม่ real-time เหมือนราคา) เก็บไว้ที่ `scripts/dr_scan/wave_cache.json` แสดงวันที่ข้อมูลล่าสุด (`ข้อมูล ณ ...`) ทุกครั้ง และ flag ทันทีถ้าราคาล่าสุดทะลุ target/stop ไปแล้วตั้งแต่คำนวณครั้งก่อน</li>
+      <li><b>💰 badge (FCF yield / Rev growth / cheap+good ฯลฯ) เป็น percentile เทียบกับหุ้นแม่อื่นที่ track อยู่ในระบบนี้เท่านั้น ไม่ใช่การประเมิน moat/คุณภาพธุรกิจ</b> — ไม่ได้ประเมิน 7 Powers หรือความได้เปรียบเชิงแข่งขันใดๆ คำนวณรายเดือนจาก Yahoo quoteSummary เก็บไว้ที่ `scripts/dr_scan/fundamentals_cache.json`</li>
     </ul>
   </div>
 
@@ -381,8 +381,7 @@
     if(f.fcf_yield != null) parts.push('FCF yield ' + (f.fcf_yield * 100).toFixed(1) + '%');
     if(f.revenue_growth != null) parts.push('Rev growth ' + (f.revenue_growth >= 0 ? '+' : '') + (f.revenue_growth * 100).toFixed(1) + '%');
     parts.push('<span class="fund-tag">' + escapeHtml(bucketLabel) + '</span>');
-    return '<span class="fund-line ' + bucketClass + '">💰 ' + parts.join(' &middot; ') +
-      '<span class="fund-footnote">peer percentile vs. tracked underlyings, ไม่ใช่ moat rating</span></span>';
+    return '<span class="fund-line ' + bucketClass + '">💰 ' + parts.join(' &middot; ') + '</span>';
   }
 
   function renderTopTable(tbodyId, rows, colClass, premLabel2){
