@@ -266,14 +266,6 @@
     if(n === null || n === undefined) return 'n/a';
     return n.toLocaleString('en-US', {minimumFractionDigits: dec||2, maximumFractionDigits: dec||2});
   }
-  function compactNum(n){
-    if(n === null || n === undefined) return 'n/a';
-    var abs = Math.abs(n);
-    if(abs >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-    if(abs >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-    if(abs >= 1e3) return (n / 1e3).toFixed(1) + 'K';
-    return n.toFixed(0);
-  }
   function premClass(p){ return p > 0 ? 'prem-pos' : (p < 0 ? 'prem-neg' : ''); }
   function premLabel(p){
     if(p === null || p === undefined) return 'n/a';
@@ -412,7 +404,7 @@
     var parts = [];
     if(f.fcf_yield != null) parts.push('FCF yield ' + (f.fcf_yield * 100).toFixed(1) + '%');
     if(f.revenue_growth != null) parts.push('Rev growth ' + (f.revenue_growth >= 0 ? '+' : '') + (f.revenue_growth * 100).toFixed(1) + '%');
-    if(f.gross_profit != null) parts.push('Gross profit ' + compactNum(f.gross_profit));
+    if(f.gross_margin != null) parts.push('Gross profit ' + (f.gross_margin * 100).toFixed(1) + '% of revenue');
     parts.push('<span class="fund-tag">' + escapeHtml(bucketLabel) + '</span>');
     return '<span class="fund-line ' + bucketClass + '">💰 ' + parts.join(' &middot; ') + '</span>';
   }
