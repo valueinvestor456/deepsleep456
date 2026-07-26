@@ -371,6 +371,10 @@
     if(f.fcf_yield != null) parts.push('FCF yield ' + (f.fcf_yield * 100).toFixed(1) + '%');
     if(f.revenue_growth != null) parts.push('Rev growth ' + (f.revenue_growth >= 0 ? '+' : '') + (f.revenue_growth * 100).toFixed(1) + '%');
     if(f.gross_margin != null) parts.push('Gross profit ' + (f.gross_margin * 100).toFixed(1) + '% of revenue');
+    if(f.price_to_sales != null) parts.push('P/S ' + f.price_to_sales.toFixed(1) + 'x');
+    if(f.mcap_to_fcf != null) parts.push('MCap/FCF ' + f.mcap_to_fcf.toFixed(1) + 'x');
+    if(f.mcap_to_ocf != null) parts.push('MCap/OCF ' + f.mcap_to_ocf.toFixed(1) + 'x');
+    if(f.roe != null) parts.push('ROE ' + (f.roe * 100).toFixed(1) + '%');
     parts.push('<span class="fund-tag">' + escapeHtml(bucketLabel) + '</span>');
     return '<span class="fund-line ' + bucketClass + '">💰 ' + parts.join(' &middot; ') + '</span>';
   }
