@@ -184,6 +184,31 @@ def load_wave_cache():
     return _wave_cache
 
 
+FUND_CACHE_PATH = os.path.join(SCRIPT_DIR, "fundamentals_cache.json")
+_fund_cache = None
+
+
+def load_fund_cache():
+    """Loaded once per process -- fundamentals_cache.json is produced by a
+    separate monthly batch job (fundamentals_analysis.py); the live 30s
+    scanner only ever reads it, never recomputes it."""
+    global _fund_cache
+    if _fund_cache is None:
+        try:
+            with open(FUND_CACHE_PATH, encoding="utf-8") as f:
+                _fund_cache = json.load(f)
+        except Exception:
+            _fund_cache = {}
+    return _fund_cache
+
+
+def get_fund_info(yahoo_u):
+    f = load_fund_cache().get(yahoo_u)
+    if not f or f.get("quality") != "ok":
+        return None
+    return f
+
+
 def get_wave_info(yahoo_u, live_underlying_price):
     """Joins cached swing/reward-risk data onto a row by underlying ticker,
     plus a cheap live check: has the price already crossed the cached
@@ -231,12 +256,13 @@ def scan_one(d):
         premium_pct = ((actual / fair - 1) * 100) if (actual and fair) else None
         pe, fwd_pe = get_pe_ratios(d['yahoo_u'], d.get('underlying_tv'))
         wave = get_wave_info(d['yahoo_u'], u_price)
+        fund = get_fund_info(d['yahoo_u'])
         row = dict(d)
         row.update({
             'actual_price': actual, 'underlying_price': u_price, 'fx_rate': fx_rate,
             'ratio_used': live_ratio, 'fair_price': round(fair, 4) if fair else None,
             'premium_pct': round(premium_pct, 2) if premium_pct is not None else None,
-            'pe_ratio': pe, 'forward_pe': fwd_pe, 'wave': wave,
+            'pe_ratio': pe, 'forward_pe': fwd_pe, 'wave': wave, 'fund': fund,
             'set_market_status': setq['marketStatus'] if setq else None,
             'set_market_datetime': setq['marketDateTime'] if setq else None,
         })

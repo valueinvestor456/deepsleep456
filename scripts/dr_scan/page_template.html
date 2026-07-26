@@ -58,6 +58,11 @@
   .wave-ok{color:var(--series-1);}
   .wave-warn{color:var(--warning);}
   .wave-breach{color:var(--critical);}
+  .fund-line{display:block;margin-top:4px;color:var(--text-secondary);}
+  .fund-line .fund-tag{font-weight:600;}
+  .fund-cheap-good .fund-tag{color:var(--series-1);}
+  .fund-good-only .fund-tag,.fund-cheap-only .fund-tag{color:var(--text-secondary);}
+  .fund-footnote{display:block;font-size:11px;opacity:0.7;margin-top:2px;}
   .section-title{font-size:15px;font-weight:600;margin:0 0 10px;}
   .table-scroll{overflow-x:auto;}
   .mobile-label{display:none;}
@@ -362,6 +367,24 @@
       (levelStr ? ' &middot; ' + levelStr : '') + statusNote + '</span>';
   }
 
+  // fundamentals_analysis.py's bucket tag is a peer PERCENTILE (FCF yield
+  // rank + revenue growth sign among the underlyings actually tracked
+  // here) -- never a moat/quality rating. The footnote line makes that
+  // explicit every time the badge renders, same STOP-box convention as
+  // the wave methodology disclosure.
+  function fundInfoStr(d0){
+    var f = d0.fund;
+    if(!f || !f.bucket) return '';
+    var bucketLabel = {'cheap+good':'cheap+good','good only':'good only','cheap only':'cheap only'}[f.bucket] || f.bucket;
+    var bucketClass = 'fund-' + f.bucket.replace(/\s+/g,'-').replace('+','-');
+    var parts = [];
+    if(f.fcf_yield != null) parts.push('FCF yield ' + (f.fcf_yield * 100).toFixed(1) + '%');
+    if(f.revenue_growth != null) parts.push('Rev growth ' + (f.revenue_growth >= 0 ? '+' : '') + (f.revenue_growth * 100).toFixed(1) + '%');
+    parts.push('<span class="fund-tag">' + escapeHtml(bucketLabel) + '</span>');
+    return '<span class="fund-line ' + bucketClass + '">💰 ' + parts.join(' &middot; ') +
+      '<span class="fund-footnote">peer percentile vs. tracked underlyings, ไม่ใช่ moat rating</span></span>';
+  }
+
   function renderTopTable(tbodyId, rows, colClass, premLabel2){
     var tbody = document.getElementById(tbodyId);
     tbody.innerHTML = rows.map(function(d){
@@ -418,7 +441,7 @@
     // derived from d0.market rather than the live (time-dependent)
     // set_market_status value.
     var nightBadge = d0.market === 'US' ? ' <span class="badge night-badge" title="DR หุ้นสหรัฐฯ เทรดได้ทั้ง Day Session และ Night Session">🌙 Night Session</span>' : '';
-    return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span>' + nightBadge + ' <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + waveInfoStr(d0) + (extraHeaderHtml || '') + '</div>' +
+    return '<div class="group-title">' + underlyingLabel(d0) + ' <span class="badge market-' + d0.market + '">' + d0.market + '</span>' + nightBadge + ' <span class="u-price">ราคาล่าสุด: ' + underlyingPriceStr(d0) + '</span>' + peStr + ' ' + chartButton(d0) + waveInfoStr(d0) + fundInfoStr(d0) + (extraHeaderHtml || '') + '</div>' +
       '<div style="overflow-x:auto;"><table><thead><tr><th>DR</th><th>จริง (THB)</th><th>Fair (THB)</th><th>Prem/Disc</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
   }
 
