@@ -1,0 +1,38 @@
+name: Stock dashboard scan (US market hours)
+
+# Rescans the US-equity watchlist and republishes dashboard/index.html +
+# dashboard/dashboard-data.json every 30 min while the US market is open.
+# See scripts/dashboard_scan/dashboard_scan.py for the scan logic (pure
+# stdlib, reuses scripts/dr_scan's HTTP/quoteSummary helpers -- no pip
+# installs needed).
+on:
+  schedule:
+    - cron: "*/30 13-20 * * 1-5"   # ~9:00am-4:30pm ET, weekdays
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: python scripts/dashboard_scan/dashboard_scan.py
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- dashboard/index.html dashboard/dashboard-data.json; then
+            echo "dashboard unchanged, skipping commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dashboard/index.html dashboard/dashboard-data.json
+          git commit -m "Refresh stock dashboard scan [skip ci]"
+          git push || (git pull --rebase && git push)
