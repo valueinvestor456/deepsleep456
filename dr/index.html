@@ -90,10 +90,14 @@
   .badge.night-badge{background:rgba(80,70,180,0.15);color:#6a4cd4;}
   .badge.spread-badge{background:rgba(211,66,66,0.15);color:var(--critical);}
   .pager{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:14px;flex-wrap:wrap;}
-  .market-index-group{margin-bottom:14px;}
-  .market-index-label{font-size:13px;font-weight:600;margin:0 0 8px;display:flex;align-items:center;gap:6px;}
+  .market-index-group{margin-bottom:8px;border:1px solid var(--border);border-radius:10px;padding:2px 12px;}
+  .market-index-group[open]{padding-bottom:12px;}
+  .market-index-label{font-size:13px;font-weight:600;margin:0;padding:10px 0;display:flex;align-items:center;gap:6px;cursor:pointer;list-style:none;}
+  .market-index-label::-webkit-details-marker{display:none;}
+  .market-index-label::before{content:'▸';color:var(--text-muted);font-size:11px;transition:transform 0.15s;}
+  .market-index-group[open] .market-index-label::before{transform:rotate(90deg);}
   .market-index-count{color:var(--text-muted);font-weight:400;font-size:12px;}
-  .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;}
   .chip{background:var(--page);border:1px solid var(--border);color:var(--text-secondary);font-size:12px;padding:5px 10px;border-radius:20px;cursor:pointer;}
   .chip:hover{color:var(--text-primary);border-color:var(--series-1);}
   .group-title{font-size:14px;font-weight:600;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
@@ -397,7 +401,7 @@
       var chips = items.map(function(d){
         return '<button type="button" class="chip" data-name="' + escapeHtml(d.name || d.yahoo_u) + '">' + escapeHtml(d.name || d.yahoo_u) + '</button>';
       }).join('');
-      return '<div class="market-index-group"><p class="market-index-label"><span class="badge market-' + m + '">' + m + '</span><span class="market-index-count">' + items.length + ' หุ้นแม่</span></p><div class="chip-row">' + chips + '</div></div>';
+      return '<details class="market-index-group"><summary class="market-index-label"><span class="badge market-' + m + '">' + m + '</span><span class="market-index-count">' + items.length + ' หุ้นแม่</span></summary><div class="chip-row">' + chips + '</div></details>';
     }).join('');
     document.getElementById('market-index').innerHTML = html;
   }
