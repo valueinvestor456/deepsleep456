@@ -117,21 +117,29 @@ def analyze_ticker(ticker):
     ks = result.get("defaultKeyStatistics") or {}
     sd = result.get("summaryDetail") or {}
 
+    operating_cashflow = _raw(fd, "operatingCashflow")
     fcf = _raw(fd, "freeCashflow")
     if fcf is None:
         # Fallback: operatingCashflow alone overstates true FCF (no capex
         # deduction) -- acceptable as a fallback only, never preferred.
-        fcf = _raw(fd, "operatingCashflow")
+        fcf = operating_cashflow
     ev = _raw(ks, "enterpriseValue")
     revenue = _raw(fd, "totalRevenue")
+    market_cap = _raw(sd, "marketCap")
 
     fcf_yield = (fcf / ev) if (fcf is not None and ev) else None
     fcf_margin = (fcf / revenue) if (fcf is not None and revenue) else None
     revenue_growth = _raw(fd, "revenueGrowth")
     gross_margin = _raw(fd, "grossMargins")
+    gross_profit = _raw(fd, "grossProfits")
     roe = _raw(fd, "returnOnEquity")
     debt_to_equity = _raw(fd, "debtToEquity")
-    market_cap = _raw(sd, "marketCap")
+    price_to_sales = (market_cap / revenue) if (market_cap and revenue) else None
+    # Only defined when FCF/OCF is positive -- a negative-cashflow "multiple"
+    # is not a meaningful ratio (e.g. -3.2x reads as cheap, means the
+    # opposite), so leave it None rather than show a misleading number.
+    mcap_to_fcf = (market_cap / fcf) if (market_cap and fcf and fcf > 0) else None
+    mcap_to_ocf = (market_cap / operating_cashflow) if (market_cap and operating_cashflow and operating_cashflow > 0) else None
 
     quality = "ok" if fcf_yield is not None else "insufficient_data"
     return {
@@ -139,8 +147,12 @@ def analyze_ticker(ticker):
         "fcf_margin": fcf_margin,
         "revenue_growth": revenue_growth,
         "gross_margin": gross_margin,
+        "gross_profit": gross_profit,
         "roe": roe,
         "debt_to_equity": debt_to_equity,
+        "price_to_sales": price_to_sales,
+        "mcap_to_fcf": mcap_to_fcf,
+        "mcap_to_ocf": mcap_to_ocf,
         "market_cap": market_cap,
         "enterprise_value": ev,
         "quality": quality,

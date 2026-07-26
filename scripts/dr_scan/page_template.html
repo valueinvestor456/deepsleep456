@@ -53,7 +53,7 @@
   .search-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
   .search-row input[type=text]{flex:1;min-width:260px;}
   .search-row select{min-width:0;flex:0 1 auto;}
-  .search-row #pe-max-filter{flex:0 1 140px;min-width:100px;width:auto;}
+  .search-row .num-filter{flex:0 1 140px;min-width:100px;width:auto;}
   .wave-line{display:block;margin-top:4px;}
   .wave-ok{color:var(--series-1);}
   .wave-warn{color:var(--warning);}
@@ -81,7 +81,7 @@
     .search-row input[type=text]{min-width:0;}
     /* filter controls stack full-width instead of cramming into a row --
        simpler and more robust than fine-tuning flex-shrink at this width */
-    .search-row select, .search-row #pe-max-filter{flex:1 1 100%;width:100%;}
+    .search-row select, .search-row .num-filter{flex:1 1 100%;width:100%;}
     /* wide leaderboard tables collapse into compact 2-column card grids instead of scrolling */
     .table-scroll{overflow-x:visible;}
     .stack-mobile thead{display:none;}
@@ -105,6 +105,12 @@
   .badge.night-badge{background:rgba(80,70,180,0.15);color:#6a4cd4;}
   .badge.spread-badge{background:rgba(211,66,66,0.15);color:var(--critical);}
   .pager{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:14px;flex-wrap:wrap;}
+  .market-index-group{margin-bottom:14px;}
+  .market-index-label{font-size:13px;font-weight:600;margin:0 0 8px;display:flex;align-items:center;gap:6px;}
+  .market-index-count{color:var(--text-muted);font-weight:400;font-size:12px;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{background:var(--page);border:1px solid var(--border);color:var(--text-secondary);font-size:12px;padding:5px 10px;border-radius:20px;cursor:pointer;}
+  .chip:hover{color:var(--text-primary);border-color:var(--series-1);}
   .group-title{font-size:14px;font-weight:600;margin:18px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
   .group-title .u-price{font-weight:400;color:var(--text-muted);font-size:12px;}
   .dr-row-link{color:var(--series-1);text-decoration:none;font-weight:600;}
@@ -163,17 +169,35 @@
         <option value="EU">EU</option>
         <option value="CN">CN</option>
       </select>
-      <input type="text" id="pe-max-filter" placeholder="P/E สูงสุด เช่น 20" inputmode="decimal">
+      <input type="text" id="pe-max-filter" class="num-filter" placeholder="P/E (Trailing) สูงสุด" inputmode="decimal">
+      <select id="direction-filter">
+        <option value="">ทิศทาง: ทั้งหมด</option>
+        <option value="bullish">ขาขึ้น (Bullish)</option>
+        <option value="bearish">ขาลง (Bearish)</option>
+      </select>
       <select id="sort-select">
         <option value="fwd_pe">เรียงตาม: Forward P/E ต่ำสุดก่อน</option>
         <option value="reward_risk">เรียงตาม: Reward:Risk สูงสุดก่อน</option>
       </select>
     </div>
+    <div class="search-row" style="margin-top:8px;">
+      <input type="text" id="fwd-pe-max-filter" class="num-filter" placeholder="Forward P/E สูงสุด" inputmode="decimal">
+      <input type="text" id="ps-max-filter" class="num-filter" placeholder="P/S สูงสุด" inputmode="decimal">
+      <input type="text" id="mcap-fcf-max-filter" class="num-filter" placeholder="MCap/FCF สูงสุด" inputmode="decimal">
+      <input type="text" id="mcap-ocf-max-filter" class="num-filter" placeholder="MCap/OCF สูงสุด" inputmode="decimal">
+      <input type="text" id="roe-min-filter" class="num-filter" placeholder="ROE% ขั้นต่ำ" inputmode="decimal">
+    </div>
     <p class="u-price" style="margin-top:6px;">
       📊 Swing Stage / Reward-Risk คำนวณจาก pivot ราคา + Fibonacci retracement/extension (อัปเดตรายสัปดาห์ ไม่ใช่ real-time เหมือนราคา) —
       <b>ไม่ใช่การนับคลื่น Elliott Wave ที่ยืนยันโดยนักวิเคราะห์</b> เป็นการประมาณด้วยอัลกอริทึมเท่านั้น ตีความคลาดเคลื่อนได้ ใช้เป็นข้อมูลประกอบ ไม่ใช่คำแนะนำการซื้อขาย —
-      ป้าย "🌊 Wave N" (ถ้ามี) เป็นการเดาแบบ best-effort ตามกฎโครงสร้าง Elliott เบื้องต้น (เลข 1-5 = คลื่นหลักตามเทรนด์ใหญ่, ตัวอักษร A/B/C = คลื่นปรับฐานหลังคลื่นหลักจบ) โชว์เฉพาะตอนที่ fit ได้ชัดเจนเท่านั้น ไม่ fit ก็ไม่โชว์ ไม่ใช่การยืนยันว่านับถูก — filter ด้านบนกรองได้ตาม Wave / ตลาด / P/E สูงสุด
+      ป้าย "🌊 Wave N" (ถ้ามี) เป็นการเดาแบบ best-effort ตามกฎโครงสร้าง Elliott เบื้องต้น (เลข 1-5 = คลื่นหลักตามเทรนด์ใหญ่, ตัวอักษร A/B/C = คลื่นปรับฐานหลังคลื่นหลักจบ) โชว์เฉพาะตอนที่ fit ได้ชัดเจนเท่านั้น ไม่ fit ก็ไม่โชว์ ไม่ใช่การยืนยันว่านับถูก —
+      MCap/FCF และ MCap/OCF คำนวณเฉพาะตอน FCF/OCF เป็นบวก (ค่าติดลบไม่ใช่ตัวคูณที่มีความหมาย) — filter ด้านบนกรองได้ตาม Wave / ตลาด / ทิศทาง / P/E / P/S / MCap ต่อกระแสเงินสด / ROE
     </p>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Index หุ้นแม่ตามตลาด — คลิกชื่อเพื่อดูรายละเอียด</p>
+    <div id="market-index"></div>
   </div>
 
   <div class="card">
@@ -241,6 +265,14 @@
   function fmt(n, dec){
     if(n === null || n === undefined) return 'n/a';
     return n.toLocaleString('en-US', {minimumFractionDigits: dec||2, maximumFractionDigits: dec||2});
+  }
+  function compactNum(n){
+    if(n === null || n === undefined) return 'n/a';
+    var abs = Math.abs(n);
+    if(abs >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+    if(abs >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+    if(abs >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+    return n.toFixed(0);
   }
   function premClass(p){ return p > 0 ? 'prem-pos' : (p < 0 ? 'prem-neg' : ''); }
   function premLabel(p){
@@ -380,8 +412,32 @@
     var parts = [];
     if(f.fcf_yield != null) parts.push('FCF yield ' + (f.fcf_yield * 100).toFixed(1) + '%');
     if(f.revenue_growth != null) parts.push('Rev growth ' + (f.revenue_growth >= 0 ? '+' : '') + (f.revenue_growth * 100).toFixed(1) + '%');
+    if(f.gross_profit != null) parts.push('Gross profit ' + compactNum(f.gross_profit));
     parts.push('<span class="fund-tag">' + escapeHtml(bucketLabel) + '</span>');
     return '<span class="fund-line ' + bucketClass + '">💰 ' + parts.join(' &middot; ') + '</span>';
+  }
+
+  // Browsable directory of every tracked underlying, grouped by market --
+  // clicking a name searches for it (reuses the existing search box/filter
+  // pipeline) rather than duplicating a separate detail view.
+  function renderMarketIndex(){
+    var seen = {};
+    var byMarket = {};
+    DATA.forEach(function(d){
+      if(!d.yahoo_u || seen[d.yahoo_u]) return;
+      seen[d.yahoo_u] = true;
+      var m = d.market || '?';
+      if(!byMarket[m]) byMarket[m] = [];
+      byMarket[m].push(d);
+    });
+    var html = Object.keys(byMarket).sort().map(function(m){
+      var items = byMarket[m].slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+      var chips = items.map(function(d){
+        return '<button type="button" class="chip" data-name="' + escapeHtml(d.name || d.yahoo_u) + '">' + escapeHtml(d.name || d.yahoo_u) + '</button>';
+      }).join('');
+      return '<div class="market-index-group"><p class="market-index-label"><span class="badge market-' + m + '">' + m + '</span><span class="market-index-count">' + items.length + ' หุ้นแม่</span></p><div class="chip-row">' + chips + '</div></div>';
+    }).join('');
+    document.getElementById('market-index').innerHTML = html;
   }
 
   function renderTopTable(tbodyId, rows, colClass, premLabel2){
@@ -551,13 +607,57 @@
     return d.pe_ratio != null && d.pe_ratio <= peMax;
   }
 
+  // Bullish/bearish read off wave.stage_key -- same direction convention
+  // used internally by get_wave_info()'s live_status check (stage_key in
+  // extending_up/retracing_from_low = bullish, else bearish). Rows with no
+  // wave data at all don't match either direction.
+  function rowMatchesDirection(d, dir){
+    if(!dir) return true;
+    var stage = d.wave && d.wave.stage_key;
+    if(!stage) return false;
+    var bullish = stage === 'extending_up' || stage === 'retracing_from_low';
+    return dir === 'bullish' ? bullish : !bullish;
+  }
+
+  function numMaxFilter(getVal){
+    return function(d, s){
+      if(!s) return true;
+      var max = parseFloat(s);
+      if(isNaN(max)) return true;
+      var v = getVal(d);
+      return v != null && v <= max;
+    };
+  }
+  var rowMatchesFwdPeMax = numMaxFilter(function(d){ return d.forward_pe; });
+  var rowMatchesPsMax = numMaxFilter(function(d){ return d.fund && d.fund.price_to_sales; });
+  var rowMatchesMcapFcfMax = numMaxFilter(function(d){ return d.fund && d.fund.mcap_to_fcf; });
+  var rowMatchesMcapOcfMax = numMaxFilter(function(d){ return d.fund && d.fund.mcap_to_ocf; });
+
+  function rowMatchesRoeMin(d, s){
+    if(!s) return true;
+    var min = parseFloat(s);
+    if(isNaN(min)) return true;
+    var roe = d.fund && d.fund.roe;
+    return roe != null && (roe * 100) >= min;
+  }
+
   function renderAll(){
     var q = document.getElementById('search-input').value.trim();
     var waveKey = document.getElementById('wave-filter').value;
     var market = document.getElementById('market-filter').value;
+    var direction = document.getElementById('direction-filter').value;
     var peMaxStr = document.getElementById('pe-max-filter').value.trim();
+    var fwdPeMaxStr = document.getElementById('fwd-pe-max-filter').value.trim();
+    var psMaxStr = document.getElementById('ps-max-filter').value.trim();
+    var mcapFcfMaxStr = document.getElementById('mcap-fcf-max-filter').value.trim();
+    var mcapOcfMaxStr = document.getElementById('mcap-ocf-max-filter').value.trim();
+    var roeMinStr = document.getElementById('roe-min-filter').value.trim();
     var filtered = DATA.filter(function(d){
-      return rowMatchesQuery(d, q) && rowMatchesWave(d, waveKey) && rowMatchesMarket(d, market) && rowMatchesPeMax(d, peMaxStr);
+      return rowMatchesQuery(d, q) && rowMatchesWave(d, waveKey) && rowMatchesMarket(d, market) &&
+        rowMatchesDirection(d, direction) && rowMatchesPeMax(d, peMaxStr) &&
+        rowMatchesFwdPeMax(d, fwdPeMaxStr) && rowMatchesPsMax(d, psMaxStr) &&
+        rowMatchesMcapFcfMax(d, mcapFcfMaxStr) && rowMatchesMcapOcfMax(d, mcapOcfMaxStr) &&
+        rowMatchesRoeMin(d, roeMinStr);
     });
     groupedPage = 1; // any filter/search/sort change starts back at page 1
     renderTopPremium(filtered);
@@ -573,8 +673,21 @@
   });
   document.getElementById('wave-filter').addEventListener('change', renderAll);
   document.getElementById('market-filter').addEventListener('change', renderAll);
+  document.getElementById('direction-filter').addEventListener('change', renderAll);
   document.getElementById('pe-max-filter').addEventListener('input', renderAll);
+  document.getElementById('fwd-pe-max-filter').addEventListener('input', renderAll);
+  document.getElementById('ps-max-filter').addEventListener('input', renderAll);
+  document.getElementById('mcap-fcf-max-filter').addEventListener('input', renderAll);
+  document.getElementById('mcap-ocf-max-filter').addEventListener('input', renderAll);
+  document.getElementById('roe-min-filter').addEventListener('input', renderAll);
   document.getElementById('sort-select').addEventListener('change', renderAll);
+  document.getElementById('market-index').addEventListener('click', function(e){
+    var chip = e.target.closest('.chip');
+    if(!chip) return;
+    document.getElementById('search-input').value = chip.getAttribute('data-name');
+    renderAll();
+    document.getElementById('grouped-list').scrollIntoView({behavior:'smooth', block:'start'});
+  });
   document.getElementById('toggle-theme').addEventListener('click', function(){
     var root = document.documentElement;
     var cur = root.getAttribute('data-theme');
@@ -583,6 +696,7 @@
     else { root.setAttribute('data-theme','dark'); }
   });
 
+  renderMarketIndex();
   renderAll();
 })();
 </script>
