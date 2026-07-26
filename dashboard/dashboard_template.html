@@ -203,7 +203,8 @@
     var html = '';
 
     html += '<div class="card"><div class="price-row"><span class="ticker" style="font-size:22px;font-weight:700;">' + escapeHtml(ticker.toUpperCase()) + '</span>' +
-      '<span style="color:var(--text-secondary);font-size:14px;">' + escapeHtml(d.company) + '</span></div>' +
+      '<span style="color:var(--text-secondary);font-size:14px;">' + escapeHtml(d.company) + '</span>' +
+      (d.stale ? '<span class="badge warn">STALE — scan ล่าสุดล้มเหลว แสดงข้อมูลเก่า</span>' : '') + '</div>' +
       '<div class="price-row"><span class="price">' + escapeHtml(d.price) + '</span>' +
       (d.delta ? '<span class="delta ' + d.deltaDir + '">' + (d.deltaDir==='up'?'▲':'▼') + ' ' + escapeHtml(d.delta) + '</span>' : '') +
       '<span class="subrange">' + escapeHtml(d.range||'') + '</span></div>';

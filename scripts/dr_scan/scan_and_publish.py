@@ -86,6 +86,9 @@ def get_set_quote(sym):
     }
 
 
+_yahoo_name_cache = {}
+
+
 def get_yahoo_price(ticker):
     """Returns the most recent tradeable reference price -- NOT always
     regularMarketPrice. During Thai daytime, US markets are closed for
@@ -98,10 +101,21 @@ def get_yahoo_price(ticker):
     uses. Picks whichever of regular/post/pre-market carries the latest
     timestamp Yahoo reports -- falls back to regularMarketPrice alone
     for tickers/markets with no extended-hours fields at all (the vast
-    majority of non-US underlyings)."""
+    majority of non-US underlyings).
+
+    Side effect: also stashes meta.longName/shortName into
+    _yahoo_name_cache -- this chart-API call already happens every scan
+    cycle for the price, so capturing the real company name here is free
+    (no extra request), used by scan_one to backfill the ~40% of
+    dr_master_resolved.json entries whose 'name' is just a copy of the raw
+    ticker (the watchlist-resolution path in build_dr_master.py has no
+    real company name to put there, only the ticker)."""
     try:
         raw = fetch(f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}")
         meta = json.loads(raw)['chart']['result'][0]['meta']
+        name = meta.get('longName') or meta.get('shortName')
+        if name:
+            _yahoo_name_cache[ticker] = name
         candidates = [
             (meta.get('regularMarketTime'), meta.get('regularMarketPrice')),
             (meta.get('postMarketTime'), meta.get('postMarketPrice')),
@@ -258,6 +272,19 @@ def scan_one(d):
         wave = get_wave_info(d['yahoo_u'], u_price)
         fund = get_fund_info(d['yahoo_u'])
         row = dict(d)
+        # dr_master_resolved.json's 'name' is a real company name only for
+        # entries resolved via direct_map/MANUAL_UNDERLYING -- the
+        # watchlist-resolution fallback in build_dr_master.py just copies
+        # the raw ticker in, so ~40% of underlyings showed e.g. "ABBV"
+        # instead of "AbbVie Inc." everywhere name is displayed (the
+        # market-index chips especially, where a bare ticker is much less
+        # useful than a company name for browsing). Backfill for free from
+        # the Yahoo chart-API name already fetched above for the price.
+        placeholder_ticker = d['yahoo_u'].split('.')[0].upper()
+        if not row.get('name') or row['name'].upper() == placeholder_ticker:
+            better_name = _yahoo_name_cache.get(d['yahoo_u'])
+            if better_name:
+                row['name'] = better_name
         row.update({
             'actual_price': actual, 'underlying_price': u_price, 'fx_rate': fx_rate,
             'ratio_used': live_ratio, 'fair_price': round(fair, 4) if fair else None,
