@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<title>GOOGL — Key Matrix &amp; Leading Indicators (Preview)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* ===== ดึงจาก scripts/dr_scan/page_template.html เพื่อให้หน้าตาตรงกับระบบเดิม ===== */
+  :root{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#c9972c; --series-3:#a09d94;
+    --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+    --card-radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --surface-1:#1a1a19; --page:#0d0d0d;
+      --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+      --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+      --series-1:#3987e5; --series-2:#d9ab45; --series-3:#6f6d66;
+    }
+  }
+  :root[data-theme="dark"]{
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,0.10);
+    --series-1:#3987e5; --series-2:#d9ab45; --series-3:#6f6d66;
+  }
+  :root[data-theme="light"]{
+    --surface-1:#fcfcfb; --page:#f9f9f7;
+    --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+    --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,0.10);
+    --series-1:#2a78d6; --series-2:#c9972c; --series-3:#a09d94;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page);color:var(--text-primary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;padding:24px;line-height:1.5;overflow-x:hidden;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  header.page{margin-bottom:20px;}
+  h1{font-size:22px;margin:0 0 4px;}
+  .subtitle{color:var(--text-secondary);font-size:14px;margin:0 0 2px;}
+  .meta{color:var(--text-muted);font-size:12px;}
+  .card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--card-radius);padding:18px 20px;margin-bottom:16px;}
+  .alert{background:var(--surface-1);border:1px solid var(--border);border-left:4px solid var(--warning);border-radius:var(--card-radius);padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;}
+  .alert .icon{font-size:20px;line-height:1;}
+  .alert .title{font-weight:600;font-size:14px;margin-bottom:4px;}
+  .alert .body{font-size:13px;color:var(--text-secondary);}
+  .btn{background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary);font-size:13px;padding:8px 14px;border-radius:8px;cursor:pointer;display:inline-block;text-decoration:none;}
+  .btn:hover{color:var(--text-primary);}
+  .section-title{font-size:15px;font-weight:600;margin:0 0 10px;}
+  .stop-box{border:1px solid var(--border);border-left:4px solid var(--warning);border-radius:var(--card-radius);padding:14px 18px;background:var(--surface-1);}
+  .stop-box .title{font-weight:600;font-size:13px;margin-bottom:6px;}
+  .stop-box ul{margin:6px 0 0;padding-left:18px;font-size:12px;color:var(--text-secondary);}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+  .badge.good{background:rgba(12,163,12,0.15);color:var(--good);}
+  .badge.warn{background:rgba(250,178,25,0.15);color:#a06d00;}
+  @media (prefers-color-scheme: dark){ .badge.warn{color:var(--warning);} }
+  .badge.serious{background:rgba(236,131,90,0.15);color:var(--serious);}
+  .badge.critical{background:rgba(211,66,66,0.15);color:var(--critical);}
+  .badge.open{background:rgba(42,120,214,0.15);color:var(--series-1);}
+  footer{font-size:11px;color:var(--text-muted);margin-top:24px;text-align:center;}
+
+  /* ===== ส่วนที่เพิ่มใหม่สำหรับ Key Matrix / Leading Indicator dashboard ===== */
+  .price-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:10px 0 4px;}
+  .price{font-size:36px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .delta{font-size:15px;font-weight:600;}
+  .delta.up{color:var(--good);}
+  .delta.down{color:var(--critical);}
+  .subrange{color:var(--text-muted);font-size:12.5px;}
+
+  .hero{border:1.5px solid var(--series-1);}
+  .hero-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;}
+  .hero-title{font-size:15px;font-weight:700;}
+  .hero-question{font-size:13.5px;color:var(--text-secondary);line-height:1.55;margin-bottom:14px;}
+  .hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+  .hero-item-label{font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;}
+  .hero-item-value{font-size:15px;font-weight:700;line-height:1.3;}
+  .hero-item-note{font-size:12px;color:var(--text-secondary);margin-top:2px;line-height:1.4;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+  .tile{background:var(--page);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+  .tile-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px;}
+  .tile-label{font-size:12px;color:var(--text-secondary);font-weight:600;line-height:1.3;}
+  .tile-value{font-size:19px;font-weight:700;margin:2px 0 4px;font-variant-numeric:tabular-nums;}
+  .tile-note{font-size:11.5px;color:var(--text-muted);line-height:1.4;}
+  .cat-desc{font-size:12.5px;color:var(--text-secondary);margin:-4px 0 12px;}
+
+  @media (max-width:640px){
+    body{padding:10px;}
+    .card{padding:12px 14px;}
+    h1{font-size:18px;}
+    .price{font-size:28px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page">
+    <h1>GOOGL — Key Matrix &amp; Leading Indicators</h1>
+    <p class="subtitle">Preview เทมเพลตหน้า /dashboard — ยังไม่ต่อ pipeline ข้อมูลจริง เป็น mockup หน้าตาให้ทดลองใช้ก่อน</p>
+    <p class="meta">Snapshot as of 2026-07-26 · <button class="btn" id="toggle-theme" style="margin-left:6px;">สลับโหมดสี</button></p>
+  </header>
+
+  <div class="alert">
+    <div class="icon">⚠️</div>
+    <div>
+      <div class="title">นี่คือ preview เท่านั้น (mockup)</div>
+      <div class="body">ตัวเลขในหน้านี้มาจาก WebSearch snapshot ที่ผมดึงไว้ตอนคุยกัน ยังไม่ได้เชื่อมกับ pipeline สดของระบบ (scan_and_publish.py) — ถ้าจะทำให้เป็นของจริงที่อัปเดตอัตโนมัติ ต้องเขียน scan script ใหม่แยกจาก DR pipeline เดิม (ตลาดหุ้นสหรัฐฯ ไม่ใช่ DR ไทย) แล้วต่อเข้า GitHub Actions ของตัวเอง — คุยรายละเอียดขั้นตอนนั้นได้เมื่อพอใจกับหน้าตานี้แล้ว</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="price-row">
+      <span class="price">~$350</span>
+      <span class="delta up">▲ ~82% (12 เดือน)</span>
+      <span class="subrange">52-wk range $187.82 – $408.61</span>
+    </div>
+  </div>
+
+  <div class="card hero">
+    <div class="hero-top">
+      <span class="hero-title">🎯 AI Capex Bet: Search Deceleration vs. Cloud Acceleration</span>
+      <span class="badge open">OPEN QUESTION</span>
+    </div>
+    <div class="hero-question">
+      Alphabet เพิ่ง raise capex ปี 2026 ขึ้นเป็น $195–205B เพื่อสร้าง AI infrastructure ขณะที่ Search ธุรกิจหลักที่ทำกำไรสูงสุดเพิ่งชะลอตัวเป็นครั้งแรกในรอบ 6 ไตรมาส
+      คำถามคือ Cloud ที่กำลังเร่งตัวแรง (backlog $514B) จะโตเร็วพอมาชดเชยและพิสูจน์ผลตอบแทนจาก capex ก้อนใหญ่นี้ได้ทันเวลาก่อนตลาดหมดความอดทนหรือไม่
+    </div>
+    <div class="hero-grid">
+      <div>
+        <div class="hero-item-label">Search &amp; Other Ads (Q2 FY26)</div>
+        <div class="hero-item-value">$63.3B · +17% YoY</div>
+        <div class="hero-item-note">ชะลอตัวครั้งแรกในรอบ 6 ไตรมาส</div>
+      </div>
+      <div>
+        <div class="hero-item-label">Google Cloud (Q2 FY26)</div>
+        <div class="hero-item-value">$24.77B · +82% YoY</div>
+        <div class="hero-item-note">Backlog $514B (+$50B QoQ)</div>
+      </div>
+      <div>
+        <div class="hero-item-label">FY2026 Capex Guidance</div>
+        <div class="hero-item-value">$195–205B</div>
+        <div class="hero-item-note">สูงกว่าที่นักวิเคราะห์คาด (~$186B)</div>
+      </div>
+      <div>
+        <div class="hero-item-label">ตัวกระตุ้นข่าวถัดไป</div>
+        <div class="hero-item-value">Q3 FY26 earnings</div>
+        <div class="hero-item-note">จับตา Search growth ฟื้นตัวหรือชะลอต่อ</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Segment Growth</p>
+    <p class="cat-desc">ธุรกิจแบบ diversified — ต้องดูแยกส่วนว่าอะไรขับเคลื่อน/ฉุดรั้ง</p>
+    <div class="grid">
+      <div class="tile">
+        <div class="tile-top"><span class="tile-label">Total Revenue</span><span class="badge good">GOOD</span></div>
+        <div class="tile-value">$119.8B</div>
+        <div class="tile-note">+24% YoY</div>
+      </div>
+      <div class="tile">
+        <div class="tile-top"><span class="tile-label">Search &amp; Other Ads</span><span class="badge warn">WATCH</span></div>
+        <div class="tile-value">+17% YoY</div>
+        <div class="tile-note">ชะลอตัวครั้งแรกใน 6 ไตรมาส</div>
+      </div>
+      <div class="tile">
+        <div class="tile-top"><span class="tile-label">Google Cloud</span><span class="badge good">GOOD</span></div>
+        <div class="tile-value">+82% YoY</div>
+        <div class="tile-note">Operating income $2.83B → $8.81B YoY</div>
+      </div>
+      <div class="tile">
+        <div class="tile-top"><span class="tile-label">Cloud Backlog</span><span class="badge good">GOOD</span></div>
+        <div class="tile-value">$514B</div>
+        <div class="tile-note">+&gt;$50B QoQ</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Technical / Market Signal</p>
+    <div class="grid">
+      <div class="tile">
+        <div class="tile-top"><span class="tile-label">50D vs 200D MA</span><span class="badge good">GOOD</span></div>
+        <div class="tile-value">Golden trend</div>
+        <div class="tile-note">50D ~$364.80 &gt; 200D ~$334.30</div>
+      </div>
+      <div class="tile">
+        <div class="tile-top"><span class="tile-label">RSI (14D)</span><span class="badge warn">WATCH</span></div>
+        <div class="tile-value">ขัดแย้งกัน</div>
+        <div class="tile-note">แหล่งข้อมูลรายงาน 50.3–70.2</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="section-title">Sentiment &amp; Analyst View</p>
+    <div class="grid">
+      <div class="tile">
+        <div class="tile-top"><span class="tile-label">Consensus rating</span><span class="badge good">GOOD</span></div>
+        <div class="tile-value">Strong Buy / Buy</div>
+        <div class="tile-note">ยังมองบวก แม้กังวล capex</div>
+      </div>
+      <div class="tile">
+        <div class="tile-top"><span class="tile-label">Avg. price target</span><span class="badge good">GOOD</span></div>
+        <div class="tile-value">~$398–431</div>
+        <div class="tile-note">ช่วงกว้าง $340–$515</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card stop-box">
+    <div class="title">🛑 STOP — จุดตรวจสอบก่อนเชื่อ</div>
+    <ul>
+      <li>ราคา/technical ในหน้านี้เป็น WebSearch snapshot ไม่ใช่ real-time — ถ้าจะทำสดต้องเขียน scan script คล้าย <code>scan_and_publish.py</code> แต่ดึงจากตลาดสหรัฐฯ แทน SET</li>
+      <li>ตัวเลข RSI/แนวรับ-แนวต้านขัดแย้งกันระหว่างแหล่งข้อมูลเว็บสาธารณะ — ต้องตรวจกับชาร์ตจริงก่อนตัดสินใจ</li>
+      <li>เนื้อหาเพื่อการติดตามข้อมูล ไม่ใช่คำแนะนำการลงทุน</li>
+    </ul>
+  </div>
+
+  <footer>Preview mockup — สร้างโดย Claude Code · ไม่ใช่คำแนะนำการลงทุน</footer>
+</div>
+
+<script>
+(function(){
+  var btn = document.getElementById('toggle-theme');
+  btn.addEventListener('click', function(){
+    var root = document.documentElement;
+    var cur = root.getAttribute('data-theme');
+    root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+  });
+})();
+</script>
+</body>
+</html>
