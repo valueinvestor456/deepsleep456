@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-27T15:14:27Z",
+  "updated": "2026-07-27T19:56:29Z",
   "events": [
     {
       "title": "SPPI y/y",
@@ -64,6 +64,14 @@
       "impact": "Low",
       "forecast": "1.6%",
       "previous": "-4.5%"
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "date": "2026-07-27T14:50:00-04:00",
+      "impact": "Medium",
+      "forecast": "",
+      "previous": ""
     },
     {
       "title": "BRC Shop Price Index y/y",
@@ -456,6 +464,14 @@
       "impact": "High",
       "forecast": "3.75%",
       "previous": "3.75%"
+    },
+    {
+      "title": "BOE Gov Bailey Speaks",
+      "country": "GBP",
+      "date": "2026-07-30T07:30:00-04:00",
+      "impact": "High",
+      "forecast": "",
+      "previous": ""
     },
     {
       "title": "Advance GDP q/q",
