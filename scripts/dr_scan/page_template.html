@@ -104,6 +104,9 @@
   .badge.warn{background:rgba(250,178,25,0.15);color:#a06d00;}
   .badge.night-badge{background:rgba(80,70,180,0.15);color:#6a4cd4;}
   .badge.spread-badge{background:rgba(211,66,66,0.15);color:var(--critical);}
+  .badge.opp-high{background:rgba(12,163,12,0.15);color:var(--good);}
+  .badge.opp-mid{background:rgba(42,120,214,0.15);color:var(--series-1);}
+  .badge.opp-warn{background:rgba(250,178,25,0.15);color:#a06d00;}
   .pager{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:14px;flex-wrap:wrap;}
   .market-index-group{margin-bottom:8px;border:1px solid var(--border);border-radius:10px;padding:2px 12px;}
   .market-index-group[open]{padding-bottom:12px;}
@@ -180,6 +183,7 @@
         <option value="bearish">ขาลง (Bearish)</option>
       </select>
       <select id="sort-select">
+        <option value="opportunity">เรียงตาม: โอกาสน่าสนใจสูงสุดก่อน</option>
         <option value="fwd_pe">เรียงตาม: Forward P/E ต่ำสุดก่อน</option>
         <option value="reward_risk">เรียงตาม: Reward:Risk สูงสุดก่อน</option>
       </select>
@@ -249,6 +253,7 @@
       <li>Premium/Discount ที่เห็นเป็นตัวเลขดิบ ยังไม่หักค่าธรรมเนียมซื้อขาย/สเปรด/ภาษี — ต้องคำนวณต้นทุนจริงเพิ่มก่อนตัดสินใจ arbitrage</li>
       <li><b>Swing Stage / Target / Stop / Reward:Risk ไม่ใช่การนับคลื่น Elliott Wave ที่ยืนยันโดยนักวิเคราะห์</b> — คำนวณจาก pivot ราคาอัตโนมัติ (ZigZag แบบ threshold ปรับตามความผันผวน) + ฉายภาพ Fibonacci retracement/extension ล้วนๆ ไม่มีมนุษย์ตรวจสอบทีละตัว การนับคลื่นแบบ subjective จริงๆ แม้แต่นักวิเคราะห์มืออาชีพยังตีความไม่ตรงกันบนกราฟเดียวกัน — อัลกอริทึมนี้ตีความคลาดเคลื่อนได้เป็นเรื่องปกติ ไม่ใช่ edge case ใช้ประกอบการตัดสินใจเท่านั้น ไม่ใช่คำแนะนำซื้อขาย — คำนวณรายสัปดาห์ (ไม่ real-time เหมือนราคา) เก็บไว้ที่ `scripts/dr_scan/wave_cache.json` แสดงวันที่ข้อมูลล่าสุด (`ข้อมูล ณ ...`) ทุกครั้ง และ flag ทันทีถ้าราคาล่าสุดทะลุ target/stop ไปแล้วตั้งแต่คำนวณครั้งก่อน</li>
       <li><b>💰 badge (FCF yield / Rev growth / cheap+good ฯลฯ) เป็น percentile เทียบกับหุ้นแม่อื่นที่ track อยู่ในระบบนี้เท่านั้น ไม่ใช่การประเมิน moat/คุณภาพธุรกิจ</b> — ไม่ได้ประเมิน 7 Powers หรือความได้เปรียบเชิงแข่งขันใดๆ คำนวณรายเดือนจาก Yahoo quoteSummary เก็บไว้ที่ `scripts/dr_scan/fundamentals_cache.json`</li>
+      <li><b>🌟/👍 "โอกาสน่าสนใจ" และตัวเลือกเรียงลำดับ "โอกาสน่าสนใจสูงสุดก่อน" ไม่ใช่คำแนะนำซื้อขายหรือ rating ใหม่</b> — เป็นแค่กฎง่ายๆ รวม 3 สัญญาณที่มีอยู่แล้วในหน้านี้ (fund bucket, ทิศทาง wave, DR ถูก/แพงกว่า Fair Price กี่ %) ให้คะแนนตามน้ำหนักที่กำหนดขึ้นเอง (ไม่มีหลักวิชาการรองรับน้ำหนักตายตัว) แค่จัดลำดับสิ่งที่มีอยู่แล้วให้เห็นง่ายขึ้น — ⚠️ ระวัง จะแสดงทันทีถ้า wave ทะลุ stop ไปแล้ว ไม่ว่าสัญญาณอื่นจะดีแค่ไหน</li>
     </ul>
   </div>
 
@@ -417,6 +422,39 @@
     return '<span class="fund-line ' + bucketClass + '">💰 ' + parts.join(' &middot; ') + '</span>';
   }
 
+  // A simple, disclosed RULE combining the three signals already shown
+  // separately on the page (fundamentals bucket, wave direction, this DR's
+  // own premium/discount) into one priority badge -- not a new data source,
+  // not a rating, just re-ranking what's already there so the most-aligned
+  // rows surface first. Weights are arbitrary and stated as such in the
+  // STOP-box; a stop-breached wave always overrides to a caution badge
+  // regardless of the other two, since an invalidated technical setup is
+  // qualitatively different from "just fewer positive signals."
+  function opportunityScore(d){
+    var score = 0;
+    if(d.fund && d.fund.bucket === 'cheap+good') score += 1;
+    var w = d.wave;
+    if(w && w.quality === 'ok' && w.live_status !== 'stop_breached'){
+      var bullish = w.stage_key === 'extending_up' || w.stage_key === 'retracing_from_low';
+      if(bullish) score += 1;
+    }
+    if(d.premium_pct != null){
+      if(d.premium_pct <= -2) score += 1;
+      else if(d.premium_pct >= 5) score -= 1;
+    }
+    return score;
+  }
+
+  function opportunityBadge(d){
+    if(d.wave && d.wave.live_status === 'stop_breached'){
+      return {label: '⚠️ ระวัง (เทคนิคหลุดกรอบแล้ว)', cls: 'opp-warn'};
+    }
+    var score = opportunityScore(d);
+    if(score >= 3) return {label: '🌟 น่าสนใจมาก', cls: 'opp-high'};
+    if(score >= 1) return {label: '👍 น่าสนใจ', cls: 'opp-mid'};
+    return null;
+  }
+
   // Browsable directory of every tracked underlying, grouped by market --
   // clicking a name searches for it (reuses the existing search box/filter
   // pipeline) rather than duplicating a separate detail view.
@@ -443,7 +481,9 @@
   function renderTopTable(tbodyId, rows, colClass, premLabel2){
     var tbody = document.getElementById(tbodyId);
     tbody.innerHTML = rows.map(function(d){
-      return '<tr><td><b>' + d.sym + '</b></td><td>' + mlabel('หุ้นแม่:') + fundamentalNameLink(d) + '</td><td>' + mlabel('ราคาหุ้นแม่:') + underlyingPriceStr(d) + '</td>' +
+      var opp = opportunityBadge(d);
+      var oppHtml = opp ? ' <span class="badge ' + opp.cls + '">' + opp.label + '</span>' : '';
+      return '<tr><td><b>' + d.sym + '</b>' + oppHtml + '</td><td>' + mlabel('หุ้นแม่:') + fundamentalNameLink(d) + '</td><td>' + mlabel('ราคาหุ้นแม่:') + underlyingPriceStr(d) + '</td>' +
         '<td>' + mlabel('ตลาด:') + '<span class="badge market-' + d.market + '">' + d.market + '</span></td>' +
         '<td>' + mlabel('ราคาจริง:') + fmt(d.actual_price) + '</td><td>' + mlabel('Fair:') + fmt(d.fair_price) + '</td>' +
         '<td class="' + colClass + '">' + mlabel(premLabel2 + ':') + (d.premium_pct > 0 ? '+' : '') + d.premium_pct.toFixed(2) + '%</td>' +
@@ -479,7 +519,9 @@
   function renderGroupBlock(items, extraHeaderHtml){
     var d0 = items[0];
     var rows = items.map(function(d){
-      return '<tr><td><b>' + d.sym + '</b></td>' +
+      var opp = opportunityBadge(d);
+      var oppHtml = opp ? ' <span class="badge ' + opp.cls + '">' + opp.label + '</span>' : '';
+      return '<tr><td><b>' + d.sym + '</b>' + oppHtml + '</td>' +
         '<td>' + fmt(d.actual_price) + '</td><td>' + fmt(d.fair_price) + '</td>' +
         '<td class="' + premClass(d.premium_pct) + '">' + premLabel(d.premium_pct) + '</td></tr>';
     }).join('');
@@ -502,6 +544,13 @@
 
   function sortGroupKeys(groups, sortMode){
     return Object.keys(groups).sort(function(a,b){
+      if(sortMode === 'opportunity'){
+        // Group-level score = its best DR variant's score (a group with
+        // several DR listings only needs one good entry point to surface).
+        var sa = Math.max.apply(null, groups[a].map(opportunityScore));
+        var sb = Math.max.apply(null, groups[b].map(opportunityScore));
+        return sb - sa; // highest score first
+      }
       if(sortMode === 'reward_risk'){
         var wa = groups[a][0].wave, wb = groups[b][0].wave;
         var ra = wa ? wa.reward_risk_ratio : null, rb = wb ? wb.reward_risk_ratio : null;
