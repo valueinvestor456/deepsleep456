@@ -36,11 +36,13 @@ search entirely until the next successful scan.
 """
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta, timezone
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 REPO_DIR = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
@@ -57,6 +59,10 @@ HTML_OUT = os.path.join(REPO_DIR, "dashboard", "index.html")
 JSON_OUT = os.path.join(REPO_DIR, "dashboard", "dashboard-data.json")
 
 WORKERS = 5  # moderate concurrency, same reasoning as scan_and_publish.py's WORKERS
+
+# Falls back to "<CODE> " (e.g. "SGD ") for any currency not listed here --
+# never silently mislabels a non-USD price as "$".
+CURRENCY_SYMBOLS = {"USD": "$", "THB": "฿", "HKD": "HK$", "EUR": "€", "GBP": "£", "JPY": "¥"}
 
 # Same modules as fundamentals_analysis.py's QUOTESUMMARY_MODULES, plus "price"
 # for company name -- fetch_quotesummary() there is hardcoded to the narrower
@@ -130,7 +136,7 @@ def rsi14(closes, period=14):
     return 100.0 - (100.0 / (1.0 + rs))
 
 
-def analyze_technical_tiles(ticker):
+def analyze_technical_tiles(ticker, cur="$"):
     closes = fetch_price_history(ticker)
     if not closes:
         return []
@@ -144,7 +150,7 @@ def analyze_technical_tiles(ticker):
         tiles.append({
             "label": "50D vs 200D MA",
             "value": "Golden trend" if golden else "Death cross",
-            "note": f"50D ${s50:,.2f} {'>' if golden else '<'} 200D ${s200:,.2f}",
+            "note": f"50D {cur}{s50:,.2f} {'>' if golden else '<'} 200D {cur}{s200:,.2f}",
             "badge": "good" if golden else "critical",
         })
     if rsi is not None:
@@ -191,6 +197,61 @@ def tally_signals(*tile_lists):
 # resolve on its own).
 NEWS_TICKER_ALIASES = {"GOOGL": "GOOG"}
 
+THAI_MONTHS = {
+    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+    "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
+}
+
+GAPFOCUS_ROW_RE = re.compile(
+    r'<div class="talk-row">\s*<a href="([^"]+)"[^>]*>\s*<img class="talk-img" alt="([^"]+)".*?'
+    r'<sub class="talk-date">([^<]+)</sub>.*?'
+    r'<sub class="talk-detail"><l>([^<]+)</l></sub>',
+    re.DOTALL,
+)
+
+
+def fetch_news_thai(sym, limit=5):
+    """Thai (SET-listed) stocks get essentially no relevant coverage from
+    Yahoo's news search (English-language, US-centric), so per user request
+    this uses stock.gapfocus.com/detail/<SYM> instead -- a Thai retail-investor
+    news aggregator, server-rendered HTML (no API/key), covering wire
+    services (Kaohoon, HoonSmart) and brokerage research notes (IAA-tagged).
+    Regex-parsed same as this project's other HTML scrapes (get_set_quote in
+    scan_and_publish.py) rather than adding a BeautifulSoup dependency for
+    one page. Two date formats observed: "DD Mon" (no year -- assumed
+    current year, rolled back a year if that would put the article
+    implausibly in the future, only matters right at a Dec/Jan boundary) for
+    older items, and a bare "HH:MM" for items published earlier today --
+    the first format this ran against (PSL) hit the second case immediately,
+    so both are handled rather than assuming "DD Mon" is the only shape."""
+    url = f"https://stock.gapfocus.com/detail/{sym}"
+    try:
+        raw = fetch(url, timeout=20)
+    except Exception:
+        return []
+    BKK = timezone(timedelta(hours=7))  # gapfocus timestamps are Thai local time
+    today = datetime.now(BKK)
+    out = []
+    for link, publisher, date_str, title in GAPFOCUS_ROW_RE.findall(raw)[:limit]:
+        date_str = date_str.strip()
+        published_at = ""
+        parts = date_str.split()
+        if len(parts) == 2:
+            day_s, mon_s = parts
+            month = THAI_MONTHS.get(mon_s)
+            if month:
+                try:
+                    d = datetime(today.year, month, int(day_s), tzinfo=BKK)
+                    if d > today + timedelta(days=2):
+                        d = d.replace(year=today.year - 1)
+                    published_at = d.strftime("%Y-%m-%d")
+                except ValueError:
+                    pass
+        elif ":" in date_str:  # bare "HH:MM" -- published earlier today
+            published_at = today.strftime("%Y-%m-%d")
+        out.append({"title": title.strip(), "publisher": publisher, "link": link, "published_at": published_at})
+    return out
+
 
 def fetch_news(ticker, limit=5):
     """Yahoo's search endpoint (same one yfinance's Ticker.news uses under
@@ -201,6 +262,8 @@ def fetch_news(ticker, limit=5):
     subject, not just a mention) trades recall for precision -- a handful of
     clearly-relevant headlines beats ten mostly-about-something-else ones on
     an investor-facing page. No API key needed."""
+    if ticker.endswith(".BK"):
+        return fetch_news_thai(ticker[:-3], limit=limit)
     news_ticker = NEWS_TICKER_ALIASES.get(ticker, ticker)
     url = f"https://query1.finance.yahoo.com/v1/finance/search?q={news_ticker}&newsCount=15&quotesCount=0"
     try:
@@ -234,6 +297,7 @@ def analyze_ticker(ticker):
     sd = result.get("summaryDetail") or {}
     price_mod = result.get("price") or {}
     company = price_mod.get("longName") or price_mod.get("shortName") or ticker
+    cur = CURRENCY_SYMBOLS.get(price_mod.get("currency"), (price_mod.get("currency") or "$") + " ")
 
     live_price = get_yahoo_price(ticker)  # regular/pre/post-market-aware, not a stale daily-bar close
     prev_close = _raw(sd, "previousClose") or _raw(price_mod, "regularMarketPreviousClose")
@@ -311,18 +375,19 @@ def analyze_ticker(ticker):
             "badge": rec_badge,
         })
     if target_mean is not None:
-        range_note = f"ช่วง ${target_low:,.0f}–${target_high:,.0f}" if (target_low and target_high) else ""
+        range_note = f"ช่วง {cur}{target_low:,.0f}–{cur}{target_high:,.0f}" if (target_low and target_high) else ""
         upside_note = ""
         if live_price:
             upside_pct = (target_mean - live_price) / live_price * 100.0
             upside_note = f" · {upside_pct:+.1f}% จากราคาปัจจุบัน"
         sentiment_tiles.append({
-            "label": "Avg. price target", "value": f"${target_mean:,.2f}", "note": (range_note + upside_note).strip(" ·"),
+            "label": "Avg. price target", "value": f"{cur}{target_mean:,.2f}", "note": (range_note + upside_note).strip(" ·"),
             "badge": "good" if (live_price and target_mean > live_price) else "warn",
         })
 
     return {
         "company": company,
+        "currency_symbol": cur,
         "live_price": live_price,
         "delta_pct": delta_pct,
         "range_low": range_low,
@@ -337,7 +402,8 @@ def scan_one(ticker, overrides):
     base = analyze_ticker(ticker)
     if base is None:
         return None  # total failure this cycle -- caller falls back to last-known-good
-    tech_tiles = analyze_technical_tiles(ticker)
+    cur = base["currency_symbol"]
+    tech_tiles = analyze_technical_tiles(ticker, cur)
     range_tile = range_position_tile(base["live_price"], base["range_low"], base["range_high"])
     if range_tile:
         tech_tiles = tech_tiles + [range_tile]
@@ -358,11 +424,11 @@ def scan_one(ticker, overrides):
     price = base["live_price"]
     entry = {
         "company": base["company"],
-        "exchange": "US",
-        "price": f"${price:,.2f}" if price else "n/a",
+        "exchange": "SET" if ticker.endswith(".BK") else "US",
+        "price": f"{cur}{price:,.2f}" if price else "n/a",
         "delta": f"{base['delta_pct']:+.2f}%" if base["delta_pct"] is not None else "",
         "deltaDir": "up" if (base["delta_pct"] is None or base["delta_pct"] >= 0) else "down",
-        "range": (f"52-wk range ${base['range_low']:,.2f} – ${base['range_high']:,.2f}"
+        "range": (f"52-wk range {cur}{base['range_low']:,.2f} – {cur}{base['range_high']:,.2f}"
                   if (base["range_low"] and base["range_high"]) else ""),
         "sections": sections,
         "technical": tech_tiles,
