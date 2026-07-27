@@ -194,6 +194,12 @@
   </div>
 
   <div class="card">
+    <p class="section-title">🌟 โอกาสน่าสนใจที่สุด — สำหรับตัดสินใจเร็ว</p>
+    <p class="u-price" style="margin:-4px 0 10px;">รวม 3 สัญญาณที่มีอยู่แล้วในหน้านี้ (พื้นฐาน + ทิศทางเทคนิค + ถูก/แพงกว่า Fair Price) เรียงคะแนนสูงสุดก่อน — ไม่รวมตัวที่ wave หลุด stop แล้ว (ดู STOP-box ด้านล่างสำหรับวิธีคำนวณ ไม่ใช่คำแนะนำซื้อขาย)</p>
+    <div id="top-opportunity-list"></div>
+  </div>
+
+  <div class="card">
     <p class="section-title">Top 20 Premium สูงสุด — DR แพงกว่า Fair Price มากที่สุด</p>
     <div id="top-premium-list"></div>
   </div>
@@ -484,6 +490,17 @@
     container.innerHTML = rows.map(function(d){ return renderGroupBlock([d]); }).join('') || '<p class="no-match">ไม่มีข้อมูล</p>';
   }
 
+  // Top picks for quick decisions: reuses opportunityScore/opportunityBadge
+  // (same rule as the per-row badges elsewhere on the page) to surface the
+  // highest-scoring rows across whatever is currently filtered, excluding
+  // stop-breached ones (a caution, not a pick) and blank-score ones.
+  function renderTopOpportunities(filtered){
+    var rows = filtered
+      .filter(function(d){ var b = opportunityBadge(d); return b && b.cls !== 'opp-warn'; })
+      .sort(function(a, b){ return opportunityScore(b) - opportunityScore(a); });
+    renderTopList('top-opportunity-list', rows.slice(0, 15));
+  }
+
   function renderTopPremium(filtered){
     var rows = filtered.filter(function(d){ return d.premium_pct > 0; });
     rows.sort(function(a,b){ return b.premium_pct - a.premium_pct; });
@@ -654,6 +671,7 @@
         rowMatchesRoeMin(d, roeMinStr);
     });
     groupedPage = 1; // any filter/search/sort change starts back at page 1
+    renderTopOpportunities(filtered);
     renderTopPremium(filtered);
     renderTopDiscount(filtered);
     renderDivergence(filtered);

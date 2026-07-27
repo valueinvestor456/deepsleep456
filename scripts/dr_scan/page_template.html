@@ -209,6 +209,17 @@
   </div>
 
   <div class="card">
+    <p class="section-title">🌟 โอกาสน่าสนใจที่สุด — สำหรับตัดสินใจเร็ว</p>
+    <p class="u-price" style="margin:-4px 0 10px;">รวม 3 สัญญาณที่มีอยู่แล้วในหน้านี้ (พื้นฐาน + ทิศทางเทคนิค + ถูก/แพงกว่า Fair Price) เรียงคะแนนสูงสุดก่อน — ไม่รวมตัวที่ wave หลุด stop แล้ว (ดู STOP-box ด้านล่างสำหรับวิธีคำนวณ ไม่ใช่คำแนะนำซื้อขาย)</p>
+    <div class="table-scroll">
+      <table id="top-opportunity-table" class="stack-mobile">
+        <thead><tr><th>DR</th><th>หุ้นแม่</th><th>ราคาหุ้นแม่</th><th>ตลาด</th><th>จริง</th><th>Fair</th><th>Prem/Disc</th><th></th></tr></thead>
+        <tbody id="top-opportunity-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
     <p class="section-title">Top 20 Premium สูงสุด — DR แพงกว่า Fair Price มากที่สุด</p>
     <div class="table-scroll">
       <table id="top-premium-table" class="stack-mobile">
@@ -491,6 +502,31 @@
     }).join('') || '<tr><td colspan="8" class="no-match">ไม่มีข้อมูล</td></tr>';
   }
 
+  // Top picks for quick decisions: reuses opportunityScore/opportunityBadge
+  // (same rule as the per-row badges elsewhere on the page, not a new
+  // calculation) to surface the highest-scoring rows across whatever is
+  // currently filtered, excluding stop-breached ones (a caution, not a
+  // pick) and blank-score ones (nothing to recommend it).
+  function renderTopOpportunities(filtered){
+    var candidates = filtered
+      .map(function(d){ return {d: d, badge: opportunityBadge(d), score: opportunityScore(d)}; })
+      .filter(function(c){ return c.badge && c.badge.cls !== 'opp-warn'; })
+      .sort(function(a, b){ return b.score - a.score; })
+      .slice(0, 15);
+    var tbody = document.getElementById('top-opportunity-tbody');
+    tbody.innerHTML = candidates.map(function(c){
+      var d = c.d;
+      var premClassName = premClass(d.premium_pct);
+      var premText = (d.premium_pct > 0 ? '+' : '') + d.premium_pct.toFixed(2) + '%';
+      return '<tr><td><b>' + d.sym + '</b> <span class="badge ' + c.badge.cls + '">' + c.badge.label + '</span></td>' +
+        '<td>' + mlabel('หุ้นแม่:') + fundamentalNameLink(d) + '</td><td>' + mlabel('ราคาหุ้นแม่:') + underlyingPriceStr(d) + '</td>' +
+        '<td>' + mlabel('ตลาด:') + '<span class="badge market-' + d.market + '">' + d.market + '</span></td>' +
+        '<td>' + mlabel('ราคาจริง:') + fmt(d.actual_price) + '</td><td>' + mlabel('Fair:') + fmt(d.fair_price) + '</td>' +
+        '<td class="' + premClassName + '">' + mlabel('Prem/Disc:') + premText + '</td>' +
+        '<td>' + chartButton(d) + '</td></tr>';
+    }).join('') || '<tr><td colspan="8" class="no-match">ไม่มีข้อมูลที่เข้าเกณฑ์ในตัวกรองปัจจุบัน</td></tr>';
+  }
+
   function renderTopPremium(filtered){
     var rows = filtered.filter(function(d){ return d.premium_pct > 0; });
     rows.sort(function(a,b){ return b.premium_pct - a.premium_pct; });
@@ -709,6 +745,7 @@
         rowMatchesRoeMin(d, roeMinStr);
     });
     groupedPage = 1; // any filter/search/sort change starts back at page 1
+    renderTopOpportunities(filtered);
     renderTopPremium(filtered);
     renderTopDiscount(filtered);
     renderDivergence(filtered);
