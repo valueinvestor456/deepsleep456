@@ -243,6 +243,14 @@
       html += '<div class="card"><p class="section-title">Sentiment &amp; Analyst View</p><div class="grid">' + d.sentiment.map(tileHtml).join('') + '</div></div>';
     }
 
+    if(d.news && d.news.length){
+      html += '<div class="card"><p class="section-title">Recent News</p><div style="display:flex;flex-direction:column;gap:10px;">' +
+        d.news.map(function(n){
+          return '<div><a href="' + escapeHtml(n.link) + '" target="_blank" rel="noopener" style="color:var(--text-primary);font-size:13.5px;font-weight:600;text-decoration:none;">' + escapeHtml(n.title) + '</a>' +
+            '<div style="font-size:11.5px;color:var(--text-muted);margin-top:2px;">' + escapeHtml(n.publisher) + ' · ' + escapeHtml(n.published_at) + '</div></div>';
+        }).join('') + '</div></div>';
+    }
+
     html += '<div class="card stop-box"><div class="title">🛑 STOP — จุดตรวจสอบก่อนเชื่อ</div><ul>' +
       '<li>ราคา/technical/fundamentals ดึงอัตโนมัติจาก Yahoo Finance — อาจ delay 15-20 นาที ไม่ใช่ real-time เป๊ะ</li>' +
       (d.narrative ? '<li>Story ด้านบนเขียนด้วยมือ ณ ' + escapeHtml(d.narrative_as_of||'') + ' — ต้องขอให้อัปเดตใหม่ถ้าจะใช้ตัดสินใจปัจจุบัน (แหล่งข้อมูล: ' + escapeHtml(d.narrative_sources||'') + ')</li>' : '') +

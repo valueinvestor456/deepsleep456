@@ -183,6 +183,45 @@ def tally_signals(*tile_lists):
     return counts
 
 
+# Yahoo's news tagging uses one canonical ticker per company regardless of
+# share class -- e.g. Alphabet news is tagged "GOOG" even when the watchlist
+# tracks "GOOGL" for price/fundamentals. Add an entry here if a newly-added
+# dual-class ticker shows 0 news items (same manual-mapping pattern as
+# dr_master_resolved.json for tickers Yahoo's automatic matching can't
+# resolve on its own).
+NEWS_TICKER_ALIASES = {"GOOGL": "GOOG"}
+
+
+def fetch_news(ticker, limit=5):
+    """Yahoo's search endpoint (same one yfinance's Ticker.news uses under
+    the hood) tags each result with relatedTickers -- the raw result set is
+    a fuzzy "market chatter mentioning this query" feed (peers, sector
+    roundups, etc.), noisy if used unfiltered. Keeping only items where the
+    canonical ticker is the FIRST related ticker (empirically the primary
+    subject, not just a mention) trades recall for precision -- a handful of
+    clearly-relevant headlines beats ten mostly-about-something-else ones on
+    an investor-facing page. No API key needed."""
+    news_ticker = NEWS_TICKER_ALIASES.get(ticker, ticker)
+    url = f"https://query1.finance.yahoo.com/v1/finance/search?q={news_ticker}&newsCount=15&quotesCount=0"
+    try:
+        raw = fetch(url, timeout=20)
+        items = json.loads(raw).get("news", [])
+    except Exception:
+        return []
+    relevant = [n for n in items if (n.get("relatedTickers") or [None])[0] == news_ticker]
+    relevant.sort(key=lambda n: n.get("providerPublishTime", 0), reverse=True)
+    out = []
+    for n in relevant[:limit]:
+        ts = n.get("providerPublishTime")
+        out.append({
+            "title": n.get("title", ""),
+            "publisher": n.get("publisher", ""),
+            "link": n.get("link", ""),
+            "published_at": time.strftime("%Y-%m-%d", time.gmtime(ts)) if ts else "",
+        })
+    return out
+
+
 def analyze_ticker(ticker):
     """Returns a dict of everything derived from quoteSummary + the live
     price picker, or None if quoteSummary totally failed for this ticker."""
@@ -329,6 +368,7 @@ def scan_one(ticker, overrides):
         "technical": tech_tiles,
         "sentiment": base["sentiment_tiles"],
         "signal_summary": tally_signals(base["fund_tiles"], base["valuation_tiles"], base["sentiment_tiles"], tech_tiles, override_tiles),
+        "news": fetch_news(ticker),
         "scanned_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "stale": False,
     }
