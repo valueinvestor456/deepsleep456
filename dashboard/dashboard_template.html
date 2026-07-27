@@ -208,6 +208,14 @@
       '<div class="price-row"><span class="price">' + escapeHtml(d.price) + '</span>' +
       (d.delta ? '<span class="delta ' + d.deltaDir + '">' + (d.deltaDir==='up'?'▲':'▼') + ' ' + escapeHtml(d.delta) + '</span>' : '') +
       '<span class="subrange">' + escapeHtml(d.range||'') + '</span></div>';
+    if(d.signal_summary){
+      var sig = d.signal_summary;
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 10px;">' +
+        (sig.good ? '<span class="badge good">✅ ' + sig.good + ' Good</span>' : '') +
+        (sig.warn ? '<span class="badge warn">⚠️ ' + sig.warn + ' Watch</span>' : '') +
+        ((sig.serious + sig.critical) ? '<span class="badge critical">🔴 ' + (sig.serious + sig.critical) + ' Risk</span>' : '') +
+        '</div>';
+    }
     if(d.narrative){
       html += '<p class="narrative">📖 <b>Story:</b> ' + escapeHtml(d.narrative) +
         (d.narrative_as_of ? ' <span style="color:var(--text-muted);font-size:11px;">(เขียนไว้ ณ ' + escapeHtml(d.narrative_as_of) + ' — ไม่ auto-refresh)</span>' : '') + '</p>';

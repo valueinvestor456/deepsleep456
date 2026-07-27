@@ -154,6 +154,35 @@ def analyze_technical_tiles(ticker):
     return tiles
 
 
+def range_position_tile(live_price, range_low, range_high):
+    """% distance from the 52-wk high/low -- turns two raw numbers into the
+    question an investor actually asks ("how close to the top/bottom of its
+    range is this?") instead of making them do the arithmetic."""
+    if not (live_price and range_low and range_high):
+        return None
+    from_high = (live_price - range_high) / range_high * 100.0
+    from_low = (live_price - range_low) / range_low * 100.0
+    return {
+        "label": "Position in 52-wk range",
+        "value": f"{from_high:+.1f}% จากจุดสูงสุด",
+        "note": f"{from_low:+.1f}% เหนือจุดต่ำสุด 52 สัปดาห์",
+        "badge": "warn" if from_high > -5 else ("good" if from_low < 15 else "warn"),
+    }
+
+
+def tally_signals(*tile_lists):
+    """Deterministic count of good/warn/serious/critical across every tile
+    already shown on the card -- pure aggregation of badges the page already
+    assigns, not a new judgment call layered on top."""
+    counts = {"good": 0, "warn": 0, "serious": 0, "critical": 0}
+    for tiles in tile_lists:
+        for t in tiles or []:
+            b = t.get("badge")
+            if b in counts:
+                counts[b] += 1
+    return counts
+
+
 def analyze_ticker(ticker):
     """Returns a dict of everything derived from quoteSummary + the live
     price picker, or None if quoteSummary totally failed for this ticker."""
@@ -201,6 +230,30 @@ def analyze_ticker(ticker):
             "note": "FCF / Enterprise Value", "badge": "good" if fcf_yield > 0 else "warn",
         })
 
+    # Valuation ratios -- classic first-look investor metrics, missing from
+    # the original cut. Badges here are rough, disclosed heuristics (e.g.
+    # "PE > 40" is a common growth-premium threshold, NOT a claim the stock
+    # is overvalued -- high PE is normal for a fast grower) rather than a
+    # peer-percentile rank like fundamentals_cache.json's bucket tag, since
+    # there's no fixed peer universe for an arbitrary watchlist ticker.
+    trailing_pe = _raw(sd, "trailingPE")
+    forward_pe = _raw(sd, "forwardPE") or _raw(ks, "forwardPE")
+    peg_ratio = _raw(ks, "pegRatio")
+    price_to_sales = _raw(sd, "priceToSalesTrailing12Months")
+
+    valuation_tiles = []
+    if trailing_pe is not None:
+        badge = "critical" if trailing_pe <= 0 else ("warn" if trailing_pe > 40 else "good")
+        note = "ขาดทุน (PE ติดลบ)" if trailing_pe <= 0 else ("PE > 40 มักสะท้อน growth premium ไม่ใช่แพงเกินไปเสมอไป" if trailing_pe > 40 else "")
+        valuation_tiles.append({"label": "Trailing P/E", "value": f"{trailing_pe:.1f}x", "note": note, "badge": badge})
+    if forward_pe is not None:
+        valuation_tiles.append({"label": "Forward P/E", "value": f"{forward_pe:.1f}x", "note": "ประมาณการกำไรปีหน้า", "badge": "good" if forward_pe > 0 else "critical"})
+    if peg_ratio is not None:
+        badge = "good" if peg_ratio < 1 else ("warn" if peg_ratio <= 2 else "critical")
+        valuation_tiles.append({"label": "PEG Ratio", "value": f"{peg_ratio:.2f}", "note": "PE เทียบกับอัตราการเติบโต — <1 มักถูกกว่าที่โต", "badge": badge})
+    if price_to_sales is not None:
+        valuation_tiles.append({"label": "Price/Sales", "value": f"{price_to_sales:.1f}x", "note": "", "badge": "warn"})
+
     target_mean = _raw(fd, "targetMeanPrice")
     target_low = _raw(fd, "targetLowPrice")
     target_high = _raw(fd, "targetHighPrice")
@@ -219,9 +272,14 @@ def analyze_ticker(ticker):
             "badge": rec_badge,
         })
     if target_mean is not None:
-        note = f"ช่วง ${target_low:,.0f}–${target_high:,.0f}" if (target_low and target_high) else ""
+        range_note = f"ช่วง ${target_low:,.0f}–${target_high:,.0f}" if (target_low and target_high) else ""
+        upside_note = ""
+        if live_price:
+            upside_pct = (target_mean - live_price) / live_price * 100.0
+            upside_note = f" · {upside_pct:+.1f}% จากราคาปัจจุบัน"
         sentiment_tiles.append({
-            "label": "Avg. price target", "value": f"${target_mean:,.2f}", "note": note, "badge": "good",
+            "label": "Avg. price target", "value": f"${target_mean:,.2f}", "note": (range_note + upside_note).strip(" ·"),
+            "badge": "good" if (live_price and target_mean > live_price) else "warn",
         })
 
     return {
@@ -231,6 +289,7 @@ def analyze_ticker(ticker):
         "range_low": range_low,
         "range_high": range_high,
         "fund_tiles": fund_tiles,
+        "valuation_tiles": valuation_tiles,
         "sentiment_tiles": sentiment_tiles,
     }
 
@@ -240,13 +299,22 @@ def scan_one(ticker, overrides):
     if base is None:
         return None  # total failure this cycle -- caller falls back to last-known-good
     tech_tiles = analyze_technical_tiles(ticker)
+    range_tile = range_position_tile(base["live_price"], base["range_low"], base["range_high"])
+    if range_tile:
+        tech_tiles = tech_tiles + [range_tile]
 
     override = overrides.get(ticker)
     sections = []
     if base["fund_tiles"]:
         sections.append({"title": "Fundamentals (auto)", "desc": "คำนวณอัตโนมัติจาก Yahoo Finance ทุกรอบ scan", "tiles": base["fund_tiles"]})
+    if base["valuation_tiles"]:
+        sections.append({"title": "Valuation (auto)", "desc": "เกณฑ์ badge เป็น heuristic คร่าวๆ ไม่ใช่คำตัดสินว่าแพง/ถูก", "tiles": base["valuation_tiles"]})
     if override:
         sections = override.get("sections", []) + sections
+
+    override_tiles = []
+    for s in (override.get("sections", []) if override else []):
+        override_tiles.extend(s.get("tiles", []))
 
     price = base["live_price"]
     entry = {
@@ -260,6 +328,7 @@ def scan_one(ticker, overrides):
         "sections": sections,
         "technical": tech_tiles,
         "sentiment": base["sentiment_tiles"],
+        "signal_summary": tally_signals(base["fund_tiles"], base["valuation_tiles"], base["sentiment_tiles"], tech_tiles, override_tiles),
         "scanned_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "stale": False,
     }
