@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-28T14:38:52Z",
+  "updated": "2026-07-28T19:53:44Z",
   "events": [
     {
       "title": "SPPI y/y",
@@ -254,7 +254,7 @@
       "country": "USD",
       "date": "2026-07-29T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "-1.7M",
+      "forecast": "0.7M",
       "previous": "2.0M"
     },
     {
@@ -478,7 +478,7 @@
       "country": "USD",
       "date": "2026-07-30T08:30:00-04:00",
       "impact": "High",
-      "forecast": "2.0%",
+      "forecast": "2.1%",
       "previous": "2.0%"
     },
     {
@@ -526,7 +526,7 @@
       "country": "USD",
       "date": "2026-07-30T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "37B",
       "previous": "32B"
     },
     {
