@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-29T09:09:39Z",
+  "updated": "2026-07-29T14:32:39Z",
   "events": [
     {
       "title": "SPPI y/y",
@@ -244,7 +244,7 @@
     {
       "title": "German 10-y Bond Auction",
       "country": "EUR",
-      "date": "2026-07-29T05:42:00-04:00",
+      "date": "2026-07-29T05:31:00-04:00",
       "impact": "Low",
       "forecast": "",
       "previous": "3.09|1.0"
