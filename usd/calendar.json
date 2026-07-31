@@ -1,5 +1,5 @@
 {
-  "updated": "2026-07-30T19:53:07Z",
+  "updated": "2026-07-31T03:51:18Z",
   "events": [
     {
       "title": "SPPI y/y",
@@ -594,9 +594,17 @@
       "previous": "50.2"
     },
     {
+      "title": "BOJ Outlook Report",
+      "country": "JPY",
+      "date": "2026-07-30T23:11:00-04:00",
+      "impact": "High",
+      "forecast": "",
+      "previous": ""
+    },
+    {
       "title": "BOJ Policy Rate",
       "country": "JPY",
-      "date": "2026-07-30T22:30:00-04:00",
+      "date": "2026-07-30T23:11:00-04:00",
       "impact": "High",
       "forecast": "<1.00%",
       "previous": "<1.00%"
@@ -604,15 +612,7 @@
     {
       "title": "Monetary Policy Statement",
       "country": "JPY",
-      "date": "2026-07-30T22:30:00-04:00",
-      "impact": "High",
-      "forecast": "",
-      "previous": ""
-    },
-    {
-      "title": "BOJ Outlook Report",
-      "country": "JPY",
-      "date": "2026-07-30T22:31:00-04:00",
+      "date": "2026-07-30T23:11:00-04:00",
       "impact": "High",
       "forecast": "",
       "previous": ""
