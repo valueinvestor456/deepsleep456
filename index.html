@@ -344,8 +344,8 @@ button { font-family: inherit; }
 .reviews__score-link { color: var(--color-forest); font-weight: 500; border-bottom: 2px solid var(--color-clay); }
 .reviews__score-link strong { color: var(--color-forest-dark); }
 .reviews__layout { display: grid; grid-template-columns: 1fr 300px; gap: 26px; align-items: start; }
-.reviews__layout--dual-video { grid-template-columns: 1fr 620px; }
-.reviews__video-list { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.reviews__layout--dual-video { grid-template-columns: 1fr 760px; }
+.reviews__video-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
 .reviews__video-list .reviews__video { text-align: center; }
 .reviews__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .review-card {
@@ -387,7 +387,6 @@ button { font-family: inherit; }
   color: #fff; font-size: .85rem; font-weight: 500; text-align: center;
 }
 .video-facade iframe { width: 100%; height: 100%; border: 0; }
-.tiktok-embed { margin: 0 auto !important; border-radius: 26px; overflow: hidden; box-shadow: 0 18px 40px rgba(46,42,34,.28); }
 .reviews__video-caption { margin: 12px 0 0; font-size: .85rem; color: #6b6553; }
 .reviews__note { text-align: center; margin-top: 26px; color: #5c5745; font-size: .85rem; }
 
@@ -538,9 +537,10 @@ button { font-family: inherit; }
   .amenities__grid { grid-template-columns: 1fr 1fr; }
   .reviews__layout { grid-template-columns: 1fr; }
   .reviews__layout--dual-video { grid-template-columns: 1fr; }
+  .reviews__layout--dual-video .reviews__video-list { display: block; }
   .reviews__grid { grid-template-columns: 1fr; }
-  .reviews__video { max-width: 280px; margin: 8px auto 0; }
-  .reviews__video-list { grid-template-columns: 1fr 1fr; max-width: 400px; margin: 8px auto 0; }
+  .reviews__video { max-width: 340px; margin: 0 auto 22px; }
+  .reviews__video:last-child { margin-bottom: 0; }
   .reviews__score-num { font-size: 2.2rem; }
 
   .map-section__grid { grid-template-columns: 1fr; }
@@ -1003,9 +1003,19 @@ button { font-family: inherit; }
             <p class="reviews__video-caption">โดยช่อง เชียงใหม่ม่วนเว่อร์ บน YouTube</p>
           </div>
           <div class="reviews__video">
-            <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@kontidtiew/video/7668707704415866120" data-video-id="7668707704415866120" style="max-width: 605px; min-width: 325px;">
-              <section></section>
-            </blockquote>
+            <a class="video-facade" href="https://www.facebook.com/reel/2851381501876156/" target="_blank" rel="noopener" aria-label="ชมคลิปรีวิว Deepsleep456 บน Facebook">
+              <img src="images/exterior/drone-aerial-thumb.webp" alt="วิดีโอรีวิวที่พัก Deepsleep456 บน Facebook" loading="lazy">
+              <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+              <span class="video-facade__label" aria-hidden="true">▶ ชมคลิปรีวิว</span>
+            </a>
+            <p class="reviews__video-caption">โดยเพจ Deepsleep456 บน Facebook</p>
+          </div>
+          <div class="reviews__video">
+            <a class="video-facade" href="https://www.tiktok.com/@kontidtiew/video/7668707704415866120" target="_blank" rel="noopener" aria-label="ชมคลิปรีวิว Deepsleep456 บน TikTok">
+              <img src="images/common/kitchen-counter-thumb.webp" alt="วิดีโอรีวิวที่พัก Deepsleep456 โดยเพจ ฅนติดเที่ยว บน TikTok" loading="lazy">
+              <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+              <span class="video-facade__label" aria-hidden="true">▶ ชมคลิปรีวิว</span>
+            </a>
             <p class="reviews__video-caption">โดยเพจ ฅนติดเที่ยว บน TikTok</p>
           </div>
         </div>
@@ -1193,6 +1203,5 @@ button { font-family: inherit; }
 </div>
 
 <script src="js/main.js?v=20260708"></script>
-<script async src="https://www.tiktok.com/embed.js"></script>
 </body>
 </html>
