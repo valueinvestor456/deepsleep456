@@ -387,6 +387,7 @@ button { font-family: inherit; }
   color: #fff; font-size: .85rem; font-weight: 500; text-align: center;
 }
 .video-facade iframe { width: 100%; height: 100%; border: 0; }
+.tiktok-embed { margin: 0 auto !important; border-radius: 26px; overflow: hidden; box-shadow: 0 18px 40px rgba(46,42,34,.28); }
 .reviews__video-caption { margin: 12px 0 0; font-size: .85rem; color: #6b6553; }
 .reviews__note { text-align: center; margin-top: 26px; color: #5c5745; font-size: .85rem; }
 
@@ -1002,11 +1003,9 @@ button { font-family: inherit; }
             <p class="reviews__video-caption">โดยช่อง เชียงใหม่ม่วนเว่อร์ บน YouTube</p>
           </div>
           <div class="reviews__video">
-            <button class="video-facade" type="button" data-video-id="7668707704415866120" data-platform="tiktok" aria-label="ชมคลิปรีวิว Deepsleep456 ล่าสุดจากเพจ ฅนติดเที่ยว บน TikTok">
-              <img src="images/exterior/firepit-sala-thumb.webp" width="700" height="933" alt="วิดีโอรีวิวที่พัก Deepsleep456 โดยเพจ ฅนติดเที่ยว บน TikTok" loading="lazy">
-              <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
-              <span class="video-facade__label" aria-hidden="true">▶ คลิปรีวิวล่าสุดจาก ฅนติดเที่ยว</span>
-            </button>
+            <blockquote class="tiktok-embed" cite="https://www.tiktok.com/@kontidtiew/video/7668707704415866120" data-video-id="7668707704415866120" style="max-width: 605px; min-width: 325px;">
+              <section></section>
+            </blockquote>
             <p class="reviews__video-caption">โดยเพจ ฅนติดเที่ยว บน TikTok</p>
           </div>
         </div>
@@ -1194,5 +1193,6 @@ button { font-family: inherit; }
 </div>
 
 <script src="js/main.js?v=20260708"></script>
+<script async src="https://www.tiktok.com/embed.js"></script>
 </body>
 </html>

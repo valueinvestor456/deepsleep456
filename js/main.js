@@ -199,15 +199,9 @@
   for (var v = 0; v < videoFacades.length; v++) {
     videoFacades[v].addEventListener("click", function () {
       var id = this.getAttribute("data-video-id");
-      var platform = this.getAttribute("data-platform") || "youtube";
       var iframe = document.createElement("iframe");
-      if (platform === "tiktok") {
-        iframe.src = "https://www.tiktok.com/embed/v2/" + id + "?autoplay=1";
-        iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture; fullscreen");
-      } else {
-        iframe.src = "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1&playsinline=1";
-        iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
-      }
+      iframe.src = "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1&playsinline=1";
+      iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
       iframe.title = this.getAttribute("aria-label") || "Review video";
       iframe.setAttribute("allowfullscreen", "");
       this.innerHTML = "";
