@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<!-- PRE-LAUNCH TODO: confirm real starting price and phone/WhatsApp number. Search for data-confirm attributes before going live. Also confirm Facebook page URL (footer link currently omitted), exact map pin, and the Chiang Mai city-side temperatures in the "climate" section (Pong Yaeng side already confirmed by owner). -->
+<!-- PRE-LAUNCH TODO: confirm phone/WhatsApp number (starting price confirmed: 890 baht/person avg). Search for data-confirm attributes before going live. Also confirm exact map pin and the Chiang Mai city-side temperatures in the "climate" section (Pong Yaeng side already confirmed by owner). -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Deepsleep456 | ที่พักโป่งแยง ใกล้ม่อนแจ่ม บ้านพักทั้งหลัง 12 คน เชียงใหม่</title>
@@ -16,7 +16,9 @@
 <meta property="og:description" content="บ้านพักทั้งหลังส่วนตัว 3 ห้องนอน 2 ห้องน้ำ รองรับสูงสุด 12 ท่าน วิวทะเลหมอกยามเช้า อากาศเย็นตลอดปี อ่างอาบน้ำ outdoor วิวภูเขา ศาลาหมูกระทะ-ปิ้งย่าง ท่ามกลางขุนเขาโป่งแยง อำเภอแม่ริม เชียงใหม่">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="th_TH">
-<meta property="og:image" content="images/og/og-image.jpg">
+<meta property="og:image" content="https://deepsleep456.com/images/og/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="images/logo.webp?v=20260707" type="image/webp">
 <!-- Inlined from css/style.css to avoid a render-blocking request. Keep both in sync when editing styles. -->
@@ -342,6 +344,9 @@ button { font-family: inherit; }
 .reviews__score-link { color: var(--color-forest); font-weight: 500; border-bottom: 2px solid var(--color-clay); }
 .reviews__score-link strong { color: var(--color-forest-dark); }
 .reviews__layout { display: grid; grid-template-columns: 1fr 300px; gap: 26px; align-items: start; }
+.reviews__layout--dual-video { grid-template-columns: 1fr 620px; }
+.reviews__video-list { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.reviews__video-list .reviews__video { text-align: center; }
 .reviews__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
 .review-card {
   position: relative; background: #fff; border-radius: var(--radius); padding: 22px 22px 18px;
@@ -425,18 +430,51 @@ button { font-family: inherit; }
 .faq__more a { color: var(--color-clay-text); font-weight: 500; text-decoration: underline; }
 
 /* Footer */
-.footer { background: var(--color-forest-dark); color: #EDE7D8; padding: 60px 0 0; }
-.footer__grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px; padding-bottom: 40px; }
-.footer__logo { height: 56px; width: auto; background: #fff; padding: 8px 12px; border-radius: 10px; margin-bottom: 14px; }
-.footer__text { color: rgba(237,231,216,.75); font-size: .93rem; }
-.footer__contact p { margin-bottom: 16px; font-size: .93rem; color: rgba(237,231,216,.9); }
-.footer__contact a:hover, .footer__links a:hover { color: var(--color-clay); }
-.footer__links { display: flex; flex-direction: column; gap: 12px; }
-.footer__line { color: var(--color-clay-light); font-weight: 600; }
-.footer__bottom {
-  display: flex; justify-content: space-between; padding: 20px; border-top: 1px solid rgba(237,231,216,.15);
-  font-size: .85rem; color: rgba(237,231,216,.65);
+.footer {
+  position: relative; background: var(--color-forest-dark); color: #EDE7D8; padding: 72px 0 0;
 }
+.footer::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--color-clay) 0%, var(--color-clay-light) 50%, var(--color-clay) 100%);
+}
+.footer__grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 40px 32px; padding-bottom: 44px; }
+.footer__logo-wrap { display: inline-flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.footer__logo { height: 52px; width: auto; background: #fff; padding: 6px 10px; border-radius: 10px; }
+.footer__brand-name { font-family: var(--font-heading); font-size: 1.15rem; color: #fff; letter-spacing: .01em; }
+.footer__text { color: rgba(237,231,216,.68); font-size: .92rem; line-height: 1.65; max-width: 30ch; }
+.footer__title {
+  text-transform: uppercase; letter-spacing: .09em; font-weight: 600; font-size: .78rem;
+  color: var(--color-clay-light); margin: 0 0 18px;
+}
+.footer__contact { display: flex; flex-direction: column; gap: 16px; }
+.footer__contact li { display: flex; gap: 10px; align-items: flex-start; font-size: .9rem; color: rgba(237,231,216,.85); line-height: 1.55; }
+.footer__contact svg { flex: none; width: 17px; height: 17px; margin-top: 2px; color: var(--color-clay-light); }
+.footer__contact a, .footer__links a { color: rgba(237,231,216,.85); transition: color .15s ease; }
+.footer__contact a:hover, .footer__links a:hover { color: var(--color-clay-light); }
+.footer__links { display: flex; flex-direction: column; gap: 13px; list-style: none; margin: 0; padding: 0; }
+.footer__links a { font-size: .92rem; position: relative; }
+.footer__connect { display: flex; flex-direction: column; gap: 12px; }
+.footer__social { display: flex; gap: 10px; margin-top: 4px; }
+.footer__social a {
+  display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(237,231,216,.08); color: #EDE7D8; border: 1px solid rgba(237,231,216,.16); transition: all .18s ease;
+}
+.footer__social a:hover { background: var(--color-clay); border-color: var(--color-clay); color: var(--color-forest-dark); transform: translateY(-2px); }
+.footer__social svg { width: 18px; height: 18px; }
+.footer__book { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.footer__book a {
+  display: flex; align-items: center; gap: 8px; font-size: .86rem; font-weight: 600; padding: 9px 14px;
+  border-radius: 999px; border: 1px solid rgba(237,231,216,.2); color: #EDE7D8; transition: all .18s ease;
+}
+.footer__book a:hover { border-color: var(--color-clay-light); background: rgba(237,231,216,.06); color: var(--color-clay-light); }
+.footer__book a.footer__line { background: rgba(6,199,85,.12); border-color: rgba(6,199,85,.35); color: #6FE3A0; }
+.footer__book a.footer__line:hover { background: var(--color-line); border-color: var(--color-line); color: var(--color-forest-dark); }
+.footer__bottom {
+  display: flex; justify-content: space-between; align-items: center; padding: 22px 0; border-top: 1px solid rgba(237,231,216,.14);
+  font-size: .82rem; color: rgba(237,231,216,.55);
+}
+.footer__bottom a { color: rgba(237,231,216,.55); }
+.footer__bottom a:hover { color: var(--color-clay-light); }
 
 /* Floating LINE button (desktop) */
 .line-float {
@@ -498,14 +536,17 @@ button { font-family: inherit; }
 
   .amenities__grid { grid-template-columns: 1fr 1fr; }
   .reviews__layout { grid-template-columns: 1fr; }
+  .reviews__layout--dual-video { grid-template-columns: 1fr; }
   .reviews__grid { grid-template-columns: 1fr; }
   .reviews__video { max-width: 280px; margin: 8px auto 0; }
+  .reviews__video-list { grid-template-columns: 1fr 1fr; max-width: 400px; margin: 8px auto 0; }
   .reviews__score-num { font-size: 2.2rem; }
 
   .map-section__grid { grid-template-columns: 1fr; }
 
-  .footer__grid { grid-template-columns: 1fr; gap: 28px; }
-  .footer__bottom { flex-direction: column; gap: 8px; text-align: center; }
+  .footer__grid { grid-template-columns: 1fr 1fr; gap: 32px 24px; }
+  .footer__about { grid-column: 1 / -1; }
+  .footer__bottom { flex-direction: column; gap: 10px; text-align: center; }
 
   .line-float { display: none; }
 
@@ -530,6 +571,7 @@ button { font-family: inherit; }
   .gallery__item--wide { grid-column: span 1; }
   .climate-compare__stat { font-size: 1.1rem; padding: 10px 6px; }
   .climate-compare__label { font-size: .85rem; padding: 10px 6px; }
+  .footer__grid { grid-template-columns: 1fr; }
 }
 </style>
 <script type="application/ld+json">
@@ -537,7 +579,7 @@ button { font-family: inherit; }
   "@context": "https://schema.org",
   "@type": "LodgingBusiness",
   "name": "Deepsleep456",
-  "image": "images/og/og-image.jpg",
+  "image": "https://deepsleep456.com/images/og/og-image.jpg",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "456 หมู่ 2",
@@ -573,11 +615,11 @@ button { font-family: inherit; }
   "@context": "https://schema.org",
   "@type": "FAQPage",
   "mainEntity": [
-    { "@type": "Question", "name": "เช็คอิน–เช็คเอาท์กี่โมง?", "acceptedAnswer": { "@type": "Answer", "text": "เช็คอินหลัง 14:00 น. และเช็คเอาท์ก่อน 11:00 น. หากต้องการเข้าพักเร็วหรือออกช้ากว่านี้ สอบถามล่วงหน้าผ่าน LINE ได้" } },
-    { "@type": "Question", "name": "พักได้กี่คน?", "acceptedAnswer": { "@type": "Answer", "text": "เป็นบ้านพักทั้งหลังส่วนตัว 3 ห้องนอน 2 ห้องน้ำ รองรับได้สูงสุด 12 ท่าน เหมาะกับครอบครัวและกลุ่มเพื่อน" } },
-    { "@type": "Question", "name": "ราคาเท่าไหร่?", "acceptedAnswer": { "@type": "Answer", "text": "เริ่มต้น 1,000 บาท/คน/คืน ราคาจริงขึ้นอยู่กับจำนวนผู้เข้าพักและช่วงฤดูกาล ทัก LINE เพื่อเช็คราคาและวันว่าง" } },
+    { "@type": "Question", "name": "เช็คอิน–เช็คเอาท์กี่โมง?", "acceptedAnswer": { "@type": "Answer", "text": "เช็คอินตั้งแต่ 15:00 น. และเช็คเอาท์ก่อน 11:00 น. หากต้องการเข้าพักเร็วหรือออกช้ากว่านี้ สอบถามล่วงหน้าผ่าน LINE ได้" } },
+    { "@type": "Question", "name": "พักได้กี่คน?", "acceptedAnswer": { "@type": "Answer", "text": "เป็นบ้านพักทั้งหลังส่วนตัว 3 ห้องนอน 2 ห้องน้ำ รองรับได้สูงสุด 12 ท่าน ห้อง Family เตียง 6 ฟุต 2 เตียง (4-5 ท่าน) ห้อง Deluxe 2 ห้อง เตียง 7 ฟุต (ห้องละ 3 ท่าน) และห้องโถงมีโซฟาเบดรองรับเพิ่ม เหมาะกับครอบครัวและกลุ่มเพื่อน" } },
+    { "@type": "Question", "name": "ราคาเท่าไหร่?", "acceptedAnswer": { "@type": "Answer", "text": "พักได้ 10 ท่าน (สูงสุด 12 ท่าน) เริ่มต้นเฉลี่ยเพียง 890 บาท/คน ราคาจริงขึ้นอยู่กับจำนวนผู้เข้าพักและช่วงฤดูกาล ทัก LINE เพื่อเช็คราคาและวันว่าง" } },
     { "@type": "Question", "name": "มีสระว่ายน้ำไหม?", "acceptedAnswer": { "@type": "Answer", "text": "ไม่มีสระว่ายน้ำ แต่มีอ่างอาบน้ำทั้งในบ้านและกลางแจ้งวิวภูเขา" } },
-    { "@type": "Question", "name": "ทำหมูกระทะ / ปิ้งย่างได้ไหม?", "acceptedAnswer": { "@type": "Answer", "text": "ได้ มีศาลาปิกนิกสำหรับจัดหมูกระทะหรือปิ้งย่างกับครอบครัวโดยเฉพาะ" } },
+    { "@type": "Question", "name": "ทำหมูกระทะ / ปิ้งย่างได้ไหม?", "acceptedAnswer": { "@type": "Answer", "text": "ได้ มีศาลาปิกนิกสำหรับจัดหมูกระทะหรือปิ้งย่างกับครอบครัวโดยเฉพาะ ทางที่พักมีอุปกรณ์ครัว จาน ชาม ให้ใช้ฟรี (หากชำรุดหรือสูญหายมีค่าปรับตามจริง) รองรับการทำชาบูและหมูกระทะ พร้อมบริการเช่าชุดเตาหมูกระทะ 250 บาท/ชุด" } },
     { "@type": "Question", "name": "มีที่จอดรถไหม?", "acceptedAnswer": { "@type": "Answer", "text": "มีที่จอดรถส่วนตัวฟรีภายในบริเวณบ้านพัก" } },
     { "@type": "Question", "name": "นำสัตว์เลี้ยงเข้าพักได้ไหม?", "acceptedAnswer": { "@type": "Answer", "text": "กรุณาสอบถามผ่าน LINE ก่อนจอง ทีมงานจะแจ้งเงื่อนไขให้ทราบ" } },
     { "@type": "Question", "name": "เดินทางมายังไง ไกลจากเมืองไหม?", "acceptedAnswer": { "@type": "Answer", "text": "ห่างจากสนามบินเชียงใหม่ประมาณ 38.6 กม. ขับรถมาเองได้สะดวก หรือใช้บริการรับ-ส่งสนามบินของที่พัก (มีค่าใช้จ่ายเพิ่มเติม) ใกล้ม่อนแจ่มและคาเฟ่ดังหลายแห่ง" } }
@@ -770,6 +812,36 @@ button { font-family: inherit; }
         <button class="gallery__item" type="button" data-category="exterior" data-lightbox="images/exterior/drone-aerial.webp">
           <img src="images/exterior/drone-aerial-thumb.webp" width="700" height="466" alt="มุมสูงตัวบ้าน Deepsleep456" loading="lazy">
         </button>
+        <button class="gallery__item" type="button" data-category="rooms" data-lightbox="images/rooms/bedroom-clean.webp">
+          <img src="images/rooms/bedroom-clean-thumb.webp" width="700" height="525" alt="ห้องนอน บรรยากาศเรียบสบาย" loading="lazy">
+        </button>
+        <button class="gallery__item" type="button" data-category="rooms" data-lightbox="images/rooms/bedroom-towel-window.webp">
+          <img src="images/rooms/bedroom-towel-window-thumb.webp" width="700" height="525" alt="ห้องนอน พร้อมม้านั่งริมหน้าต่างวิวสวน" loading="lazy">
+        </button>
+        <button class="gallery__item" type="button" data-category="bathroom" data-lightbox="images/bathroom/bathroom-window-modern.webp">
+          <img src="images/bathroom/bathroom-window-modern-thumb.webp" width="700" height="525" alt="ห้องน้ำสไตล์โมเดิร์น พร้อมหน้าต่างวิวสวน" loading="lazy">
+        </button>
+        <button class="gallery__item gallery__item--wide" type="button" data-category="bathroom" data-lightbox="images/bathroom/bathtub-outdoor-scenic.webp">
+          <img src="images/bathroom/bathtub-outdoor-scenic-thumb.webp" width="700" height="525" alt="อ่างอาบน้ำ Outdoor วิวขุนเขาโป่งแยง" loading="lazy">
+        </button>
+        <button class="gallery__item gallery__item--tall" type="button" data-category="common" data-lightbox="images/common/closet-corner.webp">
+          <img src="images/common/closet-corner-thumb.webp" width="467" height="623" alt="มุมตู้เสื้อผ้าและราวแขวน" loading="lazy">
+        </button>
+        <button class="gallery__item gallery__item--wide" type="button" data-category="common" data-lightbox="images/common/living-room-wide.webp">
+          <img src="images/common/living-room-wide-thumb.webp" width="700" height="525" alt="พื้นที่นั่งเล่นโซฟาตัวใหญ่และห้องครัว" loading="lazy">
+        </button>
+        <button class="gallery__item" type="button" data-category="exterior" data-lightbox="images/exterior/drone-context.webp">
+          <img src="images/exterior/drone-context-thumb.webp" width="700" height="525" alt="มุมสูงตัวบ้านและบริบทโดยรอบ" loading="lazy">
+        </button>
+        <button class="gallery__item gallery__item--tall" type="button" data-category="exterior" data-lightbox="images/exterior/drone-driveway.webp">
+          <img src="images/exterior/drone-driveway-thumb.webp" width="700" height="933" alt="มุมสูงทางเข้าบ้านและที่จอดรถ" loading="lazy">
+        </button>
+        <button class="gallery__item" type="button" data-category="exterior" data-lightbox="images/exterior/house-front-elevation.webp">
+          <img src="images/exterior/house-front-elevation-thumb.webp" width="700" height="525" alt="ด้านหน้าตัวบ้านมุมระดับสายตา" loading="lazy">
+        </button>
+        <button class="gallery__item" type="button" data-category="exterior" data-lightbox="images/exterior/balcony-lounge.webp">
+          <img src="images/exterior/balcony-lounge-thumb.webp" width="700" height="525" alt="ระเบียงนั่งเล่นวิวขุนเขา" loading="lazy">
+        </button>
       </div>
     </div>
   </section>
@@ -897,7 +969,7 @@ button { font-family: inherit; }
         <span class="reviews__score-stars" aria-hidden="true">★★★★★</span>
         <a class="reviews__score-link" href="https://maps.app.goo.gl/nFLFRLGoEjABzDoX6" target="_blank" rel="noopener">ดู<strong>รีวิวจริง</strong>ทั้งหมดบน Google Maps →</a>
       </div>
-      <div class="reviews__layout">
+      <div class="reviews__layout reviews__layout--dual-video">
         <div class="reviews__grid">
           <article class="review-card">
             <span class="review-card__stars" aria-hidden="true">★★★★★</span>
@@ -920,16 +992,27 @@ button { font-family: inherit; }
             <footer class="review-card__who"><span class="review-card__avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg></span><cite>คุณ Lanna boyss · รีวิว 5 ดาว Google Maps</cite></footer>
           </article>
         </div>
-        <div class="reviews__video">
-          <button class="video-facade" type="button" data-video-id="tlao0owwTec" aria-label="ชมคลิปรีวิว Deepsleep456 จากช่องเชียงใหม่ม่วนเว่อร์">
-            <img src="images/bathroom/bathtub-outdoor-alt-thumb.webp?v=20260707" width="700" height="933" alt="วิดีโอรีวิวที่พัก Deepsleep456 โดยช่องเชียงใหม่ม่วนเว่อร์" loading="lazy">
-            <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
-            <span class="video-facade__label" aria-hidden="true">▶ ชมคลิปรีวิว</span>
-          </button>
-          <p class="reviews__video-caption">โดยช่อง เชียงใหม่ม่วนเว่อร์ บน YouTube</p>
+        <div class="reviews__video-list">
+          <div class="reviews__video">
+            <button class="video-facade" type="button" data-video-id="tlao0owwTec" data-platform="youtube" aria-label="ชมคลิปรีวิว Deepsleep456 จากช่องเชียงใหม่ม่วนเว่อร์">
+              <img src="images/bathroom/bathtub-outdoor-alt-thumb.webp?v=20260707" width="700" height="933" alt="วิดีโอรีวิวที่พัก Deepsleep456 โดยช่องเชียงใหม่ม่วนเว่อร์" loading="lazy">
+              <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+              <span class="video-facade__label" aria-hidden="true">▶ ชมคลิปรีวิว</span>
+            </button>
+            <p class="reviews__video-caption">โดยช่อง เชียงใหม่ม่วนเว่อร์ บน YouTube</p>
+          </div>
+          <div class="reviews__video">
+            <button class="video-facade" type="button" data-video-id="7668707704415866120" data-platform="tiktok" aria-label="ชมคลิปรีวิว Deepsleep456 ล่าสุดจากเพจ ฅนติดเที่ยว บน TikTok">
+              <img src="images/exterior/firepit-sala-thumb.webp" width="700" height="933" alt="วิดีโอรีวิวที่พัก Deepsleep456 โดยเพจ ฅนติดเที่ยว บน TikTok" loading="lazy">
+              <span class="video-facade__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+              <span class="video-facade__label" aria-hidden="true">▶ คลิปรีวิวล่าสุดจาก ฅนติดเที่ยว</span>
+            </button>
+            <p class="reviews__video-caption">โดยเพจ ฅนติดเที่ยว บน TikTok</p>
+          </div>
         </div>
       </div>
       <p class="reviews__note">ข้อความเรียบเรียงจากรีวิวจริงของผู้เข้าพักบน Google Maps — กดดูรีวิวฉบับเต็มพร้อมรูปถ่ายจากผู้เข้าพักได้ที่ลิงก์ด้านบน</p>
+      <p class="reviews__note"><a href="https://www.facebook.com/reel/2851381501876156/" target="_blank" rel="noopener">ชมคลิปรีวิวเพิ่มเติมบน Facebook →</a> · <a href="https://www.tiktok.com/@kontidtiew/video/7668707704415866120" target="_blank" rel="noopener">ชมคลิปรีวิวล่าสุดบน TikTok →</a></p>
     </div>
   </section>
 
@@ -964,15 +1047,15 @@ button { font-family: inherit; }
       <div class="faq__list">
         <details class="faq__item">
           <summary>เช็คอิน–เช็คเอาท์กี่โมง?</summary>
-          <p>เช็คอินหลัง 14:00 น. และเช็คเอาท์ก่อน 11:00 น. หากต้องการเข้าพักเร็วหรือออกช้ากว่านี้ สอบถามล่วงหน้าผ่าน LINE ได้ครับ</p>
+          <p>เช็คอินตั้งแต่ 15:00 น. และเช็คเอาท์ก่อน 11:00 น. หากต้องการเข้าพักเร็วหรือคืนห้องเกินเวลา กรุณาแจ้งล่วงหน้าผ่าน LINE ได้ครับ</p>
         </details>
         <details class="faq__item">
           <summary>พักได้กี่คน?</summary>
-          <p>เป็นบ้านพักทั้งหลังส่วนตัว 3 ห้องนอน 2 ห้องน้ำ รองรับได้สูงสุด 12 ท่าน เหมาะกับครอบครัวและกลุ่มเพื่อน</p>
+          <p>เป็นบ้านพักทั้งหลังส่วนตัว 3 ห้องนอน 2 ห้องน้ำ รองรับได้สูงสุด 12 ท่าน — ห้อง Family เตียง 6 ฟุต 2 เตียง (พักได้ 4-5 ท่าน), ห้อง Deluxe 2 ห้อง เตียง 7 ฟุต (พักได้ห้องละ 3 ท่าน) และห้องโถงมีโซฟาเบดรองรับเพิ่ม เหมาะกับครอบครัวและกลุ่มเพื่อน</p>
         </details>
         <details class="faq__item">
           <summary>ราคาเท่าไหร่?</summary>
-          <p>เริ่มต้น <span data-confirm="price">1,000 บาท / คน / คืน</span> — ราคาจริงขึ้นอยู่กับจำนวนผู้เข้าพักและช่วงฤดูกาล ทัก LINE เพื่อเช็คราคาและวันว่างได้เลยครับ</p>
+          <p>พักได้ 10 ท่าน (สูงสุด 12 ท่าน) เริ่มต้นเฉลี่ยเพียง <span>890 บาท / คน / คืน</span> — ราคาจริงขึ้นอยู่กับจำนวนผู้เข้าพักและช่วงฤดูกาล ทัก LINE เพื่อเช็คราคาและวันว่างได้เลยครับ</p>
         </details>
         <details class="faq__item">
           <summary>มีสระว่ายน้ำไหม?</summary>
@@ -980,7 +1063,7 @@ button { font-family: inherit; }
         </details>
         <details class="faq__item">
           <summary>ทำหมูกระทะ / ปิ้งย่างได้ไหม?</summary>
-          <p>ได้ครับ มีศาลาปิกนิกสำหรับจัดหมูกระทะหรือปิ้งย่างกับครอบครัวโดยเฉพาะ</p>
+          <p>ได้ครับ มีศาลาปิกนิกสำหรับจัดหมูกระทะหรือปิ้งย่างกับครอบครัวโดยเฉพาะ ทางที่พักมีอุปกรณ์ครัว จาน ชาม ให้ใช้ฟรี (หากชำรุดหรือสูญหายมีค่าปรับตามจริง) รองรับการทำชาบูและหมูกระทะ พร้อมบริการเช่าชุดเตาหมูกระทะ 250 บาท/ชุดครับ</p>
         </details>
         <details class="faq__item">
           <summary>มีที่จอดรถไหม?</summary>
@@ -1005,9 +1088,9 @@ button { font-family: inherit; }
         <p class="eyebrow">พร้อมต้อนรับคุณแล้ว</p>
         <h2 class="section__title" id="booking-title">มาพักผ่อนที่ Deepsleep456 กันเถอะ</h2>
         <ul class="booking-cta__facts">
-          <li><strong>เช็คอิน</strong> หลัง 14:00 น.</li>
+          <li><strong>เช็คอิน</strong> ตั้งแต่ 15:00 น.</li>
           <li><strong>เช็คเอาท์</strong> ก่อน 11:00 น.</li>
-          <li><strong>เริ่มต้น</strong> <span data-confirm="price">1,000 บาท / คน / คืน</span></li>
+          <li><strong>เริ่มต้นเฉลี่ย</strong> <span>890 บาท / คน / คืน</span></li>
         </ul>
         <p class="section__text booking-cta__note">ราคาจริงขึ้นอยู่กับจำนวนผู้เข้าพักและฤดูกาล ยืนยันราคาตอนจอง</p>
       </div>
@@ -1027,27 +1110,64 @@ button { font-family: inherit; }
 <footer class="footer" id="contact">
   <div class="container footer__grid">
     <div class="footer__about">
-      <img src="images/logo.webp?v=20260707" width="220" height="111" alt="Deepsleep456" class="footer__logo">
+      <div class="footer__logo-wrap">
+        <img src="images/logo.webp?v=20260707" width="220" height="111" alt="Deepsleep456" class="footer__logo">
+        <span class="footer__brand-name">Deepsleep456</span>
+      </div>
       <p class="footer__text">ที่พักโป่งแยง ใกล้ม่อนแจ่ม บ้านพักส่วนตัว 3 ห้องนอน 2 ห้องน้ำ รองรับสูงสุด 12 ท่าน อำเภอแม่ริม จังหวัดเชียงใหม่</p>
     </div>
-    <div class="footer__contact">
-      <p><strong>ที่อยู่</strong><br>456 หมู่ 2 ตำบลโป่งแยง<br>อำเภอแม่ริม จังหวัดเชียงใหม่ 50180</p>
-      <p><strong>โทร / WhatsApp</strong><br><a href="tel:+66659654326" data-confirm="phone">065-965-4326</a></p>
-      <p><strong>อีเมล</strong><br><a href="mailto:Deepsleep456cm@gmail.com">Deepsleep456cm@gmail.com</a></p>
-    </div>
-    <nav class="footer__links" aria-label="ลิงก์ด่วน">
-      <a href="#hero">หน้าแรก</a>
-      <a href="#rooms">ห้องพัก</a>
-      <a href="#amenities">สิ่งอำนวยความสะดวก</a>
-      <a href="#reviews">รีวิว</a>
-      <a class="footer__line" href="https://line.me/R/ti/p/@952gwewf" target="_blank" rel="noopener">แชทผ่าน LINE</a>
-      <a href="https://airbnb.com/h/deepsleep456" target="_blank" rel="noopener">จองผ่าน Airbnb</a>
-      <a href="https://www.facebook.com/profile.php?id=61586222348926" target="_blank" rel="noopener">Facebook Page</a>
+
+    <nav aria-label="ลิงก์ด่วน">
+      <p class="footer__title">ลิงก์ด่วน</p>
+      <ul class="footer__links">
+        <li><a href="#hero">หน้าแรก</a></li>
+        <li><a href="#rooms">ห้องพัก</a></li>
+        <li><a href="#amenities">สิ่งอำนวยความสะดวก</a></li>
+        <li><a href="#reviews">รีวิว</a></li>
+        <li><a href="#faq">คำถามที่พบบ่อย</a></li>
+      </ul>
     </nav>
+
+    <div>
+      <p class="footer__title">ติดต่อเรา</p>
+      <ul class="footer__contact">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg>
+          <span>456 หมู่ 2 ตำบลโป่งแยง<br>อำเภอแม่ริม จังหวัดเชียงใหม่ 50180</span>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 5c0-1 1-2 2-2h2l2 5-2 1a11 11 0 0 0 5 5l1-2 5 2v2c0 1-1 2-2 2A15 15 0 0 1 4 5Z"/></svg>
+          <a href="tel:+66659654326" data-confirm="phone">065-965-4326</a>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 6 8 6 8-6"/></svg>
+          <a href="mailto:Deepsleep456cm@gmail.com">Deepsleep456cm@gmail.com</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="footer__connect">
+      <p class="footer__title">ช่องทางจอง &amp; ติดตาม</p>
+      <div class="footer__book">
+        <a class="footer__line" href="https://line.me/R/ti/p/@952gwewf" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 5.86 2 10.6c0 2.98 1.79 5.6 4.5 7.14-.15.57-.96 3.6-1 3.83 0 0-.02.17.09.24.11.07.24.02.24.02.32-.05 3.7-2.44 4.3-2.86.6.09 1.22.13 1.87.13 5.52 0 10-3.86 10-8.6S17.52 2 12 2Z"/></svg>
+          แชทผ่าน LINE
+        </a>
+        <a href="https://airbnb.com/h/deepsleep456" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C9 7 5 12.5 5 16a7 7 0 0 0 14 0c0-3.5-4-9-7-14Z"/></svg>
+          จองผ่าน Airbnb
+        </a>
+      </div>
+      <div class="footer__social" aria-label="ช่องทางโซเชียลมีเดีย">
+        <a href="https://www.facebook.com/profile.php?id=61586222348926" target="_blank" rel="noopener" aria-label="Facebook Page">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-7.8h2.6l.4-3h-3v-1.9c0-.87.24-1.46 1.5-1.46H16.6V4.3c-.27-.04-1.2-.12-2.28-.12-2.25 0-3.8 1.37-3.8 3.9v2.13H8v3h2.5V21h3Z"/></svg>
+        </a>
+      </div>
+    </div>
   </div>
   <div class="container footer__bottom">
     <p>&copy; <span data-year></span> Deepsleep456. สงวนลิขสิทธิ์.</p>
-    <a href="#hero">กลับด้านบน</a>
+    <a href="#hero">กลับด้านบน ↑</a>
   </div>
 </footer>
 
