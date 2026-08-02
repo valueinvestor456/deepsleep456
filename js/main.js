@@ -177,20 +177,32 @@
         80: "Rain showers", 81: "Rain showers", 82: "Heavy showers", 95: "Thunderstorm" }
     };
     var textEl = climateLive.querySelector(".climate-live__text");
-    fetch("https://api.open-meteo.com/v1/forecast?latitude=18.8922564&longitude=98.8279099&current=temperature_2m,weather_code&timezone=Asia%2FBangkok")
-      .then(function (res) { if (!res.ok) throw new Error("bad response"); return res.json(); })
-      .then(function (data) {
-        var c = data.current;
-        var label = weatherLabels[lang][c.weather_code] || (lang === "th" ? "มีเมฆ" : "Cloudy");
-        var time = new Date(c.time).toLocaleTimeString(lang === "th" ? "th-TH" : "en-US", { hour: "2-digit", minute: "2-digit" });
-        textEl.textContent = lang === "th"
-          ? "อุณหภูมิตอนนี้ที่โป่งแยง: " + c.temperature_2m.toFixed(1) + "°C · " + label + " · อัปเดต " + time + " น."
-          : "Right now in Pong Yaeng: " + c.temperature_2m.toFixed(1) + "°C · " + label + " · updated " + time;
-        climateLive.classList.remove("climate-live--loading");
-      })
-      .catch(function () {
-        climateLive.classList.add("climate-live--error");
+    var loadWeather = function () {
+      fetch("https://api.open-meteo.com/v1/forecast?latitude=18.8922564&longitude=98.8279099&current=temperature_2m,weather_code&timezone=Asia%2FBangkok")
+        .then(function (res) { if (!res.ok) throw new Error("bad response"); return res.json(); })
+        .then(function (data) {
+          var c = data.current;
+          var label = weatherLabels[lang][c.weather_code] || (lang === "th" ? "มีเมฆ" : "Cloudy");
+          var time = new Date(c.time).toLocaleTimeString(lang === "th" ? "th-TH" : "en-US", { hour: "2-digit", minute: "2-digit" });
+          textEl.textContent = lang === "th"
+            ? "อุณหภูมิตอนนี้ที่โป่งแยง: " + c.temperature_2m.toFixed(1) + "°C · " + label + " · อัปเดต " + time + " น."
+            : "Right now in Pong Yaeng: " + c.temperature_2m.toFixed(1) + "°C · " + label + " · updated " + time;
+          climateLive.classList.remove("climate-live--loading");
+        })
+        .catch(function () {
+          climateLive.classList.add("climate-live--error");
+        });
+    };
+    // Not part of the visible content on load, so keep it off the critical
+    // request chain: fetch only once the page has fully loaded and the
+    // browser is idle.
+    if (document.readyState === "complete") {
+      window.requestIdleCallback ? window.requestIdleCallback(loadWeather) : setTimeout(loadWeather, 0);
+    } else {
+      window.addEventListener("load", function () {
+        window.requestIdleCallback ? window.requestIdleCallback(loadWeather) : setTimeout(loadWeather, 0);
       });
+    }
   }
 
   // Review video: the YouTube player is only loaded after the visitor taps
