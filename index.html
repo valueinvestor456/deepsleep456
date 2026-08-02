@@ -279,15 +279,19 @@ button { font-family: inherit; }
   font-size: .88rem; color: var(--color-forest-dark);
 }
 .climate-live__dot {
-  width: 8px; height: 8px; border-radius: 50%; background: #4CAF50; flex-shrink: 0;
+  position: relative; width: 8px; height: 8px; border-radius: 50%; background: #4CAF50; flex-shrink: 0;
+}
+.climate-live__dot::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%; background: #4CAF50;
   animation: climate-pulse 2s infinite;
 }
 @keyframes climate-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(76,175,80,.5); }
-  70% { box-shadow: 0 0 0 6px rgba(76,175,80,0); }
-  100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); }
+  0% { transform: scale(1); opacity: .5; }
+  70% { transform: scale(3.2); opacity: 0; }
+  100% { transform: scale(3.2); opacity: 0; }
 }
-.climate-live--loading .climate-live__dot { background: #ccc; animation: none; }
+.climate-live--loading .climate-live__dot { background: #ccc; }
+.climate-live--loading .climate-live__dot::after { animation: none; }
 .climate-live--error { display: none; }
 .climate__disclaimer { margin: 14px 0 0; font-size: .82rem; color: #6b6553; }
 .climate__admin-note { margin-top: 18px; font-size: .9rem; font-style: italic; color: #5c5745; }
