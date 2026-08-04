@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-04T09:09:19Z",
+  "updated": "2026-08-04T14:39:59Z",
   "events": [
     {
       "title": "OPEC-JMMC Meetings",
@@ -462,7 +462,7 @@
       "country": "USD",
       "date": "2026-08-05T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "-0.9M",
       "previous": "-7.2M"
     },
     {
