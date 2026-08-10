@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-09T19:01:24Z",
+  "updated": "2026-08-10T02:35:14Z",
   "events": [
     {
       "title": "Bank Lending y/y",
@@ -48,6 +48,14 @@
       "impact": "Low",
       "forecast": "",
       "previous": "3.7%"
+    },
+    {
+      "title": "FOMC Member Hammack Speaks",
+      "country": "USD",
+      "date": "2026-08-10T15:00:00-04:00",
+      "impact": "Low",
+      "forecast": "",
+      "previous": ""
     },
     {
       "title": "Bank Holiday",
