@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-10T19:17:29Z",
+  "updated": "2026-08-11T02:28:22Z",
   "events": [
     {
       "title": "Bank Lending y/y",
@@ -70,7 +70,7 @@
       "country": "GBP",
       "date": "2026-08-10T19:01:00-04:00",
       "impact": "Low",
-      "forecast": "1.5%",
+      "forecast": "1.6%",
       "previous": "1.7%"
     },
     {
@@ -126,7 +126,7 @@
       "country": "USD",
       "date": "2026-08-11T06:00:00-04:00",
       "impact": "Low",
-      "forecast": "97.8",
+      "forecast": "97.5",
       "previous": "97.4"
     },
     {
@@ -198,7 +198,7 @@
       "country": "CAD",
       "date": "2026-08-12T08:30:00-04:00",
       "impact": "Low",
-      "forecast": "1.0%",
+      "forecast": "0.8%",
       "previous": "-1.7%"
     },
     {
@@ -254,7 +254,7 @@
       "country": "USD",
       "date": "2026-08-12T14:00:00-04:00",
       "impact": "Low",
-      "forecast": "-294.6B",
+      "forecast": "-361.2B",
       "previous": "-120.3B"
     },
     {
@@ -310,7 +310,7 @@
       "country": "GBP",
       "date": "2026-08-13T02:00:00-04:00",
       "impact": "Low",
-      "forecast": "-0.4%",
+      "forecast": "-0.3%",
       "previous": "-0.8%"
     },
     {
@@ -318,7 +318,7 @@
       "country": "GBP",
       "date": "2026-08-13T02:00:00-04:00",
       "impact": "Low",
-      "forecast": "-20.3B",
+      "forecast": "-20.6B",
       "previous": "-18.7B"
     },
     {
@@ -350,7 +350,7 @@
       "country": "GBP",
       "date": "2026-08-13T02:00:00-04:00",
       "impact": "Low",
-      "forecast": "-0.4%",
+      "forecast": "-0.3%",
       "previous": "0.7%"
     },
     {
@@ -366,7 +366,7 @@
       "country": "CHF",
       "date": "2026-08-13T02:30:00-04:00",
       "impact": "Low",
-      "forecast": "-0.1%",
+      "forecast": "-0.2%",
       "previous": "-0.3%"
     },
     {
@@ -382,7 +382,7 @@
       "country": "CNY",
       "date": "2026-08-13T04:03:00-04:00",
       "impact": "Low",
-      "forecast": "350B",
+      "forecast": "50B",
       "previous": "1610B"
     },
     {
@@ -390,7 +390,7 @@
       "country": "EUR",
       "date": "2026-08-13T05:00:00-04:00",
       "impact": "Low",
-      "forecast": "0.0%",
+      "forecast": "-0.1%",
       "previous": "-0.2%"
     },
     {
@@ -422,7 +422,7 @@
       "country": "USD",
       "date": "2026-08-13T08:30:00-04:00",
       "impact": "Medium",
-      "forecast": "202K",
+      "forecast": "203K",
       "previous": "199K"
     },
     {
@@ -574,7 +574,7 @@
       "country": "USD",
       "date": "2026-08-14T10:00:00-04:00",
       "impact": "Medium",
-      "forecast": "54.4",
+      "forecast": "54.7",
       "previous": "54.4"
     },
     {
