@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-11T13:43:17Z",
+  "updated": "2026-08-11T19:24:52Z",
   "events": [
     {
       "title": "Bank Lending y/y",
@@ -238,7 +238,7 @@
       "country": "USD",
       "date": "2026-08-12T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "-1.5M",
       "previous": "2.5M"
     },
     {
