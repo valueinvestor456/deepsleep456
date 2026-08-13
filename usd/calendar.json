@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-13T02:47:55Z",
+  "updated": "2026-08-13T07:53:53Z",
   "events": [
     {
       "title": "Bank Lending y/y",
@@ -354,14 +354,6 @@
       "previous": "0.7%"
     },
     {
-      "title": "Foreign Direct Investment ytd/y",
-      "country": "CNY",
-      "date": "2026-08-13T02:02:00-04:00",
-      "impact": "Low",
-      "forecast": "",
-      "previous": "-5.0%"
-    },
-    {
       "title": "PPI m/m",
       "country": "CHF",
       "date": "2026-08-13T02:30:00-04:00",
@@ -504,6 +496,14 @@
       "impact": "Low",
       "forecast": "-0.2%",
       "previous": "-0.7%"
+    },
+    {
+      "title": "Foreign Direct Investment ytd/y",
+      "country": "CNY",
+      "date": "2026-08-14T02:02:00-04:00",
+      "impact": "Low",
+      "forecast": "",
+      "previous": "-5.0%"
     },
     {
       "title": "French Final CPI m/m",
