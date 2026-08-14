@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-13T19:26:26Z",
+  "updated": "2026-08-14T02:46:47Z",
   "events": [
     {
       "title": "Bank Lending y/y",
@@ -450,6 +450,14 @@
       "previous": "5.06|2.4"
     },
     {
+      "title": "FOMC Member Goolsbee Speaks",
+      "country": "USD",
+      "date": "2026-08-13T18:00:00-04:00",
+      "impact": "Low",
+      "forecast": "",
+      "previous": ""
+    },
+    {
       "title": "BusinessNZ Manufacturing Index",
       "country": "NZD",
       "date": "2026-08-13T18:30:00-04:00",
@@ -464,14 +472,6 @@
       "impact": "Low",
       "forecast": "",
       "previous": "-2.4%"
-    },
-    {
-      "title": "RBA Gov Bullock Speaks",
-      "country": "AUD",
-      "date": "2026-08-13T19:30:00-04:00",
-      "impact": "Medium",
-      "forecast": "",
-      "previous": ""
     },
     {
       "title": "German WPI m/m",
