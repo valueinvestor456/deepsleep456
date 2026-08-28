@@ -1,5 +1,5 @@
 {
-  "updated": "2026-08-27T22:16:50Z",
+  "updated": "2026-08-28T11:25:09Z",
   "events": [
     {
       "title": "Core Retail Sales q/q",
@@ -484,7 +484,7 @@
     {
       "title": "Italian 10-y Bond Auction",
       "country": "EUR",
-      "date": "2026-08-28T05:33:00-04:00",
+      "date": "2026-08-28T05:09:00-04:00",
       "impact": "Low",
       "forecast": "",
       "previous": "4.00|1.7"
@@ -544,6 +544,14 @@
       "impact": "Medium",
       "forecast": "",
       "previous": "4.3%"
+    },
+    {
+      "title": "MPC Member Mann Speaks",
+      "country": "GBP",
+      "date": "2026-08-28T10:30:00-04:00",
+      "impact": "Low",
+      "forecast": "",
+      "previous": ""
     },
     {
       "title": "Jackson Hole Symposium",
