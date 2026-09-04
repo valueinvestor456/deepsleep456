@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-04T16:22:38Z",
+  "updated": "2026-09-04T20:46:38Z",
   "events": [
     {
       "title": "G20 Meetings",
@@ -912,14 +912,6 @@
       "impact": "Medium",
       "forecast": "56.2",
       "previous": "55.1"
-    },
-    {
-      "title": "FOMC Member Goolsbee Speaks",
-      "country": "USD",
-      "date": "2026-09-04T18:00:00-04:00",
-      "impact": "Low",
-      "forecast": "",
-      "previous": ""
     }
   ]
 }
