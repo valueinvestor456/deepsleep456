@@ -100,6 +100,7 @@
     padding:6px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;
     background:var(--cat-1);color:#fff;font-size:13px;font-weight:600;
   }
+  button:disabled{opacity:0.6;cursor:default;}
   details{margin-bottom:12px;}
   details > summary{
     cursor:pointer;font-size:14px;font-weight:600;padding:10px 16px;
@@ -597,9 +598,18 @@
            Math.pow(rates.SEK, 0.042) * Math.pow(rates.CHF, 0.036);
   }
 
+  function bust(url){
+    return url + (url.indexOf("?") === -1 ? "?" : "&") + "_=" + Date.now();
+  }
+
   function fetchAll(){
     $("spotMeta").textContent = "กำลังโหลด…";
-    fetch("https://open.er-api.com/v6/latest/USD")
+    var btn = $("refresh");
+    var btnLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "กำลังรีเฟรช…";
+
+    var spotP = fetch(bust("https://open.er-api.com/v6/latest/USD"), {cache:"no-store"})
       .then(function(r){ return r.json(); })
       .then(function(j){
         if (j && j.rates && j.rates.THB){
@@ -607,12 +617,12 @@
           state.dxy = syntheticDXY(j.rates);
           state.dxyPctAuto = snapshotDelta("dxy", state.dxy);
           snapshotDelta("spot", state.spot);
-          $("spotMeta").textContent = "open.er-api.com · " + (j.time_last_update_utc || "");
+          $("spotMeta").textContent = "open.er-api.com · " + (j.time_last_update_utc || "") + " · ดึงล่าสุด " + new Date().toLocaleTimeString("th-TH");
         }
         recalc();
       })
       .catch(function(){
-        fetch("https://api.frankfurter.dev/v1/latest?base=USD&symbols=THB")
+        return fetch(bust("https://api.frankfurter.dev/v1/latest?base=USD&symbols=THB"), {cache:"no-store"})
           .then(function(r){ return r.json(); })
           .then(function(j){
             if (j && j.rates && j.rates.THB){
@@ -621,10 +631,10 @@
             }
             recalc();
           })
-          .catch(function(){ $("spotMeta").textContent = "ดึง spot ไม่สำเร็จ — กรอกเอง"; recalc(); });
+          .catch(function(){ $("spotMeta").textContent = "ดึง spot ไม่สำเร็จ — กรอกเอง (เช็ค console/adblock)"; recalc(); });
       });
 
-    fetch("https://api.gold-api.com/price/XAU")
+    var xauP = fetch(bust("https://api.gold-api.com/price/XAU"), {cache:"no-store"})
       .then(function(r){ return r.json(); })
       .then(function(j){
         if (j && j.price){
@@ -635,8 +645,13 @@
       })
       .catch(function(){ recalc(); });
 
-    fetchMarketData();
-    fetchCalendar();
+    var mdP = fetchMarketData();
+    var calP = fetchCalendar();
+
+    Promise.allSettled([spotP, xauP, mdP, calP]).then(function(){
+      btn.disabled = false;
+      btn.textContent = btnLabel;
+    });
   }
 
   // US10Y/TH10Y/BDI/PMI: TradingEconomics has no CORS header, so these come
@@ -644,7 +659,7 @@
   // Action — see .github/workflows/market-data.yml. Auto-fills every load;
   // still editable by hand for a quick what-if (next refresh overwrites it).
   function fetchMarketData(){
-    fetch("market-data.json", {cache: "no-cache"})
+    return fetch(bust("market-data.json"), {cache: "no-store"})
       .then(function(r){ if (!r.ok) throw new Error("no relay"); return r.json(); })
       .then(function(j){
         var when = j.updated ? new Date(j.updated).toLocaleString("th-TH") : "";
@@ -731,12 +746,12 @@
 
   function fetchCalendar(){
     // tier 1: same-origin relay (refreshed by GitHub Action every 6h — no CORS issue)
-    fetch("calendar.json", {cache: "no-cache"})
+    return fetch(bust("calendar.json"), {cache: "no-store"})
       .then(function(r){ if (!r.ok) throw new Error("no relay"); return r.json(); })
       .then(function(j){ renderCalendar(j.events, j.updated); })
       .catch(function(){
         // tier 2: direct feed (works only if upstream ever adds CORS)
-        fetch("https://nfs.faireconomy.media/ff_calendar_thisweek.json")
+        return fetch(bust("https://nfs.faireconomy.media/ff_calendar_thisweek.json"))
           .then(function(r){ return r.json(); })
           .then(function(events){ renderCalendar(events, null); })
           .catch(function(){
