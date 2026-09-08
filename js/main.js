@@ -256,7 +256,7 @@
         : "Hi! I'm interested in booking Deepsleep456 (referral code: " + activeRef + ")";
       var lineLinks = document.querySelectorAll('a[href^="https://line.me/R/ti/p/"]');
       for (var l = 0; l < lineLinks.length; l++) {
-        lineLinks[l].href = "https://line.me/R/oaMessage/@952gwewf/?" + encodeURIComponent(lineMsg);
+        lineLinks[l].href = "https://line.me/R/oaMessage/@deepsleep456/?" + encodeURIComponent(lineMsg);
       }
     }
   }
