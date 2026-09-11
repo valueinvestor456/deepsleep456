@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "deepsleep456-booking-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-11",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "CORS_ORIGIN": "https://deepsleep456.com"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "deepsleep456-bookings",
+      "database_id": "b89a795c-bd1d-44b4-a25a-b5377e32e934",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
