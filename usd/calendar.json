@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-29T12:55:25Z",
+  "updated": "2026-09-29T22:16:44Z",
   "events": [
     {
       "title": "Monetary Policy Meeting Minutes",
@@ -606,7 +606,7 @@
       "country": "USD",
       "date": "2026-09-30T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "-1.9M",
       "previous": "3.0M"
     },
     {
