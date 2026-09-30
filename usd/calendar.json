@@ -1,5 +1,5 @@
 {
-  "updated": "2026-09-29T22:16:44Z",
+  "updated": "2026-09-30T05:34:37Z",
   "events": [
     {
       "title": "Monetary Policy Meeting Minutes",
@@ -462,7 +462,7 @@
       "country": "EUR",
       "date": "2026-09-30T03:55:00-04:00",
       "impact": "Low",
-      "forecast": "0K",
+      "forecast": "1K",
       "previous": "4K"
     },
     {
@@ -606,7 +606,7 @@
       "country": "USD",
       "date": "2026-09-30T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "-1.9M",
+      "forecast": "-0.7M",
       "previous": "3.0M"
     },
     {
@@ -622,6 +622,14 @@
       "country": "USD",
       "date": "2026-09-30T15:25:00-04:00",
       "impact": "Low",
+      "forecast": "",
+      "previous": ""
+    },
+    {
+      "title": "President Trump Speaks",
+      "country": "USD",
+      "date": "2026-09-30T15:30:00-04:00",
+      "impact": "Medium",
       "forecast": "",
       "previous": ""
     },
@@ -750,7 +758,7 @@
       "country": "CHF",
       "date": "2026-10-01T03:30:00-04:00",
       "impact": "Low",
-      "forecast": "56.4",
+      "forecast": "56.3",
       "previous": "57.1"
     },
     {
@@ -958,7 +966,7 @@
       "country": "USD",
       "date": "2026-10-01T10:30:00-04:00",
       "impact": "Low",
-      "forecast": "",
+      "forecast": "63B",
       "previous": "53B"
     },
     {
