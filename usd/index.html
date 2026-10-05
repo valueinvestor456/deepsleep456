@@ -122,7 +122,7 @@
 
   <div class="card header-card">
     <div>
-      <div class="score-label">USD/THB Spot (realtime)</div>
+      <div class="score-label">USD/THB Spot (FX API)</div>
       <div class="spot-big" id="spot">—</div>
       <div class="spot-meta" id="spotMeta">กำลังโหลด…</div>
       <div class="spot-meta" id="trendEMA50">Trend (EMA50): —</div>
@@ -144,10 +144,11 @@
   </div>
 
   <div class="warnbox">
-    <b>ช่องสีเหลือง = กรอกเอง (จำค่าไว้ในเครื่อง)</b> — yields/BDI/PMI ไม่มี API ฟรี ·
-    DXY กับ Gold ดึงอัตโนมัติ · น้ำหนักสมการเป็น prior เชิงโครงสร้าง <b>ยังไม่ได้ fit กับข้อมูลจริง</b> —
+    <b>ข้อมูลตลาดอัปเดตอัตโนมัติจาก GitHub Actions; ช่องสีเหลืองแก้เองได้</b> ·
+    Spot/DXY/Gold ดึงจาก API โดยตรง · น้ำหนักสมการเป็น prior เชิงโครงสร้าง <b>ยังไม่ได้ fit กับข้อมูลจริง</b> —
     ใช้เป็นเข็มทิศ bias ไม่ใช่ตัวทำนายที่พิสูจน์แล้ว
   </div>
+  <div class="note" id="marketDataStatus" role="status" aria-live="polite">กำลังโหลดข้อมูลตลาด…</div>
 
   <div class="tiles">
     <div class="tile" id="tileDXY">
@@ -163,6 +164,7 @@
       <div class="chg" id="xauChg">Δ —</div>
       <div class="row"><span class="label">Δ% override</span><input type="number" id="xauPctOv" step="0.1" placeholder="auto"></div>
       <div class="contrib" id="xauContrib">s=— · w=0.25</div>
+      <div class="stamp" id="xauStamp"></div>
     </div>
     <div class="tile" id="tileSPR">
       <div class="name">US10Y − TH10Y (auto)</div>
@@ -266,7 +268,7 @@
       <h2>CIP — ราคายุติธรรม TFEX USD Futures</h2>
       <div class="row"><span class="label">ดอกเบี้ยไทย %/ปี (auto)</span><input type="number" id="iTH" step="0.05" value="1.50"></div>
       <div class="row"><span class="label">ดอกเบี้ยสหรัฐ (Fed Funds, proxy SOFR) %/ปี (auto)</span><input type="number" id="iUS" step="0.05" value="4.00"></div>
-      <div class="row"><span class="label">TFEX series (เช่น USDU26)</span><input type="text" id="tfexSeries" style="width:80px;text-transform:uppercase" value="USDU26"></div>
+      <div class="row"><span class="label">TFEX series (ปัจจุบัน USDZ26 · ถัดไป USDH27)</span><input type="text" id="tfexSeries" style="width:80px;text-transform:uppercase" value="USDZ26"></div>
       <div class="row"><span class="label">วันถึง settlement (auto จาก series)</span><input type="number" id="days" step="1" value="90"></div>
       <div class="note" id="seriesInfo" style="margin:-4px 0 8px"></div>
       <div class="row"><span class="label">ราคา futures จริง (คีย์เอง — ไม่มี auto ฟรี)</span><input type="number" id="fut" step="0.01" placeholder="เช่น 32.50"></div>
@@ -338,6 +340,10 @@
       recalc();
     });
   });
+  if ($("tfexSeries").value.trim().toUpperCase() === "USDU26"){
+    $("tfexSeries").value = "USDZ26";
+    localStorage.setItem("usdthb_tfexSeries", "USDZ26");
+  }
   function stampPMI(id, setNow){
     var key = "usdthb_" + id + "_date";
     if (setNow) localStorage.setItem(key, new Date().toISOString().slice(0,10));
@@ -497,7 +503,7 @@
     var parsed = parseTfexSeries($("tfexSeries").value);
     var info = $("seriesInfo");
     if (!parsed){
-      info.textContent = "รูปแบบ series ไม่ถูกต้อง (ตัวอย่าง USDU26 = ก.ย. 2569) — ใช้ค่า วันถึง settlement เดิม";
+      info.textContent = "รูปแบบ series ไม่ถูกต้อง (ตัวอย่าง USDZ26 = ธ.ค. 2569) — ใช้ค่า วันถึง settlement เดิม";
       return;
     }
     // Last trading day = business day before the final business day of the
@@ -604,8 +610,11 @@
 
   function fetchAll(){
     $("spotMeta").textContent = "กำลังโหลด…";
+    $("marketDataStatus").textContent = "กำลังโหลดข้อมูลตลาด…";
+    $("marketDataStatus").className = "note";
     var btn = $("refresh");
     var btnLabel = btn.textContent;
+    if (btn.disabled) return;
     btn.disabled = true;
     btn.textContent = "กำลังรีเฟรช…";
 
@@ -634,16 +643,25 @@
           .catch(function(){ $("spotMeta").textContent = "ดึง spot ไม่สำเร็จ — กรอกเอง (เช็ค console/adblock)"; recalc(); });
       });
 
-    var xauP = fetch(bust("https://api.gold-api.com/price/XAU"), {cache:"no-store"})
-      .then(function(r){ return r.json(); })
+    var xauP = fetch("https://api.gold-api.com/price/XAU", {cache:"no-store"})
+      .then(function(r){ if (!r.ok) throw new Error("gold API HTTP " + r.status); return r.json(); })
       .then(function(j){
-        if (j && j.price){
+        if (j && Number.isFinite(j.price) && j.price > 0){
           state.xau = j.price;
           state.xauPctAuto = snapshotDelta("xau", state.xau);
+          $("xauStamp").textContent = "gold-api.com · " +
+            (j.updatedAt ? new Date(j.updatedAt).toLocaleString("th-TH", {timeZone:"Asia/Bangkok"}) : "อัปเดตล่าสุด");
+          $("xauStamp").className = "stamp";
+        } else {
+          throw new Error("gold API returned no valid price");
         }
         recalc();
       })
-      .catch(function(){ recalc(); });
+      .catch(function(){
+        $("xauStamp").textContent = "ดึงราคาทองอัตโนมัติไม่สำเร็จ";
+        $("xauStamp").className = "stamp err";
+        recalc();
+      });
 
     var mdP = fetchMarketData();
     var calP = fetchCalendar();
@@ -654,35 +672,62 @@
     });
   }
 
-  // US10Y/TH10Y/BDI/PMI: TradingEconomics has no CORS header, so these come
-  // from a same-origin relay (market-data.json) refreshed hourly by a GitHub
-  // Action — see .github/workflows/market-data.yml. Auto-fills every load;
-  // still editable by hand for a quick what-if (next refresh overwrites it).
+  // Prefer the GitHub Actions source because static hosting may not redeploy
+  // its same-origin copy after the workflow updates market-data.json.
   function fetchMarketData(){
-    return fetch(bust("market-data.json"), {cache: "no-store"})
-      .then(function(r){ if (!r.ok) throw new Error("no relay"); return r.json(); })
-      .then(function(j){
-        var when = j.updated ? new Date(j.updated).toLocaleString("th-TH") : "";
+    var sources = [
+      {url:"https://raw.githubusercontent.com/valueinvestor456/deepsleep456/main/usd/market-data.json", name:"GitHub Actions"},
+      {url:"market-data.json", name:"เว็บไซต์"}
+    ];
+    function loadSource(index){
+      return fetch(bust(sources[index].url), {cache:"no-store"})
+        .then(function(r){ if (!r.ok) throw new Error("market data HTTP " + r.status); return r.json(); })
+        .then(function(j){
+          var updatedAt = new Date(j && j.updated);
+          if (!Number.isFinite(updatedAt.getTime())) throw new Error("market data has no valid timestamp");
+          return {data:j, source:sources[index].name, updatedAt:updatedAt};
+        })
+        .catch(function(error){
+          if (index + 1 < sources.length) return loadSource(index + 1);
+          throw error;
+        });
+    }
+    return loadSource(0)
+      .then(function(result){
+        var j = result.data;
+        var ageHours = Math.max(0, (Date.now() - result.updatedAt.getTime()) / 3600000);
+        var when = result.updatedAt.toLocaleString("th-TH", {timeZone:"Asia/Bangkok"});
+        var status = $("marketDataStatus");
+        status.textContent = result.source + " · ข้อมูลตลาดอัปเดต " + when +
+          " (ผ่านมา " + (ageHours < 1 ? Math.round(ageHours * 60) + " นาที" : ageHours.toFixed(1) + " ชม.") + ")" +
+          (ageHours > 3 ? " · ข้อมูลอาจล่าช้า" : "");
+        status.className = ageHours > 3 ? "note err" : "note";
         function apply(fieldId, value){
-          if (value === null || value === undefined) return;
+          if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))){
+            $(fieldId).value = "";
+            localStorage.removeItem("usdthb_" + fieldId);
+            return;
+          }
           $(fieldId).value = value;
           localStorage.setItem("usdthb_" + fieldId, String(value));
         }
-        if (j.us10y) apply("us10", j.us10y.last);
-        if (j.th10y) apply("th10", j.th10y.last);
-        if (j.bdi) { apply("bdiLevel", j.bdi.last); apply("bdiPct", j.bdi.pct); }
+        apply("us10", j.us10y && j.us10y.last);
+        apply("th10", j.th10y && j.th10y.last);
+        apply("bdiLevel", j.bdi && j.bdi.last);
+        apply("bdiPct", j.bdi && j.bdi.pct);
         [["pmi_cn","pmiCN"], ["pmi_th","pmiTH"], ["pmi_in","pmiIN"], ["pmi_us","pmiUS"]].forEach(function(p){
           var src = j[p[0]], id = p[1];
-          if (!src) return;
-          apply(id, src.last);
-          state.pmiMom[id] = src.mom || null;
+          apply(id, src && src.last);
+          state.pmiMom[id] = src && src.mom || null;
         });
         if (j.bdry) {
           var arrow = j.bdry.pct >= 0 ? "🟢▲" : "🔴▼";
           $("bdryVal").textContent = "$" + j.bdry.last.toFixed(2) + "  " + arrow + " " + j.bdry.pct.toFixed(2) + "%";
+        } else {
+          $("bdryVal").textContent = "—";
         }
-        if (j.th_rate) apply("iTH", j.th_rate.last);
-        if (j.us_rate) apply("iUS", j.us_rate.last);
+        apply("iTH", j.th_rate && j.th_rate.last);
+        apply("iUS", j.us_rate && j.us_rate.last);
         // USD1! (TFEX USD futures) has no free API -- proxied by EMA(20)/
         // EMA(50) of USD/THB spot (THB=X via yfinance, computed server-side
         // hourly in scripts/fetch_market_data.py) since futures/spot track
@@ -692,26 +737,48 @@
           $("trendEMA50").textContent = "Trend (EMA20/50, USD1! proxy): " + (up ? "🟢 Uptrend" : "🔴 Downtrend") +
             " (EMA20 " + tr.ema20.toFixed(3) + (up ? " > " : " < ") + "EMA50 " + tr.ema50.toFixed(3) + ")";
           $("trendEMA50").className = "spot-meta " + (up ? "good" : "bad");
+        } else {
+          $("trendEMA50").textContent = "Trend (USD1! proxy): ไม่มีข้อมูลล่าสุด";
+          $("trendEMA50").className = "spot-meta err";
         }
-        if (j.th_cpi) apply("cpiTH1", j.th_cpi.last);
-        if (j.us_cpi) apply("cpiUS1", j.us_cpi.last);
+        apply("cpiTH1", j.th_cpi && j.th_cpi.last);
+        apply("cpiUS1", j.us_cpi && j.us_cpi.last);
 
-        var stampTxt = "auto จาก TradingEconomics · " + when;
+        var stampTxt = "auto · " + result.source + " · " + when;
         $("sprStamp").textContent = stampTxt;
         $("bdiStamp").textContent = stampTxt;
         $("cipStamp").textContent = stampTxt + " (ดอกเบี้ย)";
         $("pppStamp").textContent = stampTxt + " (CPI ปัจจุบัน — ฐานยังคงต้องกรอกเอง)";
-        ["pmiCN","pmiTH","pmiIN","pmiUS"].forEach(function(id){
-          localStorage.setItem("usdthb_" + id + "_date", (j.updated || "").slice(0, 10));
-          stampPMI(id, false);
+        [["pmi_cn","pmiCN"], ["pmi_th","pmiTH"], ["pmi_in","pmiIN"], ["pmi_us","pmiUS"]].forEach(function(p){
+          if (j[p[0]]){
+            localStorage.setItem("usdthb_" + p[1] + "_date", (j.updated || "").slice(0, 10));
+          } else {
+            localStorage.removeItem("usdthb_" + p[1] + "_date");
+          }
+          stampPMI(p[1], false);
         });
         recalc();
       })
-      .catch(function(){
-        $("sprStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
-        $("bdiStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
-        $("cipStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
-        $("pppStamp").textContent = "ดึง auto ไม่สำเร็จ — ใช้ค่าที่กรอกไว้ล่าสุด";
+      .catch(function(error){
+        $("marketDataStatus").textContent = "ดึงข้อมูลตลาดไม่สำเร็จ: " + error.message;
+        $("marketDataStatus").className = "note err";
+        ["us10","th10","bdiLevel","bdiPct","pmiCN","pmiTH","pmiIN","pmiUS","iTH","iUS","cpiTH1","cpiUS1"].forEach(function(id){
+          $(id).value = "";
+          localStorage.removeItem("usdthb_" + id);
+        });
+        $("bdryVal").textContent = "—";
+        $("trendEMA50").textContent = "Trend (USD1! proxy): ไม่มีข้อมูลล่าสุด";
+        $("trendEMA50").className = "spot-meta err";
+        ["pmiCN","pmiTH","pmiIN","pmiUS"].forEach(function(id){
+          state.pmiMom[id] = null;
+          localStorage.removeItem("usdthb_" + id + "_date");
+          stampPMI(id, false);
+        });
+        $("sprStamp").textContent = "ไม่มีข้อมูลล่าสุด";
+        $("bdiStamp").textContent = "ไม่มีข้อมูลล่าสุด";
+        $("cipStamp").textContent = "ไม่มีข้อมูลล่าสุด";
+        $("pppStamp").textContent = "ไม่มีข้อมูลล่าสุด";
+        recalc();
       });
   }
 
@@ -764,6 +831,9 @@
 
   $("refresh").addEventListener("click", fetchAll);
   fetchAll();
+  window.setInterval(function(){
+    if (!$("refresh").disabled) fetchAll();
+  }, 15 * 60 * 1000);
 })();
 </script>
 </body>
