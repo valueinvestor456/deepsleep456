@@ -114,11 +114,14 @@
   footer{font-size:11px;color:var(--text-muted);margin-top:20px;}
   a{color:var(--cat-1);}
 </style>
+<link rel="stylesheet" href="./trade-planner.css">
 </head>
 <body>
 <div class="wrap">
   <h1>USD/THB Intermarket Dashboard</h1>
   <p class="subtitle">Fair Value Bias จาก DXY · Gold · Yield Spread · BDI · PMI — เครื่องมือส่วนตัว ไม่ใช่คำแนะนำการลงทุน</p>
+
+  <p><a class="chip" href="#trade-planner">เปิด Calculator · Long / Short · Excess Equity</a></p>
 
   <div class="card header-card">
     <div>
@@ -187,6 +190,81 @@
       <a class="chip" href="https://finance.yahoo.com/quote/BDRY" target="_blank" rel="noopener">เช็ค BDRY</a></div>
     </div>
   </div>
+
+  <section class="card trade-planner" id="trade-planner" aria-labelledby="tp-title">
+    <h2 id="tp-title">USD Futures Calculator · Long / Short</h2>
+    <p class="tp-note">กรอกราคาและจำนวนสัญญาของแต่ละไม้ เพื่อคำนวณเงินที่ต้องใช้ ต้นทุนเฉลี่ย และกำไรสุทธิ · ราคาเริ่มต้นเป็นตัวอย่าง ไม่ใช่ราคาสด</p>
+    <div class="tp-grid">
+      <label>เงินทุนในบัญชี (ล้านบาท)<input id="tp-capital" type="number" min="0.000001" step="any" value="1"></label>
+      <label>ค่าคอมมิชชั่น / สัญญา (บาท)<input id="tp-commission" type="number" min="0" step="0.01" value="8"></label>
+      <label>รูปแบบค่าคอมมิชชั่น<select id="tp-fee-mode"><option value="roundtrip">ไป–กลับ (เปิด + ปิด)</option><option value="side">ต่อข้าง (คิดทั้งเปิดและปิด)</option></select></label>
+      <label>IM / สัญญา (บาท)<input id="tp-im" type="number" min="0.01" step="0.01" value="770"></label>
+      <label>MM / สัญญา (บาท)<input id="tp-mm" type="number" min="0.01" step="0.01" value="541.2"></label>
+      <label>FM / สัญญา (บาท)<input id="tp-fm" type="number" min="0" step="0.01" value="233.2"></label>
+      <label>เงินสำรองที่ไม่ใช้เปิดเพิ่ม (% ทุน)<input id="tp-reserve" type="number" min="0" max="99.99" step="1" value="20"></label>
+      <label>กรอบขาดทุนที่ใช้เตือน (% ทุน)<input id="tp-risk" type="number" min="0.01" max="100" step="0.1" value="5"></label>
+      <label>รุ่นสัญญาที่จำลอง<input id="tp-series" type="text" maxlength="20" placeholder="ระบุ เช่น USDZ26"></label>
+    </div>
+    <p class="tp-note" id="tp-fee-note"></p>
+    <div class="tp-switch" role="group" aria-label="เลือกฝั่งจำลอง">
+      <button type="button" id="tp-long" aria-pressed="true">Long · ซื้อเมื่อราคาลด</button>
+      <button type="button" id="tp-short" aria-pressed="false">Short · ขายเมื่อราคาขึ้น</button>
+    </div>
+    <p class="tp-note">แต่ละฝั่งใช้ทุนก้อนเดียวกันเพื่อเปรียบเทียบแผน แยกการคำนวณกัน ไม่ใช่เปิดสองฝั่งพร้อมกันในบัญชีเดียว</p>
+    <h3>สร้างจุดเพิ่มสถานะ</h3>
+    <div class="tp-grid">
+      <label>ราคาไม้แรก (บาท/USD)<input id="tp-entry" type="number" min="0.01" step="0.01"></label>
+      <label>ระยะห่างแต่ละไม้ (บาท)<input id="tp-step" type="number" min="0.01" step="0.01"></label>
+      <label>จำนวนไม้<input id="tp-count" type="number" min="1" max="12" step="1"></label>
+      <label>จำนวนสัญญาต่อไม้<input id="tp-contracts" type="number" min="1" max="1000000" step="1"></label>
+      <label>ราคาหยุดขาดทุน (บาท/USD)<input id="tp-stop" type="number" min="0.01" step="0.01"></label>
+      <label>ราคาจำลองปิดทั้งหมด (บาท/USD)<input id="tp-exit" type="number" min="0.01" step="0.01"></label>
+      <label>ราคาประเมินพอร์ต / Equity (บาท/USD)<input id="tp-mark" type="number" min="0.01" step="0.01"></label>
+    </div>
+    <div class="tp-toolbar"><button type="button" id="tp-generate">สร้างไม้จำนวนสัญญาเท่ากันใหม่</button><span class="tp-note">แก้ค่าตั้งต้น 4 ช่องแรก ตารางจะสร้างใหม่อัตโนมัติ</span></div>
+    <p class="tp-note">แก้ราคาและจำนวนสัญญาแต่ละไม้ได้ทันที เช่น 20 / 25 / 25 / 30 สัญญา · กรอก 0 เพื่อข้ามไม้ · ระบบคงจำนวนที่กรอกไว้ และแจ้งเตือนเมื่อทุนไม่พอหรือเกินกรอบขาดทุน</p>
+    <div id="tp-validation" class="tp-status tp-error" role="alert" hidden></div>
+    <div class="tp-table-scroll" tabindex="0" role="region" aria-label="ตารางแบ่งไม้ เลื่อนแนวนอนเพื่อดูทั้งหมด">
+      <table>
+        <caption id="tp-caption">แผน Long</caption>
+        <thead><tr><th scope="col">ไม้</th><th scope="col">ราคา</th><th scope="col">จำนวนสัญญา</th><th scope="col">IM + คอมไป–กลับ / ไม้</th><th scope="col">สัญญาสะสม</th><th scope="col">ราคาเฉลี่ย</th><th scope="col">IM รวม</th><th scope="col">Equity</th><th scope="col">Excess Equity</th><th scope="col">เงินใช้เพิ่มได้*</th><th scope="col">สถานะ</th></tr></thead>
+        <tbody id="tp-rows"></tbody>
+      </table>
+    </div>
+    <div id="tp-results" aria-live="polite">
+      <div class="tp-metrics">
+        <div class="tp-metric"><span>Equity ณ ราคาประเมิน (บาท)</span><strong id="tp-equity">—</strong></div>
+        <div class="tp-metric"><span>Excess Equity = Equity − IM</span><strong id="tp-excess">—</strong></div>
+        <div class="tp-metric"><span>EE หลังกันสำรอง + คอมปิด</span><strong id="tp-free">—</strong></div>
+        <div class="tp-metric"><span>สัญญารวม</span><strong id="tp-total">—</strong></div>
+        <div class="tp-metric"><span>ต้นทุนเฉลี่ย (ไม่รวมคอม)</span><strong id="tp-average">—</strong></div>
+        <div class="tp-metric"><span>ราคาคุ้มทุนรวมคอม</span><strong id="tp-breakeven">—</strong></div>
+        <div class="tp-metric"><span>IM รวม (บาท)</span><strong id="tp-margin">—</strong></div>
+        <div class="tp-metric"><span>กำไร/ขาดทุนสุทธิที่ราคาปิด</span><strong id="tp-net">—</strong></div>
+        <div class="tp-metric"><span>ขาดทุนที่จุดหยุดรวมคอม</span><strong id="tp-stop-loss">—</strong></div>
+      </div>
+      <div class="tp-details">
+        <div><span>ค่าคอมไป–กลับรวม</span><b id="tp-fees">—</b></div>
+        <div><span>ทุนหลังปิดทั้งหมด</span><b id="tp-cash">—</b></div>
+        <div><span>เงินสำรองที่กันไว้</span><b id="tp-reserved">—</b></div>
+        <div><span>กำไร/ขาดทุน ณ ราคาประเมิน ก่อนคอม</span><b id="tp-unrealized">—</b></div>
+        <div><span>ขาดทุนที่จุดหยุด / ทุน</span><b id="tp-risk-used">—</b></div>
+        <div><span>ราคาแตะ MM โดยประมาณ</span><b id="tp-mm-price">—</b></div>
+        <div><span>ราคาแตะ FM โดยประมาณ</span><b id="tp-fm-price">—</b></div>
+      </div>
+      <div id="tp-status" class="tp-status" role="status"></div>
+    </div>
+    <p class="tp-note">Equity = ทุน + กำไร/ขาดทุน ณ ราคาประเมิน − คอมเปิด · Excess Equity (EE) = Equity − IM รวม · * เงินใช้เพิ่มได้ = EE − คอมปิด − เงินสำรอง คอลัมน์ในตารางประเมินที่ราคาของแต่ละไม้ ส่วนการ์ดด้านล่างประเมินหลังเปิดครบแผน</p>
+    <details><summary>สมมติฐานและวิธีคำนวณ</summary>
+      <p class="tp-note">จำลองจากสถานะว่าง สัญญารุ่นเดียว เพิ่มสถานะตามลำดับแล้วปิดทั้งหมด ไม่มีถอน/เติมเงินหรือสถานะอื่น · ต้นทุนเฉลี่ยถ่วงน้ำหนักตามจำนวนสัญญา · Long มีกำไรเมื่อราคาปิดสูงกว่าต้นทุน และ Short มีกำไรเมื่อราคาปิดต่ำกว่า · กำไรสุทธิหักคอมเปิดและปิดครบแล้ว</p>
+      <p class="tp-note">กรอกค่าคอมรวมภาษีและค่าธรรมเนียมที่ต้องการคิดเอง แบบไป–กลับสมมติแบ่งค่าเปิด/ปิดเท่ากัน · ราคาคุ้มทุนแสดงค่าทางคณิตศาสตร์ อาจอยู่ระหว่าง tick · ไม่รวม slippage หรือ gap ราคาหยุดจึงไม่รับประกันขาดทุนสูงสุดจริง</p>
+      <p class="tp-note">MM/FM เป็นจุดที่ Equity เท่ากับเกณฑ์ที่กรอก โดยใช้ทุนทั้งบัญชีรองรับสถานะหลังเปิดครบและหักคอมเปิดแล้ว ไม่ใช่ราคาบังคับปิดที่โบรกเกอร์รับรอง · มาร์จินเริ่มต้นใช้ค่าที่ผู้ใช้ระบุ 770 / 541.2 / 233.2 บาท แก้ได้ตามบัญชีจริง</p>
+      <p class="tp-note"><a href="https://www.tfex.co.th/th/products/currency/usd-thb-futures/contract-specification" target="_blank" rel="noopener">สเปก USD/THB Futures จาก TFEX</a>: 1 สัญญา = 1,000 USD · ราคาเคลื่อน 0.01 บาท = 10 บาท/สัญญา</p>
+      <p class="tp-note"><a href="https://www.tfex.co.th/th/education/knowledge/article/3-mark-to-market" target="_blank" rel="noopener">หลักประกันและ Excess Equity จาก TFEX</a> · ตัวจำลองไม่รวมวงเงินซื้อขายเฉพาะบัญชีหรือคำสั่งรอจับคู่</p>
+    </details>
+    <p class="tp-note" id="tp-save-status">บันทึกแผนในเบราว์เซอร์นี้อัตโนมัติ</p>
+  </section>
+
 
   <div class="card">
     <h2>Score Breakdown</h2>
@@ -287,9 +365,9 @@
 
       <h2 style="margin-top:14px">เงินประกันที่ควรวางไว้ (Margin Reserve)</h2>
       <div class="row"><span class="label">ค่าคอมมิชชั่นไป-กลับ/สัญญา (THB) — คีย์เอง</span><input type="number" id="commRT" step="0.1" value="8"></div>
-      <div class="row"><span class="label">IM ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="imPerLot" step="0.1" value="840"></div>
-      <div class="row"><span class="label">MM ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="mmPerLot" step="0.1" value="590.4"></div>
-      <div class="row"><span class="label">FM (Force) ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="fmPerLot" step="0.1" value="254.4"></div>
+      <div class="row"><span class="label">IM ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="imPerLot" step="0.1" value="770"></div>
+      <div class="row"><span class="label">MM ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="mmPerLot" step="0.1" value="541.2"></div>
+      <div class="row"><span class="label">FM (Force) ต่อสัญญา (THB) — คีย์เอง</span><input type="number" id="fmPerLot" step="0.1" value="233.2"></div>
       <div class="row"><span class="label">ราคาที่ต้องทนเหวี่ยง (บาท)</span><input type="number" id="swingBaht" step="0.1" value="1.0"></div>
       <div class="row"><span class="label">ขาดทุนจากการเหวี่ยง/สัญญา (THB)</span><span class="value" id="swingLossPerLot">—</span></div>
       <div class="row"><span class="label">วางเท่านี้ถึงจะไม่โดน Force Close/สัญญา</span><span class="value" id="reserveAvoidForce">—</span></div>
@@ -836,5 +914,7 @@
   }, 15 * 60 * 1000);
 })();
 </script>
+<script src="./trade-planner-core.js"></script>
+<script src="./trade-planner.js"></script>
 </body>
 </html>
