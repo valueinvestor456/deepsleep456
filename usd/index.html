@@ -387,14 +387,14 @@
   </section>
 
 
-  <div class="card">
-    <h2>แบบจำลองเสริม · น้ำหนักคงที่ (แยกจากคะแนนรวมด้านบน)</h2>
+  <details class="card">
+    <summary>แบบจำลองเสริม · น้ำหนักคงที่ (แยกจากคะแนนรวมด้านบน)</summary>
     <div class="score-big" id="scoreBig">—</div><div id="scoreVerdict">—</div><div class="spot-meta" id="fairBias">FairBias จำลอง: —</div>
     <div class="gauge"><div class="pin" id="gaugePin" style="left:50%"></div></div>
     <div class="gauge-scale"><span>−100 (THB อ่อนแรง)</span><span>0</span><span>+100 (THB แข็งแรง)</span></div>
     <div class="bars" id="contribBars" style="margin-top:10px"></div>
     <div class="note">S = 100·tanh(Σ wᵢ·sᵢ) — บวก = บาทแข็ง = USD/THB มี bias ลง · แต่ละแท่ง = wᵢ·sᵢ (contribution)</div>
-  </div>
+  </details>
 
   <div class="card">
     <h2>PMI Tracker (คู่ค้าหลัก) — w=0.15</h2>
@@ -442,7 +442,7 @@
   </div>
 
   <details>
-    <summary>⚙️ น้ำหนักสมการ (แก้ได้ทั้งหมด)</summary>
+    <summary>⚙️ น้ำหนักแบบจำลองเสริม (ไม่เปลี่ยนคะแนนรวม 6 ปัจจัย)</summary>
     <div class="card">
       <div class="row"><span class="label">w DXY</span><input type="number" id="wDXY" step="0.05" value="0.60"></div>
       <div class="row"><span class="label">w Gold</span><input type="number" id="wXAU" step="0.05" value="0.17"></div>
@@ -517,7 +517,7 @@
 
   <div style="text-align:right;margin-top:4px"><button id="refresh">รีเฟรชข้อมูล</button></div>
 
-  <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · spot/DXY: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
+  <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · spot: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
     · DXY: ECB ผ่าน Frankfurter · US2Y: U.S. Treasury · ทองและ Current Account: ธปท. · ทุนพันธบัตร: ThaiBMA · Brent: EIA / FRED · ข้อมูลมีความล่าช้าตามการเผยแพร่ · แก้ไขล่าสุด 2026-10-11</footer>
 </div>
 
@@ -634,7 +634,9 @@
     var oil = oilAssessment();
     renderOil(oil);
     UsdSignals.updateMarket({dxyChange:dxyPct, dxyManual:num("dxyPctOv") !== null,
-      dxy:state.dxyQuote, oil:oil, us2:state.us2Quote, goldTrade:state.goldTradeQuote,
+      dxy:state.dxyQuote, oil:UsdOil.assess({mode:$("oilMode").value,quote:state.oilQuote,
+        last:$("oilCurrent").value,previous:$("oilPrevious").value,weight:1,scale:2}),
+      us2:state.us2Quote, goldTrade:state.goldTradeQuote,
       foreignFlow:state.foreignFlowQuote, currentAccount:state.currentAccountQuote});
 
     var vDXY = num("vDXY") || 0.35, vXAU = num("vXAU") || 1.0, vBDI = num("vBDI") || 2.0;
