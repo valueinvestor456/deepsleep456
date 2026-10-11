@@ -1,7 +1,7 @@
-name: Refresh market data (US10Y/TH10Y/BDI/PMI/BDRY)
+name: Refresh market data (US10Y/TH10Y/BDI/PMI/BDRY/Brent)
 
-# Relays TradingEconomics scrapes into usd/market-data.json (same-origin) so
-# the dashboard can auto-fill these fields without hitting TE's CORS block.
+# Relays TradingEconomics, Yahoo and EIA/FRED data into usd/market-data.json
+# so the dashboard can auto-fill without cross-origin restrictions.
 on:
   schedule:
     - cron: "20 * * * *"   # hourly, offset to avoid top-of-hour load spikes
@@ -21,6 +21,8 @@ jobs:
           python-version: "3.11"
 
       - run: pip install requests beautifulsoup4 yfinance
+
+      - run: python scripts/test_oil_data.py
 
       - run: python scripts/fetch_market_data.py
 

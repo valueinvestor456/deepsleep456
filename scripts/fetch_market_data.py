@@ -1,6 +1,6 @@
-"""Scrape US10Y / TH10Y / BDI / PMI (CN/TH/IN/US) / BDRY from TradingEconomics
-+ Yahoo Finance and write usd/market-data.json same-origin, so the dashboard
-(static GitHub Pages, no backend) can auto-fill those fields without hitting
+"""Fetch US10Y / TH10Y / BDI / PMI (CN/TH/IN/US) / BDRY / Brent from
+TradingEconomics, Yahoo Finance and EIA via FRED into usd/market-data.json,
+so the static dashboard can auto-fill those fields without hitting
 CORS blocks (TE sends no CORS header at all; Yahoo's chart API sends `vary:
 Origin` but no Access-Control-Allow-Origin, so browsers block it too).
 
@@ -27,6 +27,7 @@ from pathlib import Path
 import requests
 import yfinance as yf
 from bs4 import BeautifulSoup
+from oil_data import fetch_brent
 
 OUT_PATH = Path(__file__).resolve().parent.parent / "usd" / "market-data.json"
 
@@ -152,6 +153,13 @@ def main():
     except Exception as e:
         out["usdthb_trend"] = None
         print(f"[FAIL -> null] usdthb_trend: {type(e).__name__}: {e}")
+
+    try:
+        out["brent"] = fetch_brent()
+        print(f"[ok] brent: {out['brent']}")
+    except Exception as e:
+        out["brent"] = None
+        print(f"[FAIL -> null] brent: {type(e).__name__}: {e}")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(json.dumps(out), encoding="utf-8")
