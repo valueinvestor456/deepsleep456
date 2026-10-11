@@ -28,6 +28,9 @@ import requests
 import yfinance as yf
 from bs4 import BeautifulSoup
 from oil_data import fetch_brent
+from signal_data import fetch_us2
+from gold_flow_data import fetch_gold_trade
+from auto_signal_data import fetch_dxy, fetch_current_account, fetch_foreign_flow
 
 OUT_PATH = Path(__file__).resolve().parent.parent / "usd" / "market-data.json"
 
@@ -160,6 +163,28 @@ def main():
     except Exception as e:
         out["brent"] = None
         print(f"[FAIL -> null] brent: {type(e).__name__}: {e}")
+
+    try:
+        out["us2y"] = fetch_us2()
+        print(f"[ok] us2y: {out['us2y']}")
+    except Exception as e:
+        out["us2y"] = None
+        print(f"[FAIL -> null] us2y: {type(e).__name__}: {e}")
+
+    try:
+        out["gold_trade"] = fetch_gold_trade()
+        print(f"[ok] gold_trade: {out['gold_trade']}")
+    except Exception as e:
+        out["gold_trade"] = None
+        print(f"[FAIL -> null] gold_trade: {type(e).__name__}: {e}")
+
+    for key, fetcher in [('dxy_daily', fetch_dxy), ('current_account', fetch_current_account), ('foreign_flow', fetch_foreign_flow)]:
+        try:
+            out[key] = fetcher()
+            print(f"[ok] {key}: {out[key]}")
+        except Exception as e:
+            out[key] = None
+            print(f"[FAIL -> null] {key}: {type(e).__name__}: {e}")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(json.dumps(out), encoding="utf-8")

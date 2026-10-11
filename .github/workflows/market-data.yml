@@ -1,4 +1,4 @@
-name: Refresh market data (US10Y/TH10Y/BDI/PMI/BDRY/Brent)
+name: Refresh market data and USD signals
 
 # Relays TradingEconomics, Yahoo and EIA/FRED data into usd/market-data.json
 # so the dashboard can auto-fill without cross-origin restrictions.
@@ -23,6 +23,14 @@ jobs:
       - run: pip install requests beautifulsoup4 yfinance
 
       - run: python scripts/test_oil_data.py
+
+      - run: python scripts/test_signal_data.py
+
+      - run: python scripts/test_gold_flow_data.py
+
+      - run: python scripts/test_auto_signal_data.py
+
+      - run: node --test usd/trade-planner.test.cjs usd/oil-factor.test.cjs usd/signal-board.test.cjs usd/signal-score.test.cjs
 
       - run: python scripts/fetch_market_data.py
 

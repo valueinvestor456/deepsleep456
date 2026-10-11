@@ -118,11 +118,12 @@
   a{color:var(--cat-1);}
 </style>
 <link rel="stylesheet" href="./trade-planner.css">
+<link rel="stylesheet" href="./signal-board.css">
 </head>
 <body>
 <div class="wrap">
   <h1>USD/THB Intermarket Dashboard</h1>
-  <p class="subtitle">Fair Value Bias จาก DXY · Gold · Brent Oil · Yield Spread · BDI · PMI — เครื่องมือส่วนตัว ไม่ใช่คำแนะนำการลงทุน</p>
+  <p class="subtitle">ข้อมูลอัตโนมัติ · คะแนนแรงกดดันเงินบาทตามช่วงเวลา · จำลองแผน USD Futures เป็นสัญญา</p>
 
   <p><a class="chip" href="#trade-planner">เปิด Calculator · Long / Short · Excess Equity</a></p>
 
@@ -136,10 +137,10 @@
         <input type="number" id="spotOverride" step="0.001" placeholder="auto"></div>
     </div>
     <div style="text-align:right">
-      <div class="score-label">THB Strength Score</div>
-      <div class="score-big" id="scoreBig">—</div>
-      <div class="verdict-text" id="scoreVerdict">—</div>
-      <div class="spot-meta" id="fairBias">FairBias จำลอง: —</div>
+      <div class="score-label">คะแนนเงินบาทรวม · 6 ปัจจัย</div>
+      <div class="score-big" id="sg-score-top">—</div>
+      <div class="verdict-text" id="sg-verdict-top">รอข้อมูล</div>
+      <div class="spot-meta" id="sg-top-coverage">—</div>
     </div>
     <div style="text-align:right">
       <div class="score-label">Futures ยุติธรรม (CIP)</div>
@@ -151,14 +152,118 @@
 
   <div class="warnbox">
     <b>ข้อมูลตลาดอัปเดตอัตโนมัติจาก GitHub Actions; ช่องสีเหลืองแก้เองได้</b> ·
-    Spot/DXY/Gold ดึงจาก API โดยตรง · Brent ใช้ข้อมูลรายวัน EIA ผ่าน FRED ซึ่งมีความล่าช้า · <b>สูตรรวมที่เพิ่มน้ำมันยังไม่ได้ทดสอบย้อนหลัง</b> —
-    ใช้เป็นเข็มทิศ bias ไม่ใช่ตัวทำนายที่พิสูจน์แล้ว
+    รีเฟรชฟีดทุกชั่วโมงตามตาราง GitHub Actions · ข้อมูลต้นทางมีทั้งรายวันและรายเดือน · <b>คะแนนเป็นกติกาจำลองที่ยังไม่ผ่านการทดสอบย้อนหลัง</b> ไม่ใช่ความน่าจะเป็นหรือราคาคาดการณ์
   </div>
   <div class="note" id="marketDataStatus" role="status" aria-live="polite">กำลังโหลดข้อมูลตลาด…</div>
 
+  <section class="signal-board" id="usd-signals" aria-labelledby="signals-title">
+    <h2 id="signals-title">สัญญาณ USD/THB · 6 ปัจจัยที่ต้องติดตาม</h2>
+    <p class="signal-intro">↑ USD/THB ขึ้น = บาทอ่อน · ↓ USD/THB ลง = บาทแข็ง · อ่านแรงหนุนแต่ละด้านร่วมกัน</p>
+    <div class="signal-summary" aria-labelledby="sg-summary-title">
+      <div class="signal-summary-head">
+        <div><h3 id="sg-summary-title">แรงกดดันเงินบาทรวม</h3><p id="sg-scenario" class="signal-source">กำลังโหลดข้อมูลอัตโนมัติ</p></div>
+        <div class="signal-controls"><label for="sg-horizon">ระยะที่ใช้วางแผน</label><select id="sg-horizon"><option value="short">สั้น · 1–5 วัน</option><option value="medium" selected>กลาง · 1–4 สัปดาห์</option><option value="long">ยาว · 1–3 เดือน</option></select><button id="sg-auto-all" type="button">ใช้ข้อมูลอัตโนมัติทั้งหมด</button></div>
+      </div>
+      <div class="signal-total"><strong id="sg-score">—</strong><div><b id="sg-verdict">รอข้อมูล</b><p id="sg-coverage">—</p></div></div>
+      <div class="signal-gauge"><span id="sg-score-pin" hidden></span></div>
+      <div class="gauge-scale"><span>−100 · บาทอ่อน</span><span>0 · แรงหนุนผสม</span><span>+100 · บาทแข็ง</span></div>
+      <p id="sg-drivers" class="signal-drivers">รอข้อมูลแต่ละปัจจัย</p>
+      <details><summary>ดูน้ำหนัก ผลต่อคะแนน และวิธีคำนวณ</summary>
+        <div class="signal-table-scroll"><table class="signal-weight-table"><thead><tr><th>ปัจจัย</th><th>น้ำหนักตั้งต้น</th><th>ขนาดการเปลี่ยน</th><th>ความสด</th><th>ตัวคูณข้อมูล</th><th>น้ำหนักใช้จริง</th><th>คะแนน</th></tr></thead><tbody id="sg-weights"></tbody></table></div>
+        <p class="signal-footnote">คะแนนบวก = หนุนบาทแข็ง · คะแนนลบ = หนุนบาทอ่อน · รวมผลแต่ละปัจจัยเป็น −100 ถึง +100; เมื่อ |คะแนน| ≥ 15 จึงแสดงทิศทาง ต้องมีข้อมูลอย่างน้อย 3 ปัจจัยและน้ำหนักใช้ได้ ≥ 50% จึงสรุป</p>
+        <p class="signal-footnote">น้ำหนักตั้งต้น DXY/US2Y/Oil/Gold/Flow/CA: สั้น 35/25/15/5/15/5, กลาง 25/20/20/10/15/10, ยาว 15/15/20/10/15/25 · เป็นสมมติฐานปรับตามระยะวางแผน ไม่ใช่ค่าสัมประสิทธิ์ที่เรียนรู้จากตลาด</p>
+        <p class="signal-footnote">ปรับขนาดแต่ละปัจจัยด้วยสเกลสมมติ: DXY 0.35%, US2Y 5 bp, Brent 2%, ส่งออกทองสุทธิ 25,000 ล้านบาท, Fund Flow 5,000 ล้านบาท, Current Account 2,000 ล้าน USD; ใช้ tanh จำกัดสัญญาณ เมื่อขนาดเกิน 1 เท่าสเกล เพิ่มตัวคูณน้ำหนักทีละ 0.5 ต่อสเกล ถึงสูงสุด 2 เท่า แล้วปรับน้ำหนักรวมให้ได้ 100%</p>
+        <p class="signal-footnote">ความสด: รายวันเต็มน้ำหนัก 3 วัน ลดลงเชิงเส้นจนหมดที่ 10 วัน; รายเดือนเต็มน้ำหนักถึง 45 วันหลังสิ้นเดือน ลดจนหมดที่ 90 วัน · Gold Proxy ใช้ตัวคูณสมมติ 60% (ทิศทาง USD ที่กรอกเอง 50%); Fund Flow มีตลาดเดียวใช้ 50% · น้ำหนักที่หายไม่กระจายเพิ่มให้ปัจจัยอื่น · Gold และ Current Account มีข้อมูลซ้อนกัน จึงไม่ควรอ่านเป็นหลักฐานอิสระ</p>
+      </details>
+    </div>
+    <div class="signal-grid">
+      <article class="signal-card" aria-labelledby="sg-dxy-title">
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="17" cy="30" r="12"/><path d="M17 22v16m5-13c-2-4-10-3-10 1 0 5 10 3 10 8 0 4-8 5-10 1M28 24V12h-5L34 2l10 10h-5v18"/></svg><div><h3 id="sg-dxy-title">DXY Index</h3><p class="signal-subtitle">ความแข็งแกร่งของดอลลาร์โลก</p></div></div>
+        <div class="signal-reading" id="sg-dxy-value">Δ รอข้อมูล</div>
+        <p class="signal-rule">ดัชนีขึ้น → <strong>หนุน USD/THB ขึ้น</strong><br>ดัชนีลง → หนุน USD/THB ลง</p>
+        <div class="signal-impact" id="sg-dxy-impact">— รอข้อมูล ไม่สรุปทิศทาง</div>
+        <p class="signal-weight" id="sg-dxy-weight">รอคำนวณน้ำหนัก</p>
+        <p class="signal-source" id="sg-dxy-source">Synthetic DXY จากอัตราแลกเปลี่ยน</p>
+        <div class="signal-links"><a href="#tileDXY">ดูราคา / กรอก Δ% จำลอง</a></div>
+      </article>
+      <article class="signal-card" aria-labelledby="sg-us2-title">
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 5v37h38M11 31l10-11 8 6 14-16M33 10h10v10"/></svg><div><h3 id="sg-us2-title">US 2Y Yield</h3><p class="signal-subtitle">ความคาดหวังอัตราดอกเบี้ยสหรัฐ</p></div></div>
+        <div class="signal-reading" id="sg-us2-value">รอผลตอบแทน US 2Y</div>
+        <p class="signal-rule">ผลตอบแทนขึ้น → <strong>หนุน USD/THB ขึ้น</strong><br>ผลตอบแทนลง → หนุน USD/THB ลง</p>
+        <details><summary>ดูข้อมูล / จำลอง US 2Y</summary><div class="signal-fields">
+          <label>โหมด US 2Y<select id="sg-us2-mode"><option value="auto">อัตโนมัติ · U.S. Treasury</option><option value="manual">กรอกจำลองเอง</option></select></label>
+          <label>US 2Y ล่าสุด (%)<input id="sg-us2-last" type="number" step="0.01" placeholder="เช่น 4.80" readonly></label>
+          <label>US 2Y ก่อนหน้า (%)<input id="sg-us2-prev" type="number" step="0.01" placeholder="เช่น 4.75" readonly></label>
+        </div></details>
+        <div class="signal-impact" id="sg-us2-impact">— รอข้อมูล ไม่สรุปทิศทาง</div>
+        <p class="signal-weight" id="sg-us2-weight">รอคำนวณน้ำหนัก</p>
+        <p class="signal-source" id="sg-us2-source">U.S. Treasury · รายวัน</p>
+        <div class="signal-links"><a href="https://fred.stlouisfed.org/series/DGS2" target="_blank" rel="noopener">ตรวจ US 2Y · FRED</a></div>
+      </article>
+      <article class="signal-card" aria-labelledby="sg-oil-title">
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 5h26v37H7zM4 9h32M4 19h32M4 34h28M4 40h28M19 13c0 0-6 7-6 10a6 6 0 0 0 12 0c0-3-6-10-6-10Z M38 26c0 0-7 9-7 12a7 7 0 0 0 14 0c0-3-7-12-7-12Z"/></svg><div><h3 id="sg-oil-title">Crude Oil</h3><p class="signal-subtitle">ภาระต้นทุนนำเข้า · Brent</p></div></div>
+        <div class="signal-reading" id="sg-oil-value">รอราคา Brent</div>
+        <p class="signal-rule">น้ำมันขึ้น → <strong>หนุน USD/THB ขึ้น</strong><br>น้ำมันลง → หนุน USD/THB ลง</p>
+        <div class="signal-impact" id="sg-oil-impact">— รอข้อมูล ไม่สรุปทิศทาง</div>
+        <p class="signal-weight" id="sg-oil-weight">รอคำนวณน้ำหนัก</p>
+        <p class="signal-source" id="sg-oil-source">EIA / FRED · รายวัน มีความล่าช้า</p>
+        <div class="signal-links"><a href="#tileOIL">ดูราคา / จำลองน้ำมัน</a></div>
+      </article>
+      <article class="signal-card" aria-labelledby="sg-gold-title">
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m4 41 4-11h12l4 11Zm20 0 4-11h12l4 11ZM14 28l4-11h12l4 11ZM10 17 6 10m18 0V3m14 14 5-7M9 23H3m36 0h6"/></svg><div><h3 id="sg-gold-title">Thai Gold Flow</h3><p class="signal-subtitle">การค้าทองรายเดือน · Proxy กระแส USD</p></div></div>
+        <div class="signal-reading" id="sg-gold-value">รอทิศทางธุรกรรม USD</div>
+        <p class="signal-rule" id="sg-gold-rule">ส่งออกทองสุทธิ → อาจหนุนบาทแข็ง · นำเข้าสุทธิ → อาจหนุนบาทอ่อน</p>
+        <details><summary>ข้อมูลอัตโนมัติ / จำลองธุรกรรมทอง</summary><div class="signal-fields">
+          <label>โหมด Gold Flow<select id="sg-gold-mode"><option value="auto">อัตโนมัติ · การค้าทองรายเดือน</option><option value="manual">จำลองทิศทาง USD เอง</option></select></label>
+          <div class="signal-fields" id="sg-gold-auto-fields"><label>ส่งออกทอง (ล้านบาท)<input id="sg-gold-exports" type="number" readonly></label><label>นำเข้าทอง (ล้านบาท)<input id="sg-gold-imports" type="number" readonly></label><label>งวดข้อมูล<input id="sg-gold-month" type="month" readonly></label></div>
+          <div class="signal-fields" id="sg-gold-manual-fields" hidden>
+          <label>ทิศทาง USD ของธุรกิจทอง<select id="sg-gold-flow"><option value="">ยังไม่มีข้อมูล</option><option value="buy">ซื้อ USD สุทธิ</option><option value="sell">ขาย USD สุทธิ</option><option value="flat">สมดุล / ไม่มีทิศทาง</option></select></label>
+          <label>วันที่ Gold Flow<input id="sg-gold-date" type="date"></label>
+          </div>
+        </div></details>
+        <div class="signal-impact" id="sg-gold-impact">— รอข้อมูล ไม่สรุปทิศทาง</div>
+        <p class="signal-weight" id="sg-gold-weight">รอคำนวณน้ำหนัก</p>
+        <p class="signal-source" id="sg-gold-source">อัตโนมัติ · รอข้อมูลการค้าทองรายเดือน</p>
+        <p class="signal-source">Proxy จากส่งออกหักนำเข้า ไม่ใช่ยอดซื้อขาย USD / Hedging ของร้านทองวันนี้ และไม่ยืนยันว่าแปลงรายรับกลับเป็นบาทแล้ว</p>
+        <div class="signal-links"><a href="https://app.bot.or.th/BTWS_STAT/statistics/BOTWEBSTAT.aspx?language=eng&amp;reportID=978" target="_blank" rel="noopener">ส่งออกทอง</a><a href="https://app.bot.or.th/BTWS_STAT/statistics/BOTWEBSTAT.aspx?language=eng&amp;reportID=50" target="_blank" rel="noopener">นำเข้าทอง</a><a href="https://www.bot.or.th/th/news-and-media/news/news-20251223.html" target="_blank" rel="noopener">ธุรกรรมทองกับเงินบาท · ธปท.</a></div>
+      </article>
+      <article class="signal-card" aria-labelledby="sg-foreign-title">
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><ellipse cx="13" cy="28" rx="9" ry="4"/><path d="M4 28v12c0 6 18 6 18 0V28M4 34c0 6 18 6 18 0M28 29h15v13H28ZM8 17c5-7 15-9 23-7V4l12 10-12 9v-7c-10-2-15-1-23 1Z M32 33h7m-7 5h7"/></svg><div><h3 id="sg-foreign-title">Foreign Fund Flow</h3><p class="signal-subtitle">ต่างชาติในหุ้น / พันธบัตรไทย</p></div></div>
+        <div class="signal-reading" id="sg-foreign-value">รอยอดหุ้นและพันธบัตร</div>
+        <p class="signal-rule">เงินไหลออก → <strong>หนุน USD/THB ขึ้น</strong><br>เงินไหลเข้า → หนุน USD/THB ลง</p>
+        <details><summary>ข้อมูลต่างชาติ / จำลอง (ล้านบาท)</summary><div class="signal-fields">
+          <label>โหมด Fund Flow<select id="sg-foreign-mode"><option value="auto">อัตโนมัติ · ตลาดที่เข้าถึงข้อมูลได้</option><option value="manual">กรอกจำลองทั้งสองตลาด</option></select></label>
+          <label>ซื้อสุทธิหุ้น (+ซื้อ / −ขาย)<input id="sg-stock-net" type="number" step="0.01" placeholder="ไม่ทราบให้เว้นว่าง"></label>
+          <label>ทุนพันธบัตรสุทธิ (หักไถ่ถอน; +เข้า / −ออก)<input id="sg-bond-net" type="number" step="0.01" placeholder="0 = ไม่มีรายการ"></label>
+          <label>วันที่ยอดต่างชาติ<input id="sg-foreign-date" type="date"></label>
+        </div></details>
+        <div class="signal-impact" id="sg-foreign-impact">— รอข้อมูล ไม่สรุปทิศทาง</div>
+        <p class="signal-weight" id="sg-foreign-weight">รอคำนวณน้ำหนัก</p>
+        <p class="signal-source" id="sg-foreign-source">อัตโนมัติ · รอข้อมูลตลาดที่เข้าถึงได้</p>
+        <p class="signal-source">ยอดซื้อขายสุทธิเป็นข้อมูลประกอบ ไม่ได้ยืนยันว่าแลกเงินเข้าออกประเทศแล้ว</p>
+        <div class="signal-links"><a href="https://www.set.or.th/en/home" target="_blank" rel="noopener">SET</a><a href="https://www.thaibma.or.th/" target="_blank" rel="noopener">ThaiBMA</a></div>
+      </article>
+      <article class="signal-card" aria-labelledby="sg-account-title">
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 4h30v22M7 4v38h18M13 15l7-5 7 5m-14 6h17M13 28h10m-10 6h7"/><circle cx="35" cy="35" r="10"/><path d="M30 35h10"/></svg><div><h3 id="sg-account-title">Current Account</h3><p class="signal-subtitle">ดุลบัญชีเดินสะพัดไทย · รายเดือน</p></div></div>
+        <div class="signal-reading" id="sg-account-value">รอดุลบัญชีเดินสะพัด</div>
+        <p class="signal-rule">ขาดดุล → <strong>หนุน USD/THB ขึ้น</strong><br>เกินดุล → หนุน USD/THB ลง</p>
+        <details><summary>ข้อมูลอัตโนมัติ / จำลองดุลบัญชี</summary><div class="signal-fields">
+          <label>โหมด Current Account<select id="sg-account-mode"><option value="auto">อัตโนมัติ · ธปท. รายเดือน</option><option value="manual">กรอกจำลองเอง</option></select></label>
+          <label>ดุลสุทธิ (ล้าน USD; +เกินดุล / −ขาดดุล)<input id="sg-ca-value" type="number" step="0.01" placeholder="ไม่ทราบให้เว้นว่าง"></label>
+          <label>งวดข้อมูล Current Account<input id="sg-ca-month" type="month"></label>
+        </div></details>
+        <div class="signal-impact" id="sg-account-impact">— รอข้อมูล ไม่สรุปทิศทาง</div>
+        <p class="signal-weight" id="sg-account-weight">รอคำนวณน้ำหนัก</p>
+        <p class="signal-source" id="sg-account-source">อัตโนมัติ · ใช้ดูภาพเศรษฐกิจรายเดือน</p>
+        <div class="signal-links"><a href="https://app.bot.or.th/BTWS_STAT/statistics/BOTWEBSTAT.aspx?language=eng&amp;reportID=1028" target="_blank" rel="noopener">สถิติภาคต่างประเทศ · ธปท.</a></div>
+      </article>
+    </div>
+    <p class="signal-footnote">ลูกศรเป็นแรงกดดันตามสมมติฐาน คะแนนรวมปรับน้ำหนักตามระยะ ขนาดสัญญาณ ความสด และความครบของข้อมูล · ความสัมพันธ์เปลี่ยนได้ คะแนนยังไม่ได้สอบเทียบด้วยผลตอบแทนจริง</p>
+  </section>
+
   <div class="tiles">
     <div class="tile" id="tileDXY">
-      <div class="name">DXY (synthetic จาก FX API)</div>
+      <div class="name">DXY (synthetic จาก ECB รายวัน)</div>
       <div class="val" id="dxyVal">—</div>
       <div class="chg" id="dxyChg">Δ —</div>
       <div class="row"><span class="label">Δ% override</span><input type="number" id="dxyPctOv" step="0.01" placeholder="auto"></div>
@@ -181,7 +286,8 @@
       <div class="contrib" id="oilContrib">ยังไม่นับน้ำมันเข้าคะแนน</div>
       <div class="stamp" id="oilStamp" role="status">กำลังโหลดข้อมูล Brent…</div>
       <div class="note">สมมติฐานต้นทุนนำเข้า: น้ำมันขึ้นกดดันบาท / ลงหนุนบาท · ผลจริงขึ้นกับปัจจัยอื่นด้วย</div>
-      <div class="links"><a class="chip" href="https://fred.stlouisfed.org/series/DCOILBRENTEU" target="_blank" rel="noopener">EIA / FRED</a>
+      <div class="links"><a class="chip" href="https://www.eia.gov/dnav/pet/hist/RBRTED.htm" target="_blank" rel="noopener">EIA</a>
+      <a class="chip" href="https://fred.stlouisfed.org/series/DCOILBRENTEU" target="_blank" rel="noopener">FRED</a>
       <a class="chip" href="https://www.bot.or.th/th/news-and-media/news/news-20260602-2.html" target="_blank" rel="noopener">พลังงานกับดุลการค้า · ธปท.</a></div>
     </div>
     <div class="tile" id="tileSPR">
@@ -282,7 +388,8 @@
 
 
   <div class="card">
-    <h2>Score Breakdown</h2>
+    <h2>แบบจำลองเสริม · น้ำหนักคงที่ (แยกจากคะแนนรวมด้านบน)</h2>
+    <div class="score-big" id="scoreBig">—</div><div id="scoreVerdict">—</div><div class="spot-meta" id="fairBias">FairBias จำลอง: —</div>
     <div class="gauge"><div class="pin" id="gaugePin" style="left:50%"></div></div>
     <div class="gauge-scale"><span>−100 (THB อ่อนแรง)</span><span>0</span><span>+100 (THB แข็งแรง)</span></div>
     <div class="bars" id="contribBars" style="margin-top:10px"></div>
@@ -411,14 +518,16 @@
   <div style="text-align:right;margin-top:4px"><button id="refresh">รีเฟรชข้อมูล</button></div>
 
   <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · spot/DXY: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
-    · DXY/Gold Δ% เทียบ snapshot ต่างวัน · Brent: EIA ผ่าน FRED เทียบสองวันข้อมูลล่าสุด ไม่ใช่ราคาเรียลไทม์ · แก้ไขล่าสุด 2026-10-11</footer>
+    · DXY: ECB ผ่าน Frankfurter · US2Y: U.S. Treasury · ทองและ Current Account: ธปท. · ทุนพันธบัตร: ThaiBMA · Brent: EIA / FRED · ข้อมูลมีความล่าช้าตามการเผยแพร่ · แก้ไขล่าสุด 2026-10-11</footer>
 </div>
 
 <script src="./oil-factor.js"></script>
+<script src="./signal-score.js"></script>
+<script src="./signal-board.js"></script>
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
-  var state = { spot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, pmiMom:{} };
+  var state = { spot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, us2Quote:null, dxyQuote:null, goldTradeQuote:null, foreignFlowQuote:null, currentAccountQuote:null, pmiMom:{} };
 
   // ---- persistence -------------------------------------------------------
   var SAVED = ["spotOverride","dxyPctOv","xauPctOv","us10","th10","bdiLevel","bdiPct",
@@ -497,8 +606,9 @@
       stale:"ข้อมูล Brent เกิน " + UsdOil.maxAgeDays + " วัน — งดใช้ในคะแนน",
       date_gap:"วันอ้างอิงห่างเกิน 7 วัน — งดใช้ในคะแนน"
     };
+    var source = state.oilQuote && state.oilQuote.source === "EIA" ? "EIA" : "EIA / FRED";
     var stamp = oil.manual ? "จำลองจากราคาที่กรอกเอง · ไม่ใช่ราคาตลาดอัตโนมัติ" :
-      (oil.date && oil.previousDate ? "EIA / FRED · วันที่ราคา " + oil.date + " เทียบ " + oil.previousDate + " · ข้อมูลรายวันมีความล่าช้า" : "");
+      (oil.date && oil.previousDate ? source + " · วันที่ราคา " + oil.date + " เทียบ " + oil.previousDate + " · ข้อมูลรายวันมีความล่าช้า" : "");
     $("oilStamp").textContent = stamp + (oil.reason ? (stamp ? " · " : "") + messages[oil.reason] : "");
     $("oilStamp").className = oil.reason ? "stamp err" : "stamp";
     $("oilChg").textContent = oil.available ? "Δ " + (oil.pct >= 0 ? "+" : "") + oil.pct.toFixed(2) + "% เทียบราคาอ้างอิง" : "Δ —";
@@ -514,13 +624,18 @@
     var S = spotInUse();
     $("spot").textContent = fmt(S, 3);
 
-    var dxyPct = num("dxyPctOv"); if (dxyPct === null) dxyPct = state.dxyPctAuto;
+    var dq = UsdSignals.assessYield('auto',state.dxyQuote);
+    var dxyPct = num("dxyPctOv");
+    if (dxyPct === null) dxyPct = dq.available && dq.last > 0 && dq.previous > 0 ? (dq.last/dq.previous-1)*100 : null;
     var xauPct = num("xauPctOv"); if (xauPct === null) xauPct = state.xauPctAuto;
     var us10 = num("us10"), th10 = num("th10");
     var spread = (us10 !== null && th10 !== null) ? us10 - th10 : null;
     var bdiPct = num("bdiPct");
     var oil = oilAssessment();
     renderOil(oil);
+    UsdSignals.updateMarket({dxyChange:dxyPct, dxyManual:num("dxyPctOv") !== null,
+      dxy:state.dxyQuote, oil:oil, us2:state.us2Quote, goldTrade:state.goldTradeQuote,
+      foreignFlow:state.foreignFlowQuote, currentAccount:state.currentAccountQuote});
 
     var vDXY = num("vDXY") || 0.35, vXAU = num("vXAU") || 1.0, vBDI = num("vBDI") || 2.0;
     var sprN = num("sprNeutral"); if (sprN === null) sprN = 1.50;
@@ -605,7 +720,7 @@
     // tiles
     updateTile("tileDXY", "dxyChg", "dxyContrib", dxyPct, sDXY, w.DXY, "%");
     updateTile("tileXAU", "xauChg", "xauContrib", xauPct, sXAU, w.XAU, "%");
-    $("dxyVal").textContent = fmt(state.dxy, 3);
+    $("dxyVal").textContent = dq.available ? fmt(dq.last, 3) : '—';
     $("xauVal").textContent = state.xau ? "$" + state.xau.toFixed(2) : "—";
     $("sprChg").textContent = spread === null ? "Spread —" : "Spread " + (spread >= 0 ? "+" : "") + spread.toFixed(2) + "%";
     $("sprContrib").textContent = "s=" + fmt(sSPR) + " · w=" + w.SPR + " · contrib=" + fmt(sSPR*w.SPR);
@@ -729,6 +844,12 @@
     $("reserveFullIMN").textContent = (fullIM * n).toLocaleString("en-US", {maximumFractionDigits:0}) + " THB (" + n + " สัญญา)";
   }
 
+  document.addEventListener('usd-signals-auto',function(){
+    $('dxyPctOv').value='';$('oilMode').value='auto';
+    try{localStorage.removeItem('usdthb_dxyPctOv');localStorage.setItem('usdthb_oilMode','auto');}catch(_){}
+    recalc();
+  });
+
   // ---- data fetching ------------------------------------------------------
   var DXY_W = {EUR:-0.576, JPY:0.136, GBP:-0.119, CAD:0.091, SEK:0.042, CHF:0.036};
   function syntheticDXY(rates){
@@ -832,6 +953,11 @@
       .then(function(result){
         var j = result.data;
         state.oilQuote = j.brent || null;
+        state.us2Quote = j.us2y || null;
+        state.dxyQuote = j.dxy_daily || null;
+        state.goldTradeQuote = j.gold_trade || null;
+        state.foreignFlowQuote = j.foreign_flow || null;
+        state.currentAccountQuote = j.current_account || null;
         var ageHours = Math.max(0, (Date.now() - result.updatedAt.getTime()) / 3600000);
         var when = result.updatedAt.toLocaleString("th-TH", {timeZone:"Asia/Bangkok"});
         var status = $("marketDataStatus");
@@ -898,6 +1024,8 @@
       })
       .catch(function(error){
         state.oilQuote = null;
+        state.us2Quote = null;
+        state.dxyQuote = state.goldTradeQuote = state.foreignFlowQuote = state.currentAccountQuote = null;
         $("marketDataStatus").textContent = "ดึงข้อมูลตลาดไม่สำเร็จ: " + error.message;
         $("marketDataStatus").className = "note err";
         ["us10","th10","bdiLevel","bdiPct","pmiCN","pmiTH","pmiIN","pmiUS","iTH","iUS","cpiTH1","cpiUS1"].forEach(function(id){
