@@ -1,8 +1,9 @@
-"""Daily Brent spot observations from FRED or EIA (USD/barrel)."""
+"""Brent spot observations and delayed intraday futures quotes (USD/barrel)."""
 from __future__ import annotations
 
 import csv
 import io
+import json
 import math
 import re
 from datetime import date, datetime, timedelta, timezone
@@ -13,6 +14,8 @@ from urllib.request import Request, urlopen
 SERIES = "DCOILBRENTEU"
 SOURCE_URL = "https://fred.stlouisfed.org/series/" + SERIES
 EIA_URL = "https://www.eia.gov/dnav/pet/hist/RBRTED.htm"
+YAHOO_BRENT_URL = "https://query1.finance.yahoo.com/v8/finance/chart/BZ=F?range=5d&interval=1d"
+YAHOO_BRENT_PAGE = "https://finance.yahoo.com/quote/BZ%3DF/"
 
 
 def parse_brent_csv(text: str, today: date | None = None) -> dict:
@@ -119,3 +122,73 @@ def fetch_brent() -> dict:
         except (OSError, ValueError) as error:
             errors.append(f"{name}: {type(error).__name__}: {error}")
     raise ValueError("; ".join(errors))
+
+
+def parse_brent_futures(payload: dict | str, now: datetime | None = None) -> dict:
+    """Parse Yahoo Finance's BZ=F chart response into a quote.
+
+    Yahoo's chart endpoint exposes the latest delayed Brent futures quote while
+    EIA/FRED publishes a daily physical spot observation. Keep the two feeds
+    separate so the dashboard can show the TradingView-like futures price
+    without relabelling the EIA spot series.
+    """
+    if isinstance(payload, str):
+        payload = json.loads(payload)
+    result = (((payload or {}).get("chart") or {}).get("result") or [None])[0]
+    if not result:
+        raise ValueError("Yahoo Brent futures response has no result")
+    meta = result.get("meta") or {}
+    last = meta.get("regularMarketPrice")
+    previous = meta.get("previousClose")
+    market_time = meta.get("regularMarketTime")
+    timestamps = result.get("timestamp") or []
+    closes = (((result.get("indicators") or {}).get("quote") or [{}])[0]).get("close") or []
+    valid = [(int(ts), float(close)) for ts, close in zip(timestamps, closes)
+             if ts is not None and close is not None and math.isfinite(float(close)) and float(close) > 0]
+    if last is None and valid:
+        market_time, last = valid[-1]
+    # For an intraday regularMarketPrice, the penultimate daily close is the
+    # correct comparison. Yahoo's chartPreviousClose can refer to an older
+    # contract session around a weekend/roll, so use it only as a fallback.
+    if len(valid) >= 2:
+        previous = valid[-2][1]
+    elif previous is None:
+        previous = meta.get("chartPreviousClose")
+    try:
+        last, previous = float(last), float(previous)
+    except (TypeError, ValueError):
+        raise ValueError("Yahoo Brent futures response has no two valid prices")
+    if not (math.isfinite(last) and math.isfinite(previous) and last > 0 and previous > 0):
+        raise ValueError("Yahoo Brent futures prices are invalid")
+    if market_time is None:
+        market_time = valid[-1][0] if valid else None
+    if market_time is None:
+        raise ValueError("Yahoo Brent futures response has no observation time")
+    observed = datetime.fromtimestamp(int(market_time), timezone.utc)
+    current = now or datetime.now(timezone.utc)
+    if observed > current + timedelta(days=1):
+        raise ValueError("Yahoo Brent futures observation is in the future")
+    previous_time = valid[-2][0] if len(valid) >= 2 else None
+    return {
+        "last": last,
+        "previous": previous,
+        "pct": (last / previous - 1) * 100,
+        "date": observed.date().isoformat(),
+        "previous_date": datetime.fromtimestamp(previous_time, timezone.utc).date().isoformat() if previous_time else None,
+        "timestamp": observed.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "source": "Yahoo Finance",
+        "series": "BZ=F",
+        "market_type": "futures",
+        "unit": "USD/barrel",
+        "url": YAHOO_BRENT_PAGE,
+        "delayed": True,
+    }
+
+
+def fetch_brent_futures() -> dict:
+    request = Request(YAHOO_BRENT_URL, headers={"User-Agent": "deepsleep456-market-data/1.0"})
+    with urlopen(request, timeout=30) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    quote = parse_brent_futures(payload)
+    quote["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return quote

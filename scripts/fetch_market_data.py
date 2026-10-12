@@ -27,7 +27,7 @@ from pathlib import Path
 import requests
 import yfinance as yf
 from bs4 import BeautifulSoup
-from oil_data import fetch_brent
+from oil_data import fetch_brent, fetch_brent_futures
 from signal_data import fetch_us2
 from gold_flow_data import fetch_gold_trade
 from auto_signal_data import fetch_dxy, fetch_current_account, fetch_foreign_flow
@@ -163,6 +163,13 @@ def main():
     except Exception as e:
         out["brent"] = None
         print(f"[FAIL -> null] brent: {type(e).__name__}: {e}")
+
+    try:
+        out["brent_futures"] = fetch_brent_futures()
+        print(f"[ok] brent_futures: {out['brent_futures']}")
+    except Exception as e:
+        out["brent_futures"] = None
+        print(f"[FAIL -> null] brent_futures: {type(e).__name__}: {e}")
 
     try:
         out["us2y"] = fetch_us2()

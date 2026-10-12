@@ -24,7 +24,9 @@
     var previous = numeric(manual ? input.previous : quote.previous);
     var weight = numeric(input.weight), scale = numeric(input.scale);
     var result = {last:last, previous:previous, pct:null, signal:0, contribution:0,
-      available:false, reason:"", manual:manual, date:quote.date, previousDate:quote.previous_date};
+      available:false, reason:"", manual:manual, date:quote.date, previousDate:quote.previous_date,
+      source:quote.source, market_type:quote.market_type, series:quote.series,
+      timestamp:quote.timestamp, delayed:quote.delayed};
     function fail(reason){ result.reason = reason; result.signal = 0; result.contribution = 0; return result; }
     if (last === null || previous === null) return fail(manual ? "missing_manual" : "missing_auto");
     if (last <= 0 || previous <= 0) return fail("invalid_price");

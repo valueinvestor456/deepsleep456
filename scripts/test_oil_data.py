@@ -1,7 +1,7 @@
 import unittest
-from datetime import date
+from datetime import date, datetime, timezone
 from unittest.mock import patch, MagicMock
-from oil_data import parse_brent_csv, parse_brent_eia, fetch_brent
+from oil_data import parse_brent_csv, parse_brent_eia, parse_brent_futures, fetch_brent, fetch_brent_futures
 
 
 class BrentTests(unittest.TestCase):
@@ -63,6 +63,30 @@ class BrentTests(unittest.TestCase):
         self.assertEqual(quote["source"], "EIA")
         self.assertIn("fetched_at", quote)
         self.assertEqual(request.call_count, 2)
+
+    def test_yahoo_futures_quote_keeps_market_identity_and_timestamp(self):
+        payload = {
+            "chart": {"result": [{
+                "meta": {"regularMarketPrice": 107.25, "previousClose": 106.5,
+                         "regularMarketTime": 1791417600},
+                "timestamp": [1791331200, 1791417600],
+                "indicators": {"quote": [{"close": [106.5, 107.25]}]},
+            }]}
+        }
+        quote = parse_brent_futures(payload, now=datetime(2026, 10, 10, tzinfo=timezone.utc))
+        self.assertEqual(quote["series"], "BZ=F")
+        self.assertEqual(quote["market_type"], "futures")
+        self.assertEqual(quote["date"], "2026-10-08")
+        self.assertEqual(quote["previous_date"], "2026-10-07")
+        self.assertAlmostEqual(quote["pct"], (107.25 / 106.5 - 1) * 100)
+
+    def test_yahoo_futures_network_quote_is_timestamped(self):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'{"chart":{"result":[{"meta":{"regularMarketPrice":107,"previousClose":106,"regularMarketTime":1791417600},"timestamp":[1791331200,1791417600],"indicators":{"quote":[{"close":[106,107]}]}}]}}'
+        with patch("oil_data.urlopen", return_value=response):
+            quote = fetch_brent_futures()
+        self.assertEqual(quote["series"], "BZ=F")
+        self.assertIn("fetched_at", quote)
 
 
 if __name__ == "__main__":

@@ -670,9 +670,13 @@
       stale:"ข้อมูล Brent เกิน " + UsdOil.maxAgeDays + " วัน — งดใช้ในคะแนน",
       date_gap:"วันอ้างอิงห่างเกิน 7 วัน — งดใช้ในคะแนน"
     };
-    var source = state.oilQuote && state.oilQuote.source === "EIA" ? "EIA" : "EIA / FRED";
+    var quote = state.oilQuote || {};
+    var eia = state.eiaBrentQuote || {};
+    var futures = quote.market_type === "futures";
+    var source = futures ? "Yahoo Finance · BZ=F" : (quote.source === "EIA" ? "EIA" : "EIA / FRED");
     var stamp = oil.manual ? "จำลองจากราคาที่กรอกเอง · ไม่ใช่ราคาตลาดอัตโนมัติ" :
-      (oil.date && oil.previousDate ? source + " · Brent Spot FOB รายวัน ณ " + oil.date + " เทียบ " + oil.previousDate + " · ไม่ใช่ราคา Futures / CFD ปัจจุบัน" : "");
+      (oil.date && oil.previousDate ? (futures ? source + " · Brent Futures ณ " + (quote.timestamp || oil.date) + " · ราคาดีเลย์/อาจหยุดเมื่อปิดตลาด" : source + " · Brent Spot FOB รายวัน ณ " + oil.date + " เทียบ " + oil.previousDate + " · ไม่ใช่ราคา Futures / CFD ปัจจุบัน") : "");
+    if (futures && eia.last && eia.date) stamp += " · EIA Spot อ้างอิง $" + Number(eia.last).toFixed(2) + " ณ " + eia.date;
     $("oilStamp").textContent = stamp + (oil.reason ? (stamp ? " · " : "") + messages[oil.reason] : "");
     $("oilStamp").className = oil.reason ? "stamp err" : "stamp";
     $("oilChg").textContent = oil.available ? "Δ " + (oil.pct >= 0 ? "+" : "") + oil.pct.toFixed(2) + "% เทียบราคาอ้างอิง" : "Δ —";
@@ -1022,7 +1026,11 @@
     return loadSource(0)
       .then(function(result){
         var j = result.data;
-        state.oilQuote = j.brent || null;
+        // Use delayed Brent futures for the live market signal (TradingView's
+        // BZ=F-style price). Keep EIA Brent spot in the payload as a separate
+        // daily reference rather than mixing the two instruments.
+        state.oilQuote = j.brent_futures || j.brent || null;
+        state.eiaBrentQuote = j.brent || null;
         state.us2Quote = j.us2y || null;
         state.dxyQuote = j.dxy_daily || null;
         state.goldTradeQuote = j.gold_trade || null;
