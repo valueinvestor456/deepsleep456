@@ -41,6 +41,11 @@
   .header-card{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px;}
   .spot-big{font-size:32px;font-weight:700;letter-spacing:-0.5px;}
   .spot-meta{color:var(--text-muted);font-size:11px;}
+  .spot-live{border-top:3px solid #078b99;}
+  .spot-live .tradingview-widget-container{min-height:126px;width:100%;}
+  .spot-live .tradingview-widget-copyright{font-size:11px;margin-top:6px;}
+  .spot-live p{font-size:12px;color:var(--text-secondary);margin:8px 0 0;}
+  .spot-live h2{margin-bottom:8px;}
   .score-big{font-size:28px;font-weight:800;}
   .score-label{font-size:12px;color:var(--text-secondary);}
   .verdict-text{font-size:13px;font-weight:600;}
@@ -127,13 +132,34 @@
 
   <p><a class="chip" href="#trade-planner">เปิด Calculator · Long / Short · Excess Equity</a></p>
 
+  <section class="card spot-live" id="live-spot" aria-labelledby="live-spot-title">
+    <h2 id="live-spot-title">USD/THB Spot · TradingView</h2>
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/USDTHB/?exchange=FX_IDC" rel="noopener noreferrer" target="_blank">USD/THB · FX_IDC บน TradingView</a></div>
+      <script>
+      (function(){
+        var widget = document.createElement('script');
+        widget.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
+        widget.async = true;
+        widget.textContent = JSON.stringify({symbol:'FX_IDC:USDTHB',width:'100%',isTransparent:true,
+          colorTheme:window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',locale:'en'});
+        document.currentScript.parentElement.appendChild(widget);
+      })();
+      </script>
+    </div>
+    <p>ราคาอัปเดตตามฟีด TradingView เมื่อมีราคาใหม่ · ดูสถานะตลาดและความล่าช้าในกรอบราคา · <a href="https://www.tradingview.com/symbols/USDTHB/?exchange=FX_IDC" target="_blank" rel="noopener noreferrer">เปิดราคาเมื่อกรอบไม่แสดง</a></p>
+    <p>กรอบนี้ใช้ดูราคาตลาด ส่วน CIP ด้านล่างใช้อัตราอ้างอิงรายวันหรือราคาที่กรอกเอง · Calculator ใช้ราคาสัญญา Futures ที่คุณระบุ</p>
+  </section>
+
   <div class="card header-card">
     <div>
-      <div class="score-label">USD/THB Spot (FX API)</div>
+      <div class="score-label" id="spotLabel">USD/THB อ้างอิงรายวัน · ใช้คำนวณ CIP</div>
       <div class="spot-big" id="spot">—</div>
       <div class="spot-meta" id="spotMeta">กำลังโหลด…</div>
+      <div class="spot-meta">แหล่งอ้างอิงอัปเดตวันละครั้ง · <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Rates By Exchange Rate API</a></div>
       <div class="spot-meta" id="trendEMA50">Trend (EMA50): —</div>
-      <div class="row" style="margin-top:4px"><span class="label">แก้ spot เอง</span>
+      <div class="row" style="margin-top:4px"><label class="label" for="spotOverride">Spot จำลองสำหรับ CIP</label>
         <input type="number" id="spotOverride" step="0.001" placeholder="auto"></div>
     </div>
     <div style="text-align:right">
@@ -517,8 +543,8 @@
 
   <div style="text-align:right;margin-top:4px"><button id="refresh">รีเฟรชข้อมูล</button></div>
 
-  <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · spot: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
-    · DXY: ECB ผ่าน Frankfurter · US2Y: U.S. Treasury · ทองและ Current Account: ธปท. · ทุนพันธบัตร: ThaiBMA · Brent: EIA / FRED · ข้อมูลมีความล่าช้าตามการเผยแพร่ · แก้ไขล่าสุด 2026-10-11</footer>
+  <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · กรอบราคาตลาด: TradingView (FX_IDC:USDTHB) · อัตราอ้างอิงรายวันสำหรับ CIP: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
+    · DXY: ECB ผ่าน Frankfurter · US2Y: U.S. Treasury · ทองและ Current Account: ธปท. · ทุนพันธบัตร: ThaiBMA · Brent: EIA / FRED · ข้อมูลมีความล่าช้าตามการเผยแพร่ · แก้ไขล่าสุด 2026-10-12</footer>
 </div>
 
 <script src="./oil-factor.js"></script>
@@ -623,6 +649,7 @@
   function recalc(){
     var S = spotInUse();
     $("spot").textContent = fmt(S, 3);
+    $("spotLabel").textContent = num("spotOverride") > 0 ? "USD/THB จำลองจากค่าที่กรอก · ใช้คำนวณ CIP" : "USD/THB อ้างอิงรายวัน · ใช้คำนวณ CIP";
 
     var dq = UsdSignals.assessYield('auto',state.dxyQuote);
     var dxyPct = num("dxyPctOv");
@@ -885,7 +912,7 @@
           state.dxy = syntheticDXY(j.rates);
           state.dxyPctAuto = snapshotDelta("dxy", state.dxy);
           snapshotDelta("spot", state.spot);
-          $("spotMeta").textContent = "open.er-api.com · " + (j.time_last_update_utc || "") + " · ดึงล่าสุด " + new Date().toLocaleTimeString("th-TH");
+          $("spotMeta").textContent = "เวลาข้อมูลต้นทาง: " + (j.time_last_update_utc ? new Date(j.time_last_update_utc).toLocaleString("th-TH", {timeZone:"Asia/Bangkok"}) + " (ไทย)" : "ไม่ระบุ") + " · ตรวจฟีดล่าสุด " + new Date().toLocaleTimeString("th-TH", {timeZone:"Asia/Bangkok"});
         }
         recalc();
       })
@@ -895,7 +922,7 @@
           .then(function(j){
             if (j && j.rates && j.rates.THB){
               state.spot = j.rates.THB;
-              $("spotMeta").textContent = "frankfurter.dev (ECB) · " + (j.date || "") + " · DXY ใช้ไม่ได้จาก fallback นี้";
+              $("spotMeta").textContent = "ECB / Frankfurter · อัตราอ้างอิงรายวัน ณ " + (j.date || "ไม่ระบุวันที่") + " · DXY ใช้ไม่ได้จาก fallback นี้";
             }
             recalc();
           })
