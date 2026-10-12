@@ -74,7 +74,7 @@
     var body=el('sg-weights');body.replaceChildren();
     result.rows.forEach(function(r){
       var tr=dom.createElement('tr');
-      [r.label,format(r.base,0)+'%',(r.shock>1?'×'+format(r.shock,2):'×1.00'),r.available?format(r.freshness*100,0)+'%':'—',format(r.quality*100,0)+'%',format(r.effectiveWeight,1)+'%',r.available?signed(r.contribution,1):'—'].forEach(function(value){var td=dom.createElement('td');td.textContent=value;tr.appendChild(td);});
+      [r.label,r.manual?'จำลอง':r.period||'—',format(r.base,0)+'%',(r.shock>1?'×'+format(r.shock,2):'×1.00'),r.available?format(r.freshness*100,0)+'%':'—',format(r.quality*100,0)+'%',format(r.effectiveWeight,1)+'%',r.available?signed(r.contribution,1):'—'].forEach(function(value){var td=dom.createElement('td');td.textContent=value;tr.appendChild(td);});
       body.appendChild(tr);
       el('sg-'+r.key+'-weight').textContent=r.available?'น้ำหนักใช้จริง '+format(r.effectiveWeight,1)+'% · ต่อคะแนนรวม '+signed(r.contribution,1):'ยังไม่นำมาคำนวณ · ข้อมูลไม่ครบหรือเก่าเกินเกณฑ์';
     });
@@ -86,7 +86,10 @@
     show('dxy',dxy,dxy === null ? 'Δ รอข้อมูล' : (market.dxyManual?'Δ ':format(da.last,2)+' · ')+signed(dxy,2)+'%',
       market.dxyManual ? 'จำลองจาก Δ% ที่กรอก' : 'Synthetic DXY · ECB ผ่าน Frankfurter · '+(dq.date?dq.date+' เทียบ '+dq.previous_date:'รอข้อมูลรายวัน')+' · ไม่ใช่ราคา ICE เรียลไทม์');
     show('oil',oil.available ? oil.pct : null,oil.available ? '$'+format(oil.last,2)+' · '+signed(oil.pct,2)+'%' : 'รอราคา Brent',
-      oil.manual ? 'กรอกจำลองเอง · Brent USD/บาร์เรล' : 'EIA / FRED · '+(oil.date ? oil.date+' เทียบ '+oil.previousDate : 'ยังไม่มีข้อมูล')+(oil.available ? ' · มีความล่าช้า' : ' · งดสรุปทิศทาง'));
+      oil.manual ? 'กรอกจำลองเอง · Brent USD/บาร์เรล' : 'EIA / FRED · เปลี่ยนแปลงระหว่าง '+(oil.date ? oil.previousDate+' → '+oil.date : 'วันที่ยังไม่ทราบ')+' · ใช้ช่วงนี้คำนวณคะแนน'+(oil.available ? '' : ' · งดสรุปทิศทาง'));
+    el('sg-oil-title').textContent=oil.manual?'Brent · จำลอง':'Brent Spot · EIA';
+    el('sg-oil-date').textContent=oil.manual?'ราคาที่กรอกจำลองเอง':oil.date?'ราคา ณ '+oil.date+' · '+(Number.isFinite(oil.ageDays)?Math.floor(oil.ageDays)+' วันก่อน':'ข้อมูลรายวัน'):'ราคาอ้างอิงรายวัน · ยังไม่มีข้อมูล';
+    el('sg-oil-context').textContent=oil.manual?'ใช้ราคาปัจจุบันและราคาอ้างอิงของสินค้าชนิดเดียวกันและแหล่งเดียวกัน':'Europe Brent Spot FOB · ไม่ใช่ราคา Brent Futures / CFD ที่ซื้อขายขณะนี้ใน TradingView';
     var mode = el('sg-us2-mode').value, quote = market.us2 || {};
     var yields = assessYield(mode,quote,el('sg-us2-last').value,el('sg-us2-prev').value);
     el('sg-us2-last').readOnly = el('sg-us2-prev').readOnly = mode !== 'manual';

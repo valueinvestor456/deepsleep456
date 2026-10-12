@@ -46,6 +46,8 @@
   .spot-live .tradingview-widget-copyright{font-size:11px;margin-top:6px;}
   .spot-live p{font-size:12px;color:var(--text-secondary);margin:8px 0 0;}
   .spot-live h2{margin-bottom:8px;}
+  .spot-live-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0;}
+  .spot-live-actions button,#spotReset{font-size:12px;padding:6px 10px;}
   .score-big{font-size:28px;font-weight:800;}
   .score-label{font-size:12px;color:var(--text-secondary);}
   .verdict-text{font-size:13px;font-weight:600;}
@@ -134,33 +136,55 @@
 
   <section class="card spot-live" id="live-spot" aria-labelledby="live-spot-title">
     <h2 id="live-spot-title">USD/THB Spot · TradingView</h2>
-    <div class="tradingview-widget-container">
-      <div class="tradingview-widget-container__widget"></div>
-      <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/symbols/USDTHB/?exchange=FX_IDC" rel="noopener noreferrer" target="_blank">USD/THB · FX_IDC บน TradingView</a></div>
-      <script>
-      (function(){
-        var widget = document.createElement('script');
-        widget.src = 'https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
-        widget.async = true;
-        widget.textContent = JSON.stringify({symbol:'FX_IDC:USDTHB',width:'100%',isTransparent:true,
-          colorTheme:window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',locale:'en'});
-        document.currentScript.parentElement.appendChild(widget);
-      })();
-      </script>
-    </div>
-    <p>ราคาอัปเดตตามฟีด TradingView เมื่อมีราคาใหม่ · ดูสถานะตลาดและความล่าช้าในกรอบราคา · <a href="https://www.tradingview.com/symbols/USDTHB/?exchange=FX_IDC" target="_blank" rel="noopener noreferrer">เปิดราคาเมื่อกรอบไม่แสดง</a></p>
+    <div id="spotWidgetHost"></div>
+    <div class="spot-live-actions"><button id="spotWidgetRetry" type="button">โหลดกรอบราคาใหม่</button><a href="https://www.tradingview.com/symbols/USDTHB/?exchange=FX_IDC" target="_blank" rel="noopener noreferrer">เปิด USD/THB ใน TradingView</a></div>
+    <p id="spotWidgetStatus" role="status" aria-live="polite">กำลังขอกรอบราคาจาก TradingView…</p>
+    <p>ราคาอัปเดตตามฟีด TradingView เมื่อมีราคาใหม่ · ดูสถานะตลาดและความล่าช้าในกรอบราคา</p>
     <p>กรอบนี้ใช้ดูราคาตลาด ส่วน CIP ด้านล่างใช้อัตราอ้างอิงรายวันหรือราคาที่กรอกเอง · Calculator ใช้ราคาสัญญา Futures ที่คุณระบุ</p>
   </section>
+  <script>
+  (function(){
+    var host=document.getElementById('spotWidgetHost'), retry=document.getElementById('spotWidgetRetry');
+    var status=document.getElementById('spotWidgetStatus'), attempt=0, timer;
+    function loadQuote(){
+      var current=++attempt;
+      clearTimeout(timer);
+      retry.disabled=true;
+      status.textContent='กำลังขอกรอบราคาจาก TradingView…';
+      host.replaceChildren();
+      var container=document.createElement('div');
+      container.className='tradingview-widget-container';
+      var target=document.createElement('div');
+      target.className='tradingview-widget-container__widget';
+      container.appendChild(target);
+      host.appendChild(container);
+      function message(text){if(current===attempt){status.textContent=text;retry.disabled=false;}}
+      var widget=document.createElement('script');
+      widget.src='https://s3.tradingview.com/external-embedding/embed-widget-single-quote.js';
+      widget.async=true;
+      widget.textContent=JSON.stringify({symbol:'FX_IDC:USDTHB',width:'100%',isTransparent:true,
+        colorTheme:window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light',locale:'en'});
+      widget.onerror=function(){clearTimeout(timer);message('โหลดกรอบ TradingView ไม่สำเร็จ · ลองโหลดใหม่ หรือเปิดราคาจากลิงก์ด้านบน');};
+      // Loading an iframe/script does not prove that a quote has arrived inside it.
+      widget.onload=function(){message('หากกรอบยังหมุนหรือไม่แสดงตัวเลข ให้กดโหลดกรอบราคาใหม่ หรือเปิด TradingView โดยตรง');};
+      timer=setTimeout(function(){message('หากยังไม่เห็นตัวเลขราคา ให้ลองโหลดกรอบใหม่ หรือเปิด TradingView โดยตรง');},15000);
+      container.appendChild(widget);
+    }
+    retry.addEventListener('click',loadQuote);
+    loadQuote();
+  })();
+  </script>
 
   <div class="card header-card">
     <div>
       <div class="score-label" id="spotLabel">USD/THB อ้างอิงรายวัน · ใช้คำนวณ CIP</div>
       <div class="spot-big" id="spot">—</div>
       <div class="spot-meta" id="spotMeta">กำลังโหลด…</div>
-      <div class="spot-meta">แหล่งอ้างอิงอัปเดตวันละครั้ง · <a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Rates By Exchange Rate API</a></div>
+      <div class="spot-meta" id="spotAttribution">แหล่งอ้างอิงรายวัน · <a id="spotSourceLink" href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Rates By Exchange Rate API</a></div>
       <div class="spot-meta" id="trendEMA50">Trend (EMA50): —</div>
       <div class="row" style="margin-top:4px"><label class="label" for="spotOverride">Spot จำลองสำหรับ CIP</label>
         <input type="number" id="spotOverride" step="0.001" placeholder="auto"></div>
+      <button type="button" id="spotReset" hidden>ล้างค่าจำลอง · ใช้อัตราอ้างอิงอัตโนมัติ</button>
     </div>
     <div style="text-align:right">
       <div class="score-label">คะแนนเงินบาทรวม · 6 ปัจจัย</div>
@@ -194,8 +218,9 @@
       <div class="signal-gauge"><span id="sg-score-pin" hidden></span></div>
       <div class="gauge-scale"><span>−100 · บาทอ่อน</span><span>0 · แรงหนุนผสม</span><span>+100 · บาทแข็ง</span></div>
       <p id="sg-drivers" class="signal-drivers">รอข้อมูลแต่ละปัจจัย</p>
+      <p class="signal-data-note">คะแนนใช้ข้อมูลรายวันและรายเดือนตามวันที่ในการ์ด พร้อมลดน้ำหนักข้อมูลเก่า · ไม่ได้คำนวณจากราคาในกรอบ TradingView</p>
       <details><summary>ดูน้ำหนัก ผลต่อคะแนน และวิธีคำนวณ</summary>
-        <div class="signal-table-scroll"><table class="signal-weight-table"><thead><tr><th>ปัจจัย</th><th>น้ำหนักตั้งต้น</th><th>ขนาดการเปลี่ยน</th><th>ความสด</th><th>ตัวคูณข้อมูล</th><th>น้ำหนักใช้จริง</th><th>คะแนน</th></tr></thead><tbody id="sg-weights"></tbody></table></div>
+        <div class="signal-table-scroll"><table class="signal-weight-table"><thead><tr><th>ปัจจัย</th><th>วันที่ / งวดข้อมูล</th><th>น้ำหนักตั้งต้น</th><th>ขนาดการเปลี่ยน</th><th>ความสด</th><th>ตัวคูณข้อมูล</th><th>น้ำหนักใช้จริง</th><th>คะแนน</th></tr></thead><tbody id="sg-weights"></tbody></table></div>
         <p class="signal-footnote">คะแนนบวก = หนุนบาทแข็ง · คะแนนลบ = หนุนบาทอ่อน · รวมผลแต่ละปัจจัยเป็น −100 ถึง +100; เมื่อ |คะแนน| ≥ 15 จึงแสดงทิศทาง ต้องมีข้อมูลอย่างน้อย 3 ปัจจัยและน้ำหนักใช้ได้ ≥ 50% จึงสรุป</p>
         <p class="signal-footnote">น้ำหนักตั้งต้น DXY/US2Y/Oil/Gold/Flow/CA: สั้น 35/25/15/5/15/5, กลาง 25/20/20/10/15/10, ยาว 15/15/20/10/15/25 · เป็นสมมติฐานปรับตามระยะวางแผน ไม่ใช่ค่าสัมประสิทธิ์ที่เรียนรู้จากตลาด</p>
         <p class="signal-footnote">ปรับขนาดแต่ละปัจจัยด้วยสเกลสมมติ: DXY 0.35%, US2Y 5 bp, Brent 2%, ส่งออกทองสุทธิ 25,000 ล้านบาท, Fund Flow 5,000 ล้านบาท, Current Account 2,000 ล้าน USD; ใช้ tanh จำกัดสัญญาณ เมื่อขนาดเกิน 1 เท่าสเกล เพิ่มตัวคูณน้ำหนักทีละ 0.5 ต่อสเกล ถึงสูงสุด 2 เท่า แล้วปรับน้ำหนักรวมให้ได้ 100%</p>
@@ -204,7 +229,7 @@
     </div>
     <div class="signal-grid">
       <article class="signal-card" aria-labelledby="sg-dxy-title">
-        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="17" cy="30" r="12"/><path d="M17 22v16m5-13c-2-4-10-3-10 1 0 5 10 3 10 8 0 4-8 5-10 1M28 24V12h-5L34 2l10 10h-5v18"/></svg><div><h3 id="sg-dxy-title">DXY Index</h3><p class="signal-subtitle">ความแข็งแกร่งของดอลลาร์โลก</p></div></div>
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="17" cy="30" r="12"/><path d="M17 22v16m5-13c-2-4-10-3-10 1 0 5 10 3 10 8 0 4-8 5-10 1M28 24V12h-5L34 2l10 10h-5v18"/></svg><div><h3 id="sg-dxy-title">DXY · ค่าประมาณ</h3><p class="signal-subtitle">คำนวณจากอัตรา ECB รายวัน</p></div></div>
         <div class="signal-reading" id="sg-dxy-value">Δ รอข้อมูล</div>
         <p class="signal-rule">ดัชนีขึ้น → <strong>หนุน USD/THB ขึ้น</strong><br>ดัชนีลง → หนุน USD/THB ลง</p>
         <div class="signal-impact" id="sg-dxy-impact">— รอข้อมูล ไม่สรุปทิศทาง</div>
@@ -213,7 +238,7 @@
         <div class="signal-links"><a href="#tileDXY">ดูราคา / กรอก Δ% จำลอง</a></div>
       </article>
       <article class="signal-card" aria-labelledby="sg-us2-title">
-        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 5v37h38M11 31l10-11 8 6 14-16M33 10h10v10"/></svg><div><h3 id="sg-us2-title">US 2Y Yield</h3><p class="signal-subtitle">ความคาดหวังอัตราดอกเบี้ยสหรัฐ</p></div></div>
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M5 5v37h38M11 31l10-11 8 6 14-16M33 10h10v10"/></svg><div><h3 id="sg-us2-title">US 2Y Yield</h3><p class="signal-subtitle">Treasury Par Yield · รายวัน</p></div></div>
         <div class="signal-reading" id="sg-us2-value">รอผลตอบแทน US 2Y</div>
         <p class="signal-rule">ผลตอบแทนขึ้น → <strong>หนุน USD/THB ขึ้น</strong><br>ผลตอบแทนลง → หนุน USD/THB ลง</p>
         <details><summary>ดูข้อมูล / จำลอง US 2Y</summary><div class="signal-fields">
@@ -227,13 +252,15 @@
         <div class="signal-links"><a href="https://fred.stlouisfed.org/series/DGS2" target="_blank" rel="noopener">ตรวจ US 2Y · FRED</a></div>
       </article>
       <article class="signal-card" aria-labelledby="sg-oil-title">
-        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 5h26v37H7zM4 9h32M4 19h32M4 34h28M4 40h28M19 13c0 0-6 7-6 10a6 6 0 0 0 12 0c0-3-6-10-6-10Z M38 26c0 0-7 9-7 12a7 7 0 0 0 14 0c0-3-7-12-7-12Z"/></svg><div><h3 id="sg-oil-title">Crude Oil</h3><p class="signal-subtitle">ภาระต้นทุนนำเข้า · Brent</p></div></div>
+        <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M7 5h26v37H7zM4 9h32M4 19h32M4 34h28M4 40h28M19 13c0 0-6 7-6 10a6 6 0 0 0 12 0c0-3-6-10-6-10Z M38 26c0 0-7 9-7 12a7 7 0 0 0 14 0c0-3-7-12-7-12Z"/></svg><div><h3 id="sg-oil-title">Brent Spot · EIA</h3><p class="signal-subtitle">Europe Brent Spot FOB · USD/บาร์เรล</p></div></div>
+        <p class="signal-date" id="sg-oil-date">ราคาอ้างอิงรายวัน · รอวันที่ข้อมูล</p>
         <div class="signal-reading" id="sg-oil-value">รอราคา Brent</div>
+        <p class="signal-data-note" id="sg-oil-context">ไม่ใช่ราคา Brent Futures / CFD ที่ซื้อขายขณะนี้ใน TradingView</p>
         <p class="signal-rule">น้ำมันขึ้น → <strong>หนุน USD/THB ขึ้น</strong><br>น้ำมันลง → หนุน USD/THB ลง</p>
         <div class="signal-impact" id="sg-oil-impact">— รอข้อมูล ไม่สรุปทิศทาง</div>
         <p class="signal-weight" id="sg-oil-weight">รอคำนวณน้ำหนัก</p>
         <p class="signal-source" id="sg-oil-source">EIA / FRED · รายวัน มีความล่าช้า</p>
-        <div class="signal-links"><a href="#tileOIL">ดูราคา / จำลองน้ำมัน</a></div>
+        <div class="signal-links"><a href="#tileOIL">ดูราคา / จำลองน้ำมัน</a><a href="https://www.eia.gov/dnav/pet/hist/RBRTED.htm" target="_blank" rel="noopener">ตรวจราคาและวันที่ · EIA</a></div>
       </article>
       <article class="signal-card" aria-labelledby="sg-gold-title">
         <div class="signal-heading"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="m4 41 4-11h12l4 11Zm20 0 4-11h12l4 11ZM14 28l4-11h12l4 11ZM10 17 6 10m18 0V3m14 14 5-7M9 23H3m36 0h6"/></svg><div><h3 id="sg-gold-title">Thai Gold Flow</h3><p class="signal-subtitle">การค้าทองรายเดือน · Proxy กระแส USD</p></div></div>
@@ -304,8 +331,8 @@
       <div class="stamp" id="xauStamp"></div>
     </div>
     <div class="tile" id="tileOIL">
-      <div class="name">น้ำมันดิบ Brent · USD/บาร์เรล</div>
-      <label class="row"><span class="label">ราคา</span><select id="oilMode"><option value="auto">อัตโนมัติ (EIA)</option><option value="manual">จำลองเอง</option></select></label>
+      <div class="name">Brent Spot FOB รายวัน · USD/บาร์เรล</div>
+      <label class="row"><span class="label">ราคา</span><select id="oilMode"><option value="auto">รายวัน (EIA)</option><option value="manual">จำลองเอง</option></select></label>
       <label class="row"><span class="label">ราคาล่าสุด</span><input type="number" id="oilCurrent" min="0.01" step="0.01" placeholder="—" readonly></label>
       <label class="row"><span class="label">ราคาอ้างอิงก่อนหน้า</span><input type="number" id="oilPrevious" min="0.01" step="0.01" placeholder="—" readonly></label>
       <div class="chg" id="oilChg">Δ —</div>
@@ -554,6 +581,8 @@
 (function(){
   var $ = function(id){ return document.getElementById(id); };
   var state = { spot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, us2Quote:null, dxyQuote:null, goldTradeQuote:null, foreignFlowQuote:null, currentAccountQuote:null, pmiMom:{} };
+  state.spotMeta = 'กำลังโหลดอัตราอ้างอิงรายวัน…';
+  state.spotSource = 'er';
 
   // ---- persistence -------------------------------------------------------
   var SAVED = ["spotOverride","dxyPctOv","xauPctOv","us10","th10","bdiLevel","bdiPct",
@@ -611,6 +640,15 @@
     var o = num("spotOverride");
     return (o && o > 0) ? o : state.spot;
   }
+  function renderSpotSource(){
+    var manual = num('spotOverride') > 0;
+    $('spotLabel').textContent = manual ? 'USD/THB จำลองจากค่าที่กรอก · ใช้คำนวณ CIP' : 'USD/THB อ้างอิงรายวัน · ใช้คำนวณ CIP';
+    $('spotMeta').textContent = manual ? 'แหล่งข้อมูล: ค่าจำลองที่คุณกรอกและบันทึกไว้ในเบราว์เซอร์ · ไม่อัปเดตตามตลาด' : state.spotMeta;
+    $('spotAttribution').hidden = manual || state.spot === null;
+    $('spotReset').hidden = !manual;
+    $('spotSourceLink').textContent = state.spotSource === 'ecb' ? 'ECB / Frankfurter' : 'Rates By Exchange Rate API';
+    $('spotSourceLink').href = state.spotSource === 'ecb' ? 'https://frankfurter.dev/' : 'https://www.exchangerate-api.com';
+  }
 
   function oilAssessment(){
     return UsdOil.assess({mode:$("oilMode").value, quote:state.oilQuote,
@@ -634,7 +672,7 @@
     };
     var source = state.oilQuote && state.oilQuote.source === "EIA" ? "EIA" : "EIA / FRED";
     var stamp = oil.manual ? "จำลองจากราคาที่กรอกเอง · ไม่ใช่ราคาตลาดอัตโนมัติ" :
-      (oil.date && oil.previousDate ? source + " · วันที่ราคา " + oil.date + " เทียบ " + oil.previousDate + " · ข้อมูลรายวันมีความล่าช้า" : "");
+      (oil.date && oil.previousDate ? source + " · Brent Spot FOB รายวัน ณ " + oil.date + " เทียบ " + oil.previousDate + " · ไม่ใช่ราคา Futures / CFD ปัจจุบัน" : "");
     $("oilStamp").textContent = stamp + (oil.reason ? (stamp ? " · " : "") + messages[oil.reason] : "");
     $("oilStamp").className = oil.reason ? "stamp err" : "stamp";
     $("oilChg").textContent = oil.available ? "Δ " + (oil.pct >= 0 ? "+" : "") + oil.pct.toFixed(2) + "% เทียบราคาอ้างอิง" : "Δ —";
@@ -649,7 +687,7 @@
   function recalc(){
     var S = spotInUse();
     $("spot").textContent = fmt(S, 3);
-    $("spotLabel").textContent = num("spotOverride") > 0 ? "USD/THB จำลองจากค่าที่กรอก · ใช้คำนวณ CIP" : "USD/THB อ้างอิงรายวัน · ใช้คำนวณ CIP";
+    renderSpotSource();
 
     var dq = UsdSignals.assessYield('auto',state.dxyQuote);
     var dxyPct = num("dxyPctOv");
@@ -895,7 +933,8 @@
   }
 
   function fetchAll(){
-    $("spotMeta").textContent = "กำลังโหลด…";
+    state.spotMeta = "กำลังตรวจอัตราอ้างอิงรายวัน…";
+    renderSpotSource();
     $("marketDataStatus").textContent = "กำลังโหลดข้อมูลตลาด…";
     $("marketDataStatus").className = "note";
     var btn = $("refresh");
@@ -905,28 +944,30 @@
     btn.textContent = "กำลังรีเฟรช…";
 
     var spotP = fetch(bust("https://open.er-api.com/v6/latest/USD"), {cache:"no-store"})
-      .then(function(r){ return r.json(); })
+      .then(function(r){ if (!r.ok) throw new Error('Reference rate HTTP '+r.status); return r.json(); })
       .then(function(j){
-        if (j && j.rates && j.rates.THB){
+        if (j && j.rates && Number.isFinite(j.rates.THB) && j.rates.THB > 0){
           state.spot = j.rates.THB;
+          state.spotSource = 'er';
           state.dxy = syntheticDXY(j.rates);
           state.dxyPctAuto = snapshotDelta("dxy", state.dxy);
           snapshotDelta("spot", state.spot);
-          $("spotMeta").textContent = "เวลาข้อมูลต้นทาง: " + (j.time_last_update_utc ? new Date(j.time_last_update_utc).toLocaleString("th-TH", {timeZone:"Asia/Bangkok"}) + " (ไทย)" : "ไม่ระบุ") + " · ตรวจฟีดล่าสุด " + new Date().toLocaleTimeString("th-TH", {timeZone:"Asia/Bangkok"});
-        }
+          state.spotMeta = "อัตราอ้างอิงรายวัน ณ " + (j.time_last_update_utc ? new Date(j.time_last_update_utc).toLocaleString("th-TH", {timeZone:"Asia/Bangkok"}) + " (ไทย)" : "ไม่ระบุเวลา") + " · ไม่ใช่ Spot สด";
+        } else { throw new Error('Reference API returned no valid THB rate'); }
         recalc();
       })
       .catch(function(){
         return fetch(bust("https://api.frankfurter.dev/v1/latest?base=USD&symbols=THB"), {cache:"no-store"})
-          .then(function(r){ return r.json(); })
+          .then(function(r){ if (!r.ok) throw new Error('ECB rate HTTP '+r.status); return r.json(); })
           .then(function(j){
-            if (j && j.rates && j.rates.THB){
+            if (j && j.rates && Number.isFinite(j.rates.THB) && j.rates.THB > 0){
               state.spot = j.rates.THB;
-              $("spotMeta").textContent = "ECB / Frankfurter · อัตราอ้างอิงรายวัน ณ " + (j.date || "ไม่ระบุวันที่") + " · DXY ใช้ไม่ได้จาก fallback นี้";
-            }
+              state.spotSource = 'ecb';
+              state.spotMeta = "ECB / Frankfurter · อัตราอ้างอิงรายวัน ณ " + (j.date || "ไม่ระบุวันที่") + " · ไม่ใช่ Spot สด";
+            } else { throw new Error('ECB returned no valid THB rate'); }
             recalc();
           })
-          .catch(function(){ $("spotMeta").textContent = "ดึง spot ไม่สำเร็จ — กรอกเอง (เช็ค console/adblock)"; recalc(); });
+          .catch(function(){ state.spotMeta = state.spot === null ? "ดึงอัตราอ้างอิงไม่สำเร็จ · กรอกค่าจำลองได้" : "ดึงอัตราอ้างอิงใหม่ไม่สำเร็จ · แสดงค่าที่โหลดไว้ก่อนหน้า"; recalc(); });
       });
 
     var xauP = fetch("https://api.gold-api.com/price/XAU", {cache:"no-store"})
@@ -990,9 +1031,9 @@
         var ageHours = Math.max(0, (Date.now() - result.updatedAt.getTime()) / 3600000);
         var when = result.updatedAt.toLocaleString("th-TH", {timeZone:"Asia/Bangkok"});
         var status = $("marketDataStatus");
-        status.textContent = result.source + " · ข้อมูลตลาดอัปเดต " + when +
+        status.textContent = result.source + " · ตรวจและรวบรวมฟีดเมื่อ " + when +
           " (ผ่านมา " + (ageHours < 1 ? Math.round(ageHours * 60) + " นาที" : ageHours.toFixed(1) + " ชม.") + ")" +
-          (ageHours > 3 ? " · ข้อมูลอาจล่าช้า" : "");
+          " · วันที่ของตัวเลขแต่ละชุดดูในการ์ด" + (ageHours > 3 ? " · การรวบรวมฟีดอาจล่าช้า" : "");
         status.className = ageHours > 3 ? "note err" : "note";
         function apply(fieldId, value){
           if (value === null || value === undefined || value === "" || !Number.isFinite(Number(value))){
@@ -1125,6 +1166,11 @@
   }
 
   $("refresh").addEventListener("click", fetchAll);
+  $('spotReset').addEventListener('click',function(){
+    $('spotOverride').value='';
+    try{localStorage.removeItem('usdthb_spotOverride');}catch(_){}
+    recalc();
+  });
   recalc();
   fetchAll();
   window.setInterval(function(){
