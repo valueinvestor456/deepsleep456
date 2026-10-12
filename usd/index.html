@@ -331,8 +331,8 @@
       <div class="stamp" id="xauStamp"></div>
     </div>
     <div class="tile" id="tileOIL">
-      <div class="name">Brent Spot FOB รายวัน · USD/บาร์เรล</div>
-      <label class="row"><span class="label">ราคา</span><select id="oilMode"><option value="auto">รายวัน (EIA)</option><option value="manual">จำลองเอง</option></select></label>
+      <div class="name">Brent quote · Futures BZ=F (fallback EIA Spot) · USD/บาร์เรล</div>
+      <label class="row"><span class="label">ราคา</span><select id="oilMode"><option value="auto">อัตโนมัติ · Futures BZ=F (fallback EIA)</option><option value="manual">จำลองเอง</option></select></label>
       <label class="row"><span class="label">ราคาล่าสุด</span><input type="number" id="oilCurrent" min="0.01" step="0.01" placeholder="—" readonly></label>
       <label class="row"><span class="label">ราคาอ้างอิงก่อนหน้า</span><input type="number" id="oilPrevious" min="0.01" step="0.01" placeholder="—" readonly></label>
       <div class="chg" id="oilChg">Δ —</div>
@@ -571,7 +571,7 @@
   <div style="text-align:right;margin-top:4px"><button id="refresh">รีเฟรชข้อมูล</button></div>
 
   <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · กรอบราคาตลาด: TradingView (FX_IDC:USDTHB) · อัตราอ้างอิงรายวันสำหรับ CIP: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
-    · DXY: ECB ผ่าน Frankfurter · US2Y: U.S. Treasury · ทองและ Current Account: ธปท. · ทุนพันธบัตร: ThaiBMA · Brent: EIA / FRED · ข้อมูลมีความล่าช้าตามการเผยแพร่ · แก้ไขล่าสุด 2026-10-12</footer>
+    · DXY: ECB ผ่าน Frankfurter · US2Y: U.S. Treasury · ทองและ Current Account: ธปท. · ทุนพันธบัตร: ThaiBMA · Brent Futures BZ=F: Yahoo Finance (fallback EIA / FRED) · ข้อมูลมีความล่าช้าตามการเผยแพร่ · แก้ไขล่าสุด 2026-10-12</footer>
 </div>
 
 <script src="./oil-factor.js"></script>
