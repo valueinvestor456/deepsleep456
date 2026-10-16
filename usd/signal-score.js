@@ -5,12 +5,12 @@
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
   'use strict';
   var DAY=86400000;
-  var KEYS=['dxy','us2','oil','gold','foreign','account'];
+  var KEYS=['us2','oil','gold','foreign','account'];
   // Rule-based scenario weights, not fitted coefficients or probabilities.
-  var BASE={short:[35,25,15,5,15,5],medium:[25,20,20,10,15,10],long:[15,15,20,10,15,25]};
-  var LABELS={dxy:'DXY',us2:'US 2Y',oil:'Brent',gold:'Gold Flow Proxy',foreign:'Foreign Flow',account:'Current Account'};
-  var SCALES={dxy:0.35,us2:5,oil:2,gold:25000,foreign:5000,account:2000};
-  var SIGN={dxy:-1,us2:-1,oil:-1,gold:1,foreign:1,account:1};
+  var BASE={short:[25,15,5,15,5],medium:[20,20,10,15,10],long:[15,20,10,15,25]};
+  var LABELS={us2:'US 2Y',oil:'Brent',gold:'Gold Flow Proxy',foreign:'Foreign Flow',account:'Current Account'};
+  var SCALES={us2:5,oil:2,gold:25000,foreign:5000,account:2000};
+  var SIGN={us2:-1,oil:-1,gold:1,foreign:1,account:1};
   function number(v){
     if((typeof v!=='number' && typeof v!=='string') || String(v).trim()==='') return null;
     var n=Number(v);return Number.isFinite(n)?n:null;

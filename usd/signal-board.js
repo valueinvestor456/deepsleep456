@@ -64,7 +64,7 @@
     var verdict={strong:'เอนเอียงไปทางบาทแข็ง · USD/THB ลง',weak:'เอนเอียงไปทางบาทอ่อน · USD/THB ขึ้น',mixed:'แรงหนุนผสม · ยังไม่ชัดเจน',missing:'ข้อมูลไม่พอให้สรุปทิศทาง'}[result.direction];
     ['sg-score','sg-score-top'].forEach(function(id){el(id).textContent=result.score===null?'—':signed(result.score,1);el(id).dataset.direction=result.direction;});
     ['sg-verdict','sg-verdict-top'].forEach(function(id){el(id).textContent=verdict;});
-    var coverage='ใช้ได้ '+result.count+'/6 ปัจจัย · น้ำหนักที่ใช้ได้ '+format(result.coverage,0)+'%';
+    var coverage='ใช้ได้ '+result.count+'/5 ปัจจัย · น้ำหนักที่ใช้ได้ '+format(result.coverage,0)+'%';
     el('sg-coverage').textContent=coverage+' · ค่านี้บอกความครอบคลุมข้อมูล ไม่ใช่โอกาสทายถูก';
     el('sg-top-coverage').textContent=coverage;
     el('sg-scenario').textContent=result.scenario?'โหมดจำลอง · มีค่าที่กรอกเอง':'โหมดข้อมูลอัตโนมัติ · ใช้ข้อมูลล่าสุดที่เผยแพร่';
@@ -119,7 +119,6 @@
     var account = accountAuto?(ca.available?ca.value:null):number(el('sg-ca-value').value);
     show('account',account,account === null ? 'รอดุลบัญชีเดินสะพัด' : signed(account,2)+' ล้าน USD',accountAuto?'อัตโนมัติ · ธปท. · งวด '+(ca.period||'—')+' · ข้อมูลรายเดือน มีความล่าช้า':manualStamp(el('sg-ca-month').value,true));
     renderScore({
-      dxy:{value:dxy,date:dq.date,manual:market.dxyManual},
       us2:{value:yields.available?yields.bps:null,date:quote.date,manual:mode==='manual'},
       oil:{value:oil.available?oil.pct:null,date:oil.date,manual:oil.manual},
       gold:goldAuto?{value:ga.available?ga.net:null,frequency:'monthly',period:ga.period,quality:.6}:{value:goldValues[gold]===undefined?null:-goldValues[gold],scale:1,manual:true,quality:.5},

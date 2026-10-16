@@ -56,7 +56,13 @@
   .tile{
     background:var(--surface-1);border:1px solid var(--border);border-radius:12px;padding:12px;
   }
-  .tile.pos{background:var(--good-bg);} .tile.neg{background:var(--bad-bg);}
+  .tile.pos{background:var(--bad-bg);} .tile.neg{background:var(--good-bg);}
+  .signal-color-legend{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 10px;font-size:12px;font-weight:700;}
+  .signal-color-legend span{padding:6px 10px;border-radius:999px;border:1px solid var(--border);}
+  .signal-color-legend .weak{background:var(--good-bg);color:var(--good);}
+  .signal-color-legend .strong{background:var(--bad-bg);color:var(--bad);}
+  .signal-color-legend .neutral{background:var(--surface-1);color:var(--text-secondary);}
+  #tileDXY, article[aria-labelledby="sg-dxy-title"]{display:none!important;}
   .tile .name{font-size:12px;color:var(--text-secondary);font-weight:600;}
   .tile .val{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;margin:2px 0;}
   .tile .chg{font-size:13px;font-weight:600;}
@@ -187,7 +193,7 @@
       <button type="button" id="spotReset" hidden>ล้างค่าจำลอง · ใช้อัตราอ้างอิงอัตโนมัติ</button>
     </div>
     <div style="text-align:right">
-      <div class="score-label">คะแนนเงินบาทรวม · 6 ปัจจัย</div>
+      <div class="score-label">คะแนนเงินบาทรวม · 5 ปัจจัย</div>
       <div class="score-big" id="sg-score-top">—</div>
       <div class="verdict-text" id="sg-verdict-top">รอข้อมูล</div>
       <div class="spot-meta" id="sg-top-coverage">—</div>
@@ -207,7 +213,7 @@
   <div class="note" id="marketDataStatus" role="status" aria-live="polite">กำลังโหลดข้อมูลตลาด…</div>
 
   <section class="signal-board" id="usd-signals" aria-labelledby="signals-title">
-    <h2 id="signals-title">สัญญาณ USD/THB · 6 ปัจจัยที่ต้องติดตาม</h2>
+    <h2 id="signals-title">สัญญาณ USD/THB · 5 ปัจจัยที่ต้องติดตาม</h2>
     <p class="signal-intro">↑ USD/THB ขึ้น = บาทอ่อน · ↓ USD/THB ลง = บาทแข็ง · อ่านแรงหนุนแต่ละด้านร่วมกัน</p>
     <div class="signal-summary" aria-labelledby="sg-summary-title">
       <div class="signal-summary-head">
@@ -222,8 +228,8 @@
       <details><summary>ดูน้ำหนัก ผลต่อคะแนน และวิธีคำนวณ</summary>
         <div class="signal-table-scroll"><table class="signal-weight-table"><thead><tr><th>ปัจจัย</th><th>วันที่ / งวดข้อมูล</th><th>น้ำหนักตั้งต้น</th><th>ขนาดการเปลี่ยน</th><th>ความสด</th><th>ตัวคูณข้อมูล</th><th>น้ำหนักใช้จริง</th><th>คะแนน</th></tr></thead><tbody id="sg-weights"></tbody></table></div>
         <p class="signal-footnote">คะแนนบวก = หนุนบาทแข็ง · คะแนนลบ = หนุนบาทอ่อน · รวมผลแต่ละปัจจัยเป็น −100 ถึง +100; เมื่อ |คะแนน| ≥ 15 จึงแสดงทิศทาง ต้องมีข้อมูลอย่างน้อย 3 ปัจจัยและน้ำหนักใช้ได้ ≥ 50% จึงสรุป</p>
-        <p class="signal-footnote">น้ำหนักตั้งต้น DXY/US2Y/Oil/Gold/Flow/CA: สั้น 35/25/15/5/15/5, กลาง 25/20/20/10/15/10, ยาว 15/15/20/10/15/25 · เป็นสมมติฐานปรับตามระยะวางแผน ไม่ใช่ค่าสัมประสิทธิ์ที่เรียนรู้จากตลาด</p>
-        <p class="signal-footnote">ปรับขนาดแต่ละปัจจัยด้วยสเกลสมมติ: DXY 0.35%, US2Y 5 bp, Brent 2%, ส่งออกทองสุทธิ 25,000 ล้านบาท, Fund Flow 5,000 ล้านบาท, Current Account 2,000 ล้าน USD; ใช้ tanh จำกัดสัญญาณ เมื่อขนาดเกิน 1 เท่าสเกล เพิ่มตัวคูณน้ำหนักทีละ 0.5 ต่อสเกล ถึงสูงสุด 2 เท่า แล้วปรับน้ำหนักรวมให้ได้ 100%</p>
+        <p class="signal-footnote">น้ำหนักตั้งต้น US2Y/Oil/Gold/Flow/CA: สั้น 25/15/5/15/5, กลาง 20/20/10/15/10, ยาว 15/20/10/15/25 · เป็นสมมติฐานปรับตามระยะวางแผน ไม่ใช่ค่าสัมประสิทธิ์ที่เรียนรู้จากตลาด</p>
+        <p class="signal-footnote">ปรับขนาดแต่ละปัจจัยด้วยสเกลสมมติ: US2Y 5 bp, Brent 2%, ส่งออกทองสุทธิ 25,000 ล้านบาท, Fund Flow 5,000 ล้านบาท, Current Account 2,000 ล้าน USD; ใช้ tanh จำกัดสัญญาณ เมื่อขนาดเกิน 1 เท่าสเกล เพิ่มตัวคูณน้ำหนักทีละ 0.5 ต่อสเกล ถึงสูงสุด 2 เท่า แล้วปรับน้ำหนักรวมให้ได้ 100%</p>
         <p class="signal-footnote">ความสด: รายวันเต็มน้ำหนัก 3 วัน ลดลงเชิงเส้นจนหมดที่ 10 วัน; รายเดือนเต็มน้ำหนักถึง 45 วันหลังสิ้นเดือน ลดจนหมดที่ 90 วัน · Gold Proxy ใช้ตัวคูณสมมติ 60% (ทิศทาง USD ที่กรอกเอง 50%); Fund Flow มีตลาดเดียวใช้ 50% · น้ำหนักที่หายไม่กระจายเพิ่มให้ปัจจัยอื่น · Gold และ Current Account มีข้อมูลซ้อนกัน จึงไม่ควรอ่านเป็นหลักฐานอิสระ</p>
       </details>
     </div>
@@ -314,6 +320,11 @@
     <p class="signal-footnote">ลูกศรเป็นแรงกดดันตามสมมติฐาน คะแนนรวมปรับน้ำหนักตามระยะ ขนาดสัญญาณ ความสด และความครบของข้อมูล · ความสัมพันธ์เปลี่ยนได้ คะแนนยังไม่ได้สอบเทียบด้วยผลตอบแทนจริง</p>
   </section>
 
+  <div class="signal-color-legend" aria-label="ความหมายสีของสัญญาณ">
+    <span class="weak">สีเขียว = บาทอ่อน · USD/THB มีแนวโน้มขึ้น</span>
+    <span class="strong">สีแดง = บาทแข็ง · USD/THB มีแนวโน้มลง</span>
+    <span class="neutral">สีเทา = สัญญาณกลาง</span>
+  </div>
   <div class="tiles">
     <div class="tile" id="tileDXY">
       <div class="name">DXY (synthetic จาก ECB รายวัน)</div>
@@ -377,6 +388,7 @@
       <label>FM / สัญญา (บาท)<input id="tp-fm" type="number" min="0" step="0.01" value="233.2"></label>
       <label>เงินสำรองที่ไม่ใช้เปิดเพิ่ม (% ทุน)<input id="tp-reserve" type="number" min="0" max="99.99" step="1" value="20"></label>
       <label>กรอบขาดทุนที่ใช้เตือน (% ทุน)<input id="tp-risk" type="number" min="0.01" max="100" step="0.1" value="5"></label>
+      <label>โหมดคำแนะนำจำนวนสัญญา<select id="tp-recommend-mode"><option value="max-capital" selected>ใช้ทุนสูงสุด · ไม่ใช้ Stop loss จำกัด</option><option value="risk-stop">จำกัดตาม Stop loss และกรอบขาดทุน</option></select></label>
       <label>รุ่นสัญญาที่จำลอง<input id="tp-series" type="text" maxlength="20" placeholder="ระบุ เช่น USDZ26"></label>
     </div>
     <p class="tp-note" id="tp-fee-note"></p>
@@ -397,6 +409,50 @@
     </div>
     <div class="tp-toolbar"><button type="button" id="tp-generate">สร้างไม้จำนวนสัญญาเท่ากันใหม่</button><span class="tp-note">แก้ค่าตั้งต้น 4 ช่องแรก ตารางจะสร้างใหม่อัตโนมัติ</span></div>
     <p class="tp-note">แก้ราคาและจำนวนสัญญาแต่ละไม้ได้ทันที เช่น 20 / 25 / 25 / 30 สัญญา · กรอก 0 เพื่อข้ามไม้ · ระบบคงจำนวนที่กรอกไว้ และแจ้งเตือนเมื่อทุนไม่พอหรือเกินกรอบขาดทุน</p>
+    <div class="tp-recommendation" aria-labelledby="tp-recommend-title">
+      <div class="tp-recommend-head">
+        <div>
+          <h3 id="tp-recommend-title">คำแนะนำจำนวนสัญญาตามทุน</h3>
+          <p class="tp-note">คำนวณเพื่อประกอบการตัดสินใจเท่านั้น ไม่ส่งคำสั่งซื้อ · ใช้เงินสำรองและกรอบขาดทุนที่กรอกไว้เป็นข้อจำกัด</p>
+        </div>
+        <div class="tp-recommend-summary"><span>จำนวนสะสมที่แนะนำสุดท้าย</span><strong id="tp-recommend-total">—</strong></div>
+      </div>
+      <div class="tp-table-scroll" tabindex="0" role="region" aria-label="คำแนะนำจำนวนสัญญาและเงินเติมตามราคา">
+        <table class="tp-recommend-table">
+          <caption>เมื่อราคาถึงแต่ละระดับ</caption>
+          <thead><tr><th scope="col">ราคา</th><th scope="col">แนะนำเปิดเพิ่ม</th><th scope="col">สัญญาสะสม</th><th scope="col">เงินเหลือหลังไม้*</th><th scope="col">เงินที่ต้องเติมเพื่อเปิดตามจำนวนฐาน</th><th scope="col">ข้อจำกัดหลัก</th></tr></thead>
+          <tbody id="tp-recommend-rows"></tbody>
+        </table>
+      </div>
+      <p class="tp-note">* เงินเหลือหลังไม้ = เงินส่วนเกินหลังหัก IM, คอมเปิด และเงินสำรอง · “จำนวนฐาน” คือจำนวนสัญญาต่อไม้ที่กรอกด้านบน ใช้เป็นตัวเทียบว่าถ้าต้องการเปิดตามจำนวนนี้ ต้องเติมเงินเท่าไร</p>
+      <div id="tp-recommend-status" class="tp-status" role="status"></div>
+    </div>
+    <section class="tp-survival-plan" aria-labelledby="tp-survival-title">
+      <div class="tp-recommend-head">
+        <div>
+          <h3 id="tp-survival-title">ภาพรวมแผนถัว · จุดทนราคา · จุดออก</h3>
+          <p class="tp-note">ใช้แผนที่กรอกเพื่อดูว่าถัวแต่ละไม้แล้วต้นทุนเฉลี่ยและราคาเสมอตัวเปลี่ยนอย่างไร</p>
+        </div>
+        <div class="tp-action-badge" id="tp-plan-action">กรอกแผนเพื่อประเมิน</div>
+      </div>
+      <div class="tp-survival-metrics">
+        <div><span>เงินทุน</span><b id="tp-plan-capital">—</b></div>
+        <div><span>เงินสำรองที่ควรกัน</span><b id="tp-plan-reserve">—</b></div>
+        <div><span>ทนได้ถึง MM โดยประมาณ</span><b id="tp-plan-mm-price">—</b></div>
+        <div><span>ระดับ FM โดยประมาณ</span><b id="tp-plan-fm-price">—</b></div>
+        <div><span>ต้นทุนเฉลี่ยสุดท้าย</span><b id="tp-plan-average">—</b></div>
+        <div><span>ราคาออกเสมอตัว</span><b id="tp-plan-breakeven">—</b></div>
+        <div><span>ราคาออกตามแผน</span><b id="tp-plan-exit">—</b></div>
+        <div><span>กำไร/ขาดทุนตามราคาออก</span><b id="tp-plan-exit-pnl">—</b></div>
+      </div>
+      <div class="tp-table-scroll" tabindex="0" role="region" aria-label="ต้นทุนเฉลี่ยและจุดออกตามแต่ละไม้">
+        <table class="tp-recommend-table">
+          <caption>ถัวแต่ละระดับแล้วควรออกที่ราคาใด</caption>
+          <thead><tr><th>ราคาไม้</th><th>สัญญาสะสม</th><th>ต้นทุนเฉลี่ย</th><th>ราคาเสมอตัวโดยประมาณ</th><th>Action</th></tr></thead>
+          <tbody id="tp-action-plan-rows"></tbody>
+        </table>
+      </div>
+    </section>
     <div id="tp-validation" class="tp-status tp-error" role="alert" hidden></div>
     <div class="tp-table-scroll" tabindex="0" role="region" aria-label="ตารางแบ่งไม้ เลื่อนแนวนอนเพื่อดูทั้งหมด">
       <table>
@@ -495,7 +551,7 @@
   </div>
 
   <details>
-    <summary>⚙️ น้ำหนักแบบจำลองเสริม (ไม่เปลี่ยนคะแนนรวม 6 ปัจจัย)</summary>
+    <summary>⚙️ น้ำหนักแบบจำลองเสริม (ไม่เปลี่ยนคะแนนรวม 5 ปัจจัย)</summary>
     <div class="card">
       <div class="row"><span class="label">w DXY</span><input type="number" id="wDXY" step="0.05" value="0.60"></div>
       <div class="row"><span class="label">w Gold</span><input type="number" id="wXAU" step="0.05" value="0.17"></div>
@@ -751,9 +807,9 @@
       }
     });
 
-    var w = {DXY:num("wDXY")||0, XAU:num("wXAU")||0, SPR:num("wSPR")||0, BDI:num("wBDI")||0, PMI:num("wPMI")||0};
+    var w = {XAU:num("wXAU")||0, SPR:num("wSPR")||0, BDI:num("wBDI")||0, PMI:num("wPMI")||0};
     var contribs = [
-      {name:"DXY", s:sDXY, w:w.DXY}, {name:"Gold", s:sXAU, w:w.XAU},
+      {name:"Gold", s:sXAU, w:w.XAU},
       {name:"Brent Oil", s:oil.signal, w:oil.available ? num("wOIL") : 0, available:oil.available},
       {name:"Spread", s:sSPR, w:w.SPR}, {name:"BDI", s:sBDI, w:w.BDI}, {name:"PMI", s:sPMI, w:w.PMI},
     ];
@@ -764,8 +820,8 @@
     // header
     $("scoreBig").textContent = (score >= 0 ? "+" : "") + score.toFixed(0);
     var sv = $("scoreVerdict");
-    if (score >= 30){ sv.textContent = "🟢 THB แข็งแรง — USD/THB bias ลง"; sv.className = "verdict-text good"; $("scoreBig").className = "score-big good"; }
-    else if (score <= -30){ sv.textContent = "🔴 THB อ่อนแรง — USD/THB bias ขึ้น"; sv.className = "verdict-text bad"; $("scoreBig").className = "score-big bad"; }
+    if (score >= 30){ sv.textContent = "🔴 THB แข็งแรง — USD/THB bias ลง"; sv.className = "verdict-text bad"; $("scoreBig").className = "score-big bad"; }
+    else if (score <= -30){ sv.textContent = "🟢 THB อ่อนแรง — USD/THB bias ขึ้น"; sv.className = "verdict-text good"; $("scoreBig").className = "score-big good"; }
     else { sv.textContent = "⚪ เป็นกลาง — สัญญาณไม่ชัด"; sv.className = "verdict-text neutral"; $("scoreBig").className = "score-big neutral"; }
 
     var k = num("kSens"); if (k === null) k = 0.09;
