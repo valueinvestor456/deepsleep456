@@ -48,6 +48,10 @@
   .spot-live h2{margin-bottom:8px;}
   .spot-live-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:8px 0;}
   .spot-live-actions button,#spotReset{font-size:12px;padding:6px 10px;}
+  .spot-live-reading{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:4px 0 2px;}
+  .spot-live-reading .label{font-size:12px;color:var(--text-secondary);font-weight:600;}
+  .spot-live-reading .value{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .spot-live-reference{font-size:11px;color:var(--text-muted);margin-top:4px;}
   .score-big{font-size:28px;font-weight:800;}
   .score-label{font-size:12px;color:var(--text-secondary);}
   .verdict-text{font-size:13px;font-weight:600;}
@@ -142,11 +146,13 @@
 
   <section class="card spot-live" id="live-spot" aria-labelledby="live-spot-title">
     <h2 id="live-spot-title">USD/THB Spot · TradingView</h2>
+    <div class="spot-live-reading" aria-live="polite"><span class="label">Spot ล่าสุด (mid-market)</span><strong class="value" id="liveSpotValue">—</strong><span class="spot-meta" id="liveSpotMeta">กำลังโหลด Spot ล่าสุด…</span></div>
+    <div class="spot-live-reference" id="spotReferenceMeta">อัตราอ้างอิงรายวัน: กำลังโหลด…</div>
     <div id="spotWidgetHost"></div>
     <div class="spot-live-actions"><button id="spotWidgetRetry" type="button">โหลดกรอบราคาใหม่</button><a href="https://www.tradingview.com/symbols/USDTHB/?exchange=FX_IDC" target="_blank" rel="noopener noreferrer">เปิด USD/THB ใน TradingView</a></div>
     <p id="spotWidgetStatus" role="status" aria-live="polite">กำลังขอกรอบราคาจาก TradingView…</p>
     <p>ราคาอัปเดตตามฟีด TradingView เมื่อมีราคาใหม่ · ดูสถานะตลาดและความล่าช้าในกรอบราคา</p>
-    <p>กรอบนี้ใช้ดูราคาตลาด ส่วน CIP ด้านล่างใช้อัตราอ้างอิงรายวันหรือราคาที่กรอกเอง · Calculator ใช้ราคาสัญญา Futures ที่คุณระบุ</p>
+    <p>ตัวเลข Spot ล่าสุดใช้เป็นค่าเริ่มต้นของ CIP · อัตราอ้างอิงรายวันแสดงแยกไว้เป็นค่าเปรียบเทียบ/สำรอง · Calculator ใช้ราคาสัญญา Futures ที่คุณระบุ</p>
   </section>
   <script>
   (function(){
@@ -183,10 +189,10 @@
 
   <div class="card header-card">
     <div>
-      <div class="score-label" id="spotLabel">USD/THB อ้างอิงรายวัน · ใช้คำนวณ CIP</div>
+      <div class="score-label" id="spotLabel">USD/THB Spot ล่าสุด · ใช้คำนวณ CIP</div>
       <div class="spot-big" id="spot">—</div>
       <div class="spot-meta" id="spotMeta">กำลังโหลด…</div>
-      <div class="spot-meta" id="spotAttribution">แหล่งอ้างอิงรายวัน · <a id="spotSourceLink" href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer">Rates By Exchange Rate API</a></div>
+      <div class="spot-meta" id="spotAttribution">แหล่ง Spot ล่าสุด · <a id="spotSourceLink" href="https://fxratesapi.com/" target="_blank" rel="noopener noreferrer">FXRatesAPI</a></div>
       <div class="spot-meta" id="trendEMA50">Trend (EMA50): —</div>
       <div class="row" style="margin-top:4px"><label class="label" for="spotOverride">Spot จำลองสำหรับ CIP</label>
         <input type="number" id="spotOverride" step="0.001" placeholder="auto"></div>
@@ -626,7 +632,7 @@
 
   <div style="text-align:right;margin-top:4px"><button id="refresh">รีเฟรชข้อมูล</button></div>
 
-  <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · กรอบราคาตลาด: TradingView (FX_IDC:USDTHB) · อัตราอ้างอิงรายวันสำหรับ CIP: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
+  <footer>คำนวณฝั่งเบราว์เซอร์ทั้งหมด · Spot ล่าสุด: FXRatesAPI (fallback TripCalc) · กรอบราคาตลาด: TradingView (FX_IDC:USDTHB) · อัตราอ้างอิงรายวัน: open.er-api.com · gold: gold-api.com · ปฏิทิน: Forex Factory feed
     · DXY: ECB ผ่าน Frankfurter · US2Y: U.S. Treasury · ทองและ Current Account: ธปท. · ทุนพันธบัตร: ThaiBMA · Brent Futures BZ=F: Yahoo Finance (fallback EIA / FRED) · ข้อมูลมีความล่าช้าตามการเผยแพร่ · แก้ไขล่าสุด 2026-10-12</footer>
 </div>
 
@@ -636,8 +642,10 @@
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
-  var state = { spot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, us2Quote:null, dxyQuote:null, goldTradeQuote:null, foreignFlowQuote:null, currentAccountQuote:null, pmiMom:{} };
+  var state = { spot:null, liveSpot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, us2Quote:null, dxyQuote:null, goldTradeQuote:null, foreignFlowQuote:null, currentAccountQuote:null, pmiMom:{} };
   state.spotMeta = 'กำลังโหลดอัตราอ้างอิงรายวัน…';
+  state.liveSpotMeta = 'กำลังโหลด Spot ล่าสุด…';
+  state.liveSpotSource = 'fxrates';
   state.spotSource = 'er';
 
   // ---- persistence -------------------------------------------------------
@@ -694,16 +702,21 @@
 
   function spotInUse(){
     var o = num("spotOverride");
-    return (o && o > 0) ? o : state.spot;
+    return (o && o > 0) ? o : (state.liveSpot || state.spot);
   }
   function renderSpotSource(){
     var manual = num('spotOverride') > 0;
-    $('spotLabel').textContent = manual ? 'USD/THB จำลองจากค่าที่กรอก · ใช้คำนวณ CIP' : 'USD/THB อ้างอิงรายวัน · ใช้คำนวณ CIP';
-    $('spotMeta').textContent = manual ? 'แหล่งข้อมูล: ค่าจำลองที่คุณกรอกและบันทึกไว้ในเบราว์เซอร์ · ไม่อัปเดตตามตลาด' : state.spotMeta;
-    $('spotAttribution').hidden = manual || state.spot === null;
+    var liveAvailable = state.liveSpot !== null;
+    var fallback = !manual && !liveAvailable && state.spot !== null;
+    $('spotLabel').textContent = manual ? 'USD/THB จำลองจากค่าที่กรอก · ใช้คำนวณ CIP' : (liveAvailable ? 'USD/THB Spot ล่าสุด · ใช้คำนวณ CIP' : 'USD/THB อ้างอิงรายวัน (สำรอง) · ใช้คำนวณ CIP');
+    $('spotMeta').textContent = manual ? 'แหล่งข้อมูล: ค่าจำลองที่คุณกรอกและบันทึกไว้ในเบราว์เซอร์ · ไม่อัปเดตตามตลาด' : (liveAvailable ? state.liveSpotMeta : (fallback ? state.liveSpotMeta + ' · ' + state.spotMeta : state.liveSpotMeta));
+    $('spotAttribution').hidden = manual || (!liveAvailable && state.spot === null);
     $('spotReset').hidden = !manual;
-    $('spotSourceLink').textContent = state.spotSource === 'ecb' ? 'ECB / Frankfurter' : 'Rates By Exchange Rate API';
-    $('spotSourceLink').href = state.spotSource === 'ecb' ? 'https://frankfurter.dev/' : 'https://www.exchangerate-api.com';
+    $('spotSourceLink').textContent = liveAvailable ? (state.liveSpotSource === 'tripcalc' ? 'TripCalc' : 'FXRatesAPI') : (state.spotSource === 'ecb' ? 'ECB / Frankfurter' : 'Rates By Exchange Rate API');
+    $('spotSourceLink').href = liveAvailable ? (state.liveSpotSource === 'tripcalc' ? 'https://tripcalc.io/' : 'https://fxratesapi.com/') : (state.spotSource === 'ecb' ? 'https://frankfurter.dev/' : 'https://www.exchangerate-api.com');
+    $('liveSpotValue').textContent = state.liveSpot === null ? '—' : fmt(state.liveSpot, 3);
+    $('liveSpotMeta').textContent = state.liveSpotMeta;
+    $('spotReferenceMeta').textContent = state.spot === null ? 'อัตราอ้างอิงรายวัน: ยังโหลดไม่ได้' : 'อัตราอ้างอิงรายวัน (ใช้เป็นสำรอง/เปรียบเทียบ): ' + fmt(state.spot, 3) + ' · ' + state.spotMeta;
   }
 
   function oilAssessment(){
@@ -992,7 +1005,43 @@
     return url + (url.indexOf("?") === -1 ? "?" : "&") + "_=" + Date.now();
   }
 
+  function fetchLiveSpot(){
+    return fetch(bust("https://api.fxratesapi.com/latest?base=USD&currencies=THB"), {cache:"no-store"})
+      .then(function(r){ if (!r.ok) throw new Error('Live spot HTTP '+r.status); return r.json(); })
+      .then(function(j){
+        if (j && j.rates && Number.isFinite(j.rates.THB) && j.rates.THB > 0){
+          state.liveSpot = j.rates.THB;
+          state.liveSpotSource = 'fxrates';
+          state.liveSpotMeta = 'FXRatesAPI · อัปเดต ' + (j.timestamp ? new Date(j.timestamp * 1000).toLocaleString('th-TH', {timeZone:'Asia/Bangkok'}) + ' (ไทย)' : 'ล่าสุด') + ' · mid-market';
+          recalc();
+          return;
+        }
+        throw new Error('Live spot API returned no valid THB rate');
+      })
+      .catch(function(){
+        return fetch(bust("https://tripcalc.io/api/fx"), {cache:"no-store"})
+          .then(function(r){ if (!r.ok) throw new Error('TripCalc spot HTTP '+r.status); return r.json(); })
+          .then(function(j){
+            if (j && j.rates && Number.isFinite(j.rates.THB) && j.rates.THB > 0){
+              state.liveSpot = j.rates.THB;
+              state.liveSpotSource = 'tripcalc';
+              state.liveSpotMeta = 'TripCalc · อัปเดต ' + (j.updatedAt ? new Date(j.updatedAt).toLocaleString('th-TH', {timeZone:'Asia/Bangkok'}) + ' (ไทย)' : 'ล่าสุด') + ' · mid-market';
+              recalc();
+              return;
+            }
+            throw new Error('TripCalc returned no valid THB rate');
+          })
+          .catch(function(){
+            state.liveSpot = null;
+            state.liveSpotMeta = state.spot === null ? 'ดึง Spot ล่าสุดไม่สำเร็จ' : 'ดึง Spot ล่าสุดไม่สำเร็จ · ใช้อัตราอ้างอิงรายวันเป็นสำรอง';
+            renderSpotSource();
+            recalc();
+          });
+      });
+  }
+
   function fetchAll(){
+    state.liveSpotMeta = "กำลังตรวจ Spot ล่าสุด…";
     state.spotMeta = "กำลังตรวจอัตราอ้างอิงรายวัน…";
     renderSpotSource();
     $("marketDataStatus").textContent = "กำลังโหลดข้อมูลตลาด…";
@@ -1002,6 +1051,8 @@
     if (btn.disabled) return;
     btn.disabled = true;
     btn.textContent = "กำลังรีเฟรช…";
+
+    var liveSpotP = fetchLiveSpot();
 
     var spotP = fetch(bust("https://open.er-api.com/v6/latest/USD"), {cache:"no-store"})
       .then(function(r){ if (!r.ok) throw new Error('Reference rate HTTP '+r.status); return r.json(); })
@@ -1013,6 +1064,7 @@
           state.dxyPctAuto = snapshotDelta("dxy", state.dxy);
           snapshotDelta("spot", state.spot);
           state.spotMeta = "อัตราอ้างอิงรายวัน ณ " + (j.time_last_update_utc ? new Date(j.time_last_update_utc).toLocaleString("th-TH", {timeZone:"Asia/Bangkok"}) + " (ไทย)" : "ไม่ระบุเวลา") + " · ไม่ใช่ Spot สด";
+          renderSpotSource();
         } else { throw new Error('Reference API returned no valid THB rate'); }
         recalc();
       })
@@ -1024,10 +1076,11 @@
               state.spot = j.rates.THB;
               state.spotSource = 'ecb';
               state.spotMeta = "ECB / Frankfurter · อัตราอ้างอิงรายวัน ณ " + (j.date || "ไม่ระบุวันที่") + " · ไม่ใช่ Spot สด";
+              renderSpotSource();
             } else { throw new Error('ECB returned no valid THB rate'); }
             recalc();
           })
-          .catch(function(){ state.spotMeta = state.spot === null ? "ดึงอัตราอ้างอิงไม่สำเร็จ · กรอกค่าจำลองได้" : "ดึงอัตราอ้างอิงใหม่ไม่สำเร็จ · แสดงค่าที่โหลดไว้ก่อนหน้า"; recalc(); });
+          .catch(function(){ state.spotMeta = state.spot === null ? "ดึงอัตราอ้างอิงไม่สำเร็จ · กรอกค่าจำลองได้" : "ดึงอัตราอ้างอิงใหม่ไม่สำเร็จ · แสดงค่าที่โหลดไว้ก่อนหน้า"; renderSpotSource(); recalc(); });
       });
 
     var xauP = fetch("https://api.gold-api.com/price/XAU", {cache:"no-store"})
@@ -1053,7 +1106,7 @@
     var mdP = fetchMarketData();
     var calP = fetchCalendar();
 
-    Promise.allSettled([spotP, xauP, mdP, calP]).then(function(){
+    Promise.allSettled([liveSpotP, spotP, xauP, mdP, calP]).then(function(){
       btn.disabled = false;
       btn.textContent = btnLabel;
     });
@@ -1237,6 +1290,9 @@
   });
   recalc();
   fetchAll();
+  window.setInterval(function(){
+    if (!$('refresh').disabled) fetchLiveSpot();
+  }, 60 * 1000);
   window.setInterval(function(){
     if (!$("refresh").disabled) fetchAll();
   }, 15 * 60 * 1000);
