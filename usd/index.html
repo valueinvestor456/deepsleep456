@@ -62,7 +62,7 @@
   .signal-color-legend .weak{background:var(--good-bg);color:var(--good);}
   .signal-color-legend .strong{background:var(--bad-bg);color:var(--bad);}
   .signal-color-legend .neutral{background:var(--surface-1);color:var(--text-secondary);}
-  #tileDXY, article[aria-labelledby="sg-dxy-title"]{display:none!important;}
+  #tileDXY{display:none!important;}
   .tile .name{font-size:12px;color:var(--text-secondary);font-weight:600;}
   .tile .val{font-size:19px;font-weight:700;font-variant-numeric:tabular-nums;margin:2px 0;}
   .tile .chg{font-size:13px;font-weight:600;}
@@ -193,7 +193,7 @@
       <button type="button" id="spotReset" hidden>ล้างค่าจำลอง · ใช้อัตราอ้างอิงอัตโนมัติ</button>
     </div>
     <div style="text-align:right">
-      <div class="score-label">คะแนนเงินบาทรวม · 5 ปัจจัย</div>
+      <div class="score-label">คะแนนเงินบาทรวม · 6 ปัจจัย</div>
       <div class="score-big" id="sg-score-top">—</div>
       <div class="verdict-text" id="sg-verdict-top">รอข้อมูล</div>
       <div class="spot-meta" id="sg-top-coverage">—</div>
@@ -213,7 +213,7 @@
   <div class="note" id="marketDataStatus" role="status" aria-live="polite">กำลังโหลดข้อมูลตลาด…</div>
 
   <section class="signal-board" id="usd-signals" aria-labelledby="signals-title">
-    <h2 id="signals-title">สัญญาณ USD/THB · 5 ปัจจัยที่ต้องติดตาม</h2>
+    <h2 id="signals-title">สัญญาณ USD/THB · 6 ปัจจัยที่ต้องติดตาม</h2>
     <p class="signal-intro">↑ USD/THB ขึ้น = บาทอ่อน · ↓ USD/THB ลง = บาทแข็ง · อ่านแรงหนุนแต่ละด้านร่วมกัน</p>
     <div class="signal-summary" aria-labelledby="sg-summary-title">
       <div class="signal-summary-head">
@@ -229,7 +229,7 @@
         <div class="signal-table-scroll"><table class="signal-weight-table"><thead><tr><th>ปัจจัย</th><th>วันที่ / งวดข้อมูล</th><th>น้ำหนักตั้งต้น</th><th>ขนาดการเปลี่ยน</th><th>ความสด</th><th>ตัวคูณข้อมูล</th><th>น้ำหนักใช้จริง</th><th>คะแนน</th></tr></thead><tbody id="sg-weights"></tbody></table></div>
         <p class="signal-footnote">คะแนนบวก = หนุนบาทแข็ง · คะแนนลบ = หนุนบาทอ่อน · รวมผลแต่ละปัจจัยเป็น −100 ถึง +100; เมื่อ |คะแนน| ≥ 15 จึงแสดงทิศทาง ต้องมีข้อมูลอย่างน้อย 3 ปัจจัยและน้ำหนักใช้ได้ ≥ 50% จึงสรุป</p>
         <p class="signal-footnote">น้ำหนักตั้งต้น US2Y/Oil/Gold/Flow/CA: สั้น 25/15/5/15/5, กลาง 20/20/10/15/10, ยาว 15/20/10/15/25 · เป็นสมมติฐานปรับตามระยะวางแผน ไม่ใช่ค่าสัมประสิทธิ์ที่เรียนรู้จากตลาด</p>
-        <p class="signal-footnote">ปรับขนาดแต่ละปัจจัยด้วยสเกลสมมติ: US2Y 5 bp, Brent 2%, ส่งออกทองสุทธิ 25,000 ล้านบาท, Fund Flow 5,000 ล้านบาท, Current Account 2,000 ล้าน USD; ใช้ tanh จำกัดสัญญาณ เมื่อขนาดเกิน 1 เท่าสเกล เพิ่มตัวคูณน้ำหนักทีละ 0.5 ต่อสเกล ถึงสูงสุด 2 เท่า แล้วปรับน้ำหนักรวมให้ได้ 100%</p>
+        <p class="signal-footnote">ปรับขนาดแต่ละปัจจัยด้วยสเกลสมมติ: DXY 0.35%, US2Y 5 bp, Brent 2%, ส่งออกทองสุทธิ 25,000 ล้านบาท, Fund Flow 5,000 ล้านบาท, Current Account 2,000 ล้าน USD; ใช้ tanh จำกัดสัญญาณ เมื่อขนาดเกิน 1 เท่าสเกล เพิ่มตัวคูณน้ำหนักทีละ 0.5 ต่อสเกล ถึงสูงสุด 2 เท่า แล้วปรับน้ำหนักรวมให้ได้ 100%</p>
         <p class="signal-footnote">ความสด: รายวันเต็มน้ำหนัก 3 วัน ลดลงเชิงเส้นจนหมดที่ 10 วัน; รายเดือนเต็มน้ำหนักถึง 45 วันหลังสิ้นเดือน ลดจนหมดที่ 90 วัน · Gold Proxy ใช้ตัวคูณสมมติ 60% (ทิศทาง USD ที่กรอกเอง 50%); Fund Flow มีตลาดเดียวใช้ 50% · น้ำหนักที่หายไม่กระจายเพิ่มให้ปัจจัยอื่น · Gold และ Current Account มีข้อมูลซ้อนกัน จึงไม่ควรอ่านเป็นหลักฐานอิสระ</p>
       </details>
     </div>
@@ -551,7 +551,7 @@
   </div>
 
   <details>
-    <summary>⚙️ น้ำหนักแบบจำลองเสริม (ไม่เปลี่ยนคะแนนรวม 5 ปัจจัย)</summary>
+        <summary>⚙️ น้ำหนักแบบจำลองเสริม (ไม่เปลี่ยนคะแนนรวม 6 ปัจจัย)</summary>
     <div class="card">
       <div class="row"><span class="label">w DXY</span><input type="number" id="wDXY" step="0.05" value="0.60"></div>
       <div class="row"><span class="label">w Gold</span><input type="number" id="wXAU" step="0.05" value="0.17"></div>
