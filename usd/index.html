@@ -133,11 +133,35 @@
   .err{color:var(--bad);font-size:12px;}
   footer{font-size:11px;color:var(--text-muted);margin-top:20px;}
   a{color:var(--cat-1);}
+  .zone-live-card{position:fixed;right:18px;bottom:18px;z-index:50;width:min(320px,calc(100vw - 36px));background:var(--surface-1);border:2px solid var(--neutral);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:12px 14px;}
+  .zone-live-card .zone-live-title{font-size:11px;color:var(--text-secondary);font-weight:800;letter-spacing:.4px;}
+  .zone-live-card .zone-live-action{font-size:23px;font-weight:900;margin:3px 0 6px;}
+  .zone-live-card .zone-live-spot{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
+  .zone-live-card .zone-live-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;margin-top:7px;font-size:11px;color:var(--text-secondary);}
+  .zone-live-card .zone-live-grid b{color:var(--text-primary);font-variant-numeric:tabular-nums;}
+  .zone-live-card .zone-live-foot{font-size:10px;color:var(--text-muted);margin-top:7px;}
+  .zone-live-card.zone-premium{border-color:#b91c1c;background:color-mix(in srgb,var(--bad-bg) 72%,var(--surface-1));}
+  .zone-live-card.zone-premium .zone-live-action{color:#b91c1c;}
+  .zone-live-card.zone-discount{border-color:#15803d;background:color-mix(in srgb,var(--good-bg) 72%,var(--surface-1));}
+  .zone-live-card.zone-discount .zone-live-action{color:#15803d;}
+  .zone-live-card.zone-equilibrium .zone-live-action{color:#a16207;}
+  @media (max-width:600px){.zone-live-card{right:10px;bottom:10px;width:calc(100vw - 20px);}}
 </style>
 <link rel="stylesheet" href="./trade-planner.css?v=39a307fd">
 <link rel="stylesheet" href="./signal-board.css?v=39a307fd">
 </head>
 <body>
+<aside id="zone-live-card" class="zone-live-card" aria-live="polite">
+  <div class="zone-live-title">USD/THB LIVE ZONE · TRADINGVIEW 15m</div>
+  <div id="zone-live-action" class="zone-live-action">กำลังรอสัญญาณ</div>
+  <div id="zone-live-spot" class="zone-live-spot">Spot: —</div>
+  <div class="zone-live-grid">
+    <span>Premium</span><b id="zone-live-premium">—</b>
+    <span>Equilibrium</span><b id="zone-live-equilibrium">—</b>
+    <span>Discount</span><b id="zone-live-discount">—</b>
+  </div>
+  <div id="zone-live-foot" class="zone-live-foot">กำลังรอข้อมูลจาก TradingView Webhook…</div>
+</aside>
 <div class="wrap">
   <h1>USD/THB Intermarket Dashboard</h1>
   <p class="subtitle">ข้อมูลอัตโนมัติ · คะแนนแรงกดดันเงินบาทตามช่วงเวลา · จำลองแผน USD Futures เป็นสัญญา</p>
@@ -1296,6 +1320,36 @@
   window.setInterval(function(){
     if (!$("refresh").disabled) fetchAll();
   }, 15 * 60 * 1000);
+})();
+</script>
+<script>
+(function(){
+  var latestUrl='https://peer-expressed-dui-brings.trycloudflare.com/latest';
+  var card=document.getElementById('zone-live-card');
+  var actionEl=document.getElementById('zone-live-action');
+  var spotEl=document.getElementById('zone-live-spot');
+  var premiumEl=document.getElementById('zone-live-premium');
+  var equilibriumEl=document.getElementById('zone-live-equilibrium');
+  var discountEl=document.getElementById('zone-live-discount');
+  var footEl=document.getElementById('zone-live-foot');
+  function fmt(v){return v===null||v===undefined||isNaN(Number(v))?'—':Number(v).toFixed(3);}
+  function range(z){return z&&z.low!==undefined&&z.high!==undefined?fmt(z.low)+' – '+fmt(z.high):'—';}
+  function render(data){
+    var p=data&&data.payload;
+    if(!data||!data.ok||!p){footEl.textContent='ยังไม่มีข้อมูลจาก TradingView Webhook';return;}
+    var zone=String(p.zone||'OUTSIDE').toUpperCase();
+    var action=p.action||(zone==='PREMIUM'?'SHORT / SELL':zone==='DISCOUNT'?'LONG / BUY':'WAIT');
+    card.className='zone-live-card zone-'+zone.toLowerCase();
+    actionEl.textContent=action+' · '+zone;
+    spotEl.textContent='Spot: '+fmt(p.spot);
+    premiumEl.textContent=range(p.premium);
+    equilibriumEl.textContent=range(p.equilibrium);
+    discountEl.textContent=range(p.discount);
+    footEl.textContent='อัปเดตจาก TradingView Webhook · '+(p.received_at?new Date(p.received_at).toLocaleString('th-TH'):'—');
+  }
+  function poll(){fetch(latestUrl+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(render).catch(function(){footEl.textContent='เชื่อมต่อข้อมูลโซนไม่ได้ · ตรวจสอบ bridge/tunnel';});}
+  poll();
+  setInterval(poll,15000);
 })();
 </script>
 <script src="./trade-planner-core.js?v=39a307fd"></script>
