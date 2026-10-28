@@ -20,6 +20,7 @@ reliable for DXY/Gold/US10Y/USDTHB tickers in the macro-telegram-bot project).
 from __future__ import annotations
 
 import json
+import math
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -109,6 +110,8 @@ def fetch_bdry() -> dict:
         raise ValueError(f"BDRY: got {len(hist)} rows, need >= 2")
     last = float(hist["Close"].iloc[-1])
     prev = float(hist["Close"].iloc[-2])
+    if not math.isfinite(last) or not math.isfinite(prev) or prev <= 0:
+        raise ValueError("BDRY: non-finite or non-positive close")
     return {"last": last, "pct": (last / prev - 1.0) * 100.0}
 
 
@@ -194,7 +197,7 @@ def main():
             print(f"[FAIL -> null] {key}: {type(e).__name__}: {e}")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(out), encoding="utf-8")
+    OUT_PATH.write_text(json.dumps(out, allow_nan=False), encoding="utf-8")
     print(f"wrote {OUT_PATH}")
 
 

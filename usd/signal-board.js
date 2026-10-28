@@ -62,7 +62,7 @@
   function renderScore(observations){
     var result=Score.composite(observations,el('sg-horizon').value);
     var verdict={strong:'เอนเอียงไปทางบาทแข็ง · USD/THB ลง',weak:'เอนเอียงไปทางบาทอ่อน · USD/THB ขึ้น',mixed:'แรงหนุนผสม · ยังไม่ชัดเจน',missing:'ข้อมูลไม่พอให้สรุปทิศทาง'}[result.direction];
-    ['sg-score','sg-score-top'].forEach(function(id){el(id).textContent=result.score===null?'—':signed(result.score,1);el(id).dataset.direction=result.direction;});
+    ['sg-score','sg-score-top'].forEach(function(id){el(id).textContent=result.ready?signed(result.score,1):'—';el(id).dataset.direction=result.direction;});
     ['sg-verdict','sg-verdict-top'].forEach(function(id){el(id).textContent=verdict;});
     var coverage='ใช้ได้ '+result.count+'/6 ปัจจัย · น้ำหนักที่ใช้ได้ '+format(result.coverage,0)+'%';
     el('sg-coverage').textContent=coverage+' · ค่านี้บอกความครอบคลุมข้อมูล ไม่ใช่โอกาสทายถูก';
@@ -70,7 +70,7 @@
     el('sg-scenario').textContent=result.scenario?'โหมดจำลอง · มีค่าที่กรอกเอง':'โหมดข้อมูลอัตโนมัติ · ใช้ข้อมูลล่าสุดที่เผยแพร่';
     el('sg-score-pin').style.left=(result.score===null?50:(result.score+100)/2)+'%';
     el('sg-score-pin').hidden=!result.ready;
-    el('sg-drivers').textContent=result.leaders.length?'ตัวขับหลัก: '+result.leaders.map(function(r){return r.label+' '+signed(r.contribution,1)+' คะแนน';}).join(' · '):'รอแหล่งข้อมูลก่อนคำนวณ';
+    el('sg-drivers').textContent=result.ready&&result.leaders.length?'ตัวขับหลัก: '+result.leaders.map(function(r){return r.label+' '+signed(r.contribution,1)+' คะแนน';}).join(' · '):'ข้อมูลยังไม่พอให้สรุปตัวขับหลัก';
     var body=el('sg-weights');body.replaceChildren();
     result.rows.forEach(function(r){
       var tr=dom.createElement('tr');
