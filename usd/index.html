@@ -116,6 +116,13 @@
     padding:10px 14px;font-size:12px;margin-bottom:12px;color:var(--text-secondary);
   }
   .warnbox b{color:var(--text-primary);}
+  .bias-panel{margin:10px 0;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-1);display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;}
+  .bias-panel strong{font-size:20px;letter-spacing:.2px;}
+  [data-status="long"],[data-status="armed"]{color:var(--good);}
+  [data-status="short"],[data-status="exit"]{color:var(--bad);}
+  [data-status="watch"]{color:#c98a38;}
+  [data-status="blocked"],[data-status="neutral"]{color:var(--text-muted);}
+  .bias-panel p{margin:2px 0;font-size:12px;color:var(--text-secondary);}
   button{
     padding:6px 14px;border:1px solid var(--border);border-radius:8px;cursor:pointer;
     background:var(--cat-1);color:#fff;font-size:13px;font-weight:600;
@@ -242,6 +249,7 @@
       <div class="score-big" id="sg-score-top">—</div>
       <div class="verdict-text" id="sg-verdict-top">รอข้อมูล</div>
       <div class="spot-meta" id="sg-top-coverage">—</div>
+      <div class="verdict-text" id="sg-bias-top" data-status="blocked">NO TRADE</div>
     </div>
     <div style="text-align:right">
       <div class="score-label">Futures ยุติธรรม (CIP)</div>
@@ -269,6 +277,7 @@
       <div class="signal-total"><strong id="sg-score">—</strong><div><b id="sg-verdict">รอข้อมูล</b><p id="sg-coverage">—</p></div></div>
       <div class="signal-gauge"><span id="sg-score-pin" hidden></span></div>
       <div class="gauge-scale"><span>−100 · บาทอ่อน</span><span>0 · แรงหนุนผสม</span><span>+100 · บาทแข็ง</span></div>
+      <div class="bias-panel" role="status" aria-live="polite"><div><span class="score-label">REGIME SHIFT · TRADING BIAS</span><br><strong id="sg-bias" data-status="blocked">NO TRADE</strong></div><div><p id="sg-bias-reason">กำลังตรวจเงื่อนไข</p><p id="sg-bias-checks">—</p></div></div>
       <p id="sg-drivers" class="signal-drivers">รอข้อมูลแต่ละปัจจัย</p>
       <p class="signal-data-note">คะแนนใช้ข้อมูลรายวันและรายเดือนตามวันที่ในการ์ด พร้อมลดน้ำหนักข้อมูลเก่า · ไม่ได้คำนวณจากราคาในกรอบ TradingView</p>
       <details><summary>ดูน้ำหนัก ผลต่อคะแนน และวิธีคำนวณ</summary>
@@ -690,12 +699,12 @@
 </div>
 
 <script src="./oil-factor.js"></script>
-<script src="./signal-score.js?v=39a307fd"></script>
-<script src="./signal-board.js?v=39a307fd"></script>
+<script src="./signal-score.js?v=2026110602"></script>
+<script src="./signal-board.js?v=2026110602"></script>
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
-  var state = { spot:null, liveSpot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, us2Quote:null, dxyQuote:null, goldTradeQuote:null, foreignFlowQuote:null, currentAccountQuote:null, pmiMom:{}, pppLatestMonth:null, liveMarketAt:null };
+  var state = { spot:null, liveSpot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, us2Quote:null, dxyQuote:null, goldTradeQuote:null, foreignFlowQuote:null, currentAccountQuote:null, usdthbTrend:null, pmiMom:{}, pppLatestMonth:null, liveMarketAt:null };
   state.spotMeta = 'กำลังโหลดอัตราอ้างอิงรายวัน…';
   state.liveSpotMeta = 'กำลังโหลด Spot ล่าสุด…';
   state.liveSpotSource = 'fxrates';
@@ -837,7 +846,8 @@
       dxy:state.dxyQuote, oil:UsdOil.assess({mode:$("oilMode").value,quote:state.oilQuote,
         last:$("oilCurrent").value,previous:$("oilPrevious").value,weight:1,scale:2}),
       us2:state.us2Quote, goldTrade:state.goldTradeQuote,
-      foreignFlow:state.foreignFlowQuote, currentAccount:state.currentAccountQuote});
+      foreignFlow:state.foreignFlowQuote, currentAccount:state.currentAccountQuote,
+      trend:state.usdthbTrend, live:hasFreshLiveMarket()});
 
     var vDXY = num("vDXY") || 0.35, vXAU = num("vXAU") || 1.0, vBDI = num("vBDI") || 2.0;
     var sprN = num("sprNeutral"); if (sprN === null) sprN = 1.50;
@@ -1095,6 +1105,7 @@
         state.liveSpot = c.spot;
         state.liveSpotSource = 'tradingview';
         state.liveMarketAt = fetched;
+        state.usdthbTrend = c.trend || state.usdthbTrend;
         state.liveSpotMeta = 'TradingView Cloud · ตรวจล่าสุด ' + fetched.toLocaleTimeString('th-TH', {timeZone:'Asia/Bangkok'}) + ' (ไทย) · รีเฟรชทุก 30 วินาที';
         var today = fetched.toISOString().slice(0,10), before = new Date(fetched.getTime()-86400000).toISOString().slice(0,10);
         if (q.DXY && Number.isFinite(q.DXY.close) && Number.isFinite(q.DXY.change)) {
@@ -1323,6 +1334,7 @@
         // closely via CIP arbitrage. EMA20 vs EMA50 crossover is the trend.
         if (j.usdthb_trend){
           var tr = j.usdthb_trend, up = tr.direction === "up";
+          if (!hasFreshLiveMarket()) state.usdthbTrend = tr;
           $("trendEMA50").textContent = "Trend (EMA20/50, USD1! proxy): " + (up ? "🟢 Uptrend" : "🔴 Downtrend") +
             " (EMA20 " + tr.ema20.toFixed(3) + (up ? " > " : " < ") + "EMA50 " + tr.ema50.toFixed(3) + ")";
           $("trendEMA50").className = "spot-meta " + (up ? "good" : "bad");

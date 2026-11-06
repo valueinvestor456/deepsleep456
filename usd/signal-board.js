@@ -42,7 +42,7 @@
     result.reason = result.available ? '' : 'ค่าผลตอบแทนไม่ถูกต้อง';
     return result;
   }
-  var dom, market = {};
+  var dom, market = {}, biasMemory = {};
   var fields = ['sg-horizon','sg-us2-mode','sg-us2-last','sg-us2-prev','sg-gold-mode','sg-gold-flow','sg-gold-date','sg-foreign-mode','sg-stock-net','sg-bond-net','sg-foreign-date','sg-account-mode','sg-ca-value','sg-ca-month'];
   var manualFields={'sg-us2-mode':['sg-us2-last','sg-us2-prev'],'sg-foreign-mode':['sg-stock-net','sg-bond-net','sg-foreign-date'],'sg-account-mode':['sg-ca-value','sg-ca-month']};
   function el(id){ return dom.getElementById(id); }
@@ -71,6 +71,12 @@
     el('sg-score-pin').style.left=(result.score===null?50:(result.score+100)/2)+'%';
     el('sg-score-pin').hidden=!result.ready;
     el('sg-drivers').textContent=result.ready&&result.leaders.length?'ตัวขับหลัก: '+result.leaders.map(function(r){return r.label+' '+signed(r.contribution,1)+' คะแนน';}).join(' · '):'ข้อมูลยังไม่พอให้สรุปตัวขับหลัก';
+    var bias=Score.tradingBias(result,biasMemory,{live:market.live===true,trend:market.trend});
+    biasMemory=bias.next;
+    try{localStorage.setItem('usdthb_regime_v1',JSON.stringify(biasMemory));}catch(_){}
+    ['sg-bias','sg-bias-top'].forEach(function(id){el(id).textContent=bias.label;el(id).dataset.status=bias.status;});
+    el('sg-bias-reason').textContent=bias.reason;
+    el('sg-bias-checks').textContent='กติกา: ข้อมูล ≥4/6 · coverage ≥60% · ไม่มีค่าจำลอง · กลับขั้ว ±15 นาน 10 นาที · ฟีดสด · EMA20/50 ยืนยัน';
     var body=el('sg-weights');body.replaceChildren();
     result.rows.forEach(function(r){
       var tr=dom.createElement('tr');
@@ -130,6 +136,7 @@
   function mount(document){
     if(!document || !document.getElementById('usd-signals')) return;
     dom = document;
+    try{biasMemory=JSON.parse(localStorage.getItem('usdthb_regime_v1')||'{}')||{};}catch(_){biasMemory={};}
     fields.forEach(function(id){
       try { var value = localStorage.getItem('usdthb_'+id); if(value !== null) el(id).value = value; } catch (_) {}
       el(id).addEventListener('input',function(){

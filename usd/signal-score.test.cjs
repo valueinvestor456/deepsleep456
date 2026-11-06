@@ -48,3 +48,27 @@ test('manual scenarios are labelled, bounded and zero remains usable',()=>{
   const a=S.composite(o,'medium',now);assert.equal(a.scenario,true);assert.equal(a.count,6);
   assert.equal(a.rows[0].contribution,0);assert.ok(a.score<=100&&a.score>=-100);
 });
+test('long bias requires strong-to-weak shift, ten-minute persistence, live feed and uptrend',()=>{
+  const base={ready:true,count:5,coverage:80,scenario:false,score:25};
+  const t=Date.parse('2026-10-11T01:00:00Z');
+  let a=S.tradingBias(base,{}, {live:true,trend:{direction:'up'}},t);
+  assert.equal(a.label,'ARMED LONG');
+  let b=S.tradingBias({...base,score:-20},a.next,{live:true,trend:{direction:'up'}},t+60000);
+  assert.equal(b.label,'WATCH LONG');
+  let c=S.tradingBias({...base,score:-20},b.next,{live:true,trend:{direction:'up'}},t+11*60000);
+  assert.equal(c.label,'LONG BIAS');
+  let d=S.tradingBias({...base,score:-6},c.next,{live:true,trend:{direction:'up'}},t+12*60000);
+  assert.equal(d.label,'LONG BIAS');
+  let e=S.tradingBias({...base,score:-4},d.next,{live:true,trend:{direction:'up'}},t+13*60000);
+  assert.equal(e.label,'EXIT LONG');
+});
+test('bias blocks weak data, manual scenarios, stale live feed and unconfirmed price trend',()=>{
+  const t=Date.parse('2026-10-11T01:00:00Z'), good={ready:true,count:5,coverage:80,scenario:false,score:20};
+  assert.equal(S.tradingBias({...good,count:3},{},{live:true,trend:{direction:'down'}},t).label,'NO TRADE');
+  assert.equal(S.tradingBias({...good,scenario:true},{},{live:true,trend:{direction:'down'}},t).label,'NO TRADE');
+  assert.equal(S.tradingBias(good,{}, {live:false,trend:{direction:'down'}},t).label,'NO TRADE');
+  let armed=S.tradingBias({...good,score:-20},{},{live:true,trend:{direction:'down'}},t);
+  let watch=S.tradingBias(good,armed.next,{live:true,trend:{direction:'up'}},t+60000);
+  let stillWatch=S.tradingBias(good,watch.next,{live:true,trend:{direction:'up'}},t+12*60000);
+  assert.equal(stillWatch.label,'WATCH SHORT');
+});

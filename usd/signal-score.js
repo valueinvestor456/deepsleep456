@@ -88,6 +88,44 @@
       scenario:rows.some(function(r){return r.available&&r.manual;}),rows:rows,
       leaders:rows.filter(function(r){return r.available;}).sort(function(a,b){return Math.abs(b.contribution)-Math.abs(a.contribution);}).slice(0,3)};
   }
+  function regime(score){
+    return score>=15?'strong':score<=-15?'weak':'neutral';
+  }
+  function tradingBias(result,memory,market,now){
+    now=now===undefined?Date.now():now;memory=memory||{};market=market||{};
+    var next={anchor:memory.anchor||null,anchorAt:number(memory.anchorAt),candidate:memory.candidate||null,
+      candidateAt:number(memory.candidateAt),active:memory.active||null};
+    var current=result&&result.ready?regime(result.score):'neutral';
+    var quality=!!(result&&result.ready&&result.count>=4&&result.coverage>=60&&!result.scenario);
+    var trend=market.trend&&market.trend.direction;
+    var live=market.live===true, trendUp=trend==='up', trendDown=trend==='down';
+    function out(status,label,reason){return {status:status,label:label,reason:reason,regime:current,quality:quality,next:next};}
+    if(!quality){next.candidate=null;next.candidateAt=null;next.active=null;return out('blocked','NO TRADE','ข้อมูลต้องครบอย่างน้อย 4/6 ปัจจัย น้ำหนักใช้ได้ ≥60% และห้ามมีค่าจำลอง');}
+    if(!live){next.active=null;return out('blocked','NO TRADE','ฟีด Spot/DXY/Gold/Bond ไม่สด จึงงดใช้คะแนนอ้างอิงการเทรด');}
+    if(trend!=='up'&&trend!=='down'){next.active=null;return out('blocked','NO TRADE','ยังไม่มีแนวโน้ม EMA20/EMA50 สำหรับยืนยันราคา');}
+    if(next.active==='long'){
+      if(result.score<=-5&&trendUp)return out('long','LONG BIAS','บาทยังอ่อนและ EMA20 > EMA50; ใช้โซนราคาเป็นจุดเข้า ไม่ไล่ราคา');
+      next.active=null;
+      return out('exit','EXIT LONG','Score ฟื้นเหนือ −5 หรือแนวโน้มราคาไม่ยืนยันแล้ว');
+    }
+    if(next.active==='short'){
+      if(result.score>=5&&trendDown)return out('short','SHORT BIAS','บาทยังแข็งและ EMA20 < EMA50; ใช้โซนราคาเป็นจุดเข้า ไม่ไล่ราคา');
+      next.active=null;
+      return out('exit','EXIT SHORT','Score อ่อนต่ำกว่า +5 หรือแนวโน้มราคาไม่ยืนยันแล้ว');
+    }
+    if(!next.anchor&&(current==='strong'||current==='weak')){next.anchor=current;next.anchorAt=now;return out('armed','ARMED '+(current==='strong'?'LONG':'SHORT'),'บันทึกระบอบ '+(current==='strong'?'บาทแข็ง':'บาทอ่อน')+' เป็นฐาน รอการกลับขั้ว');}
+    var wanted=next.anchor==='strong'&&current==='weak'?'long':next.anchor==='weak'&&current==='strong'?'short':null;
+    if(!wanted){
+      next.candidate=null;next.candidateAt=null;
+      if(current===next.anchor)return out('armed','ARMED '+(next.anchor==='strong'?'LONG':'SHORT'),'ยังอยู่ระบอบเดิม รอ Score กลับข้ามอีกฝั่ง');
+      return out('neutral','NO TRADE','Score อยู่เขตกลาง −15 ถึง +15; งดตีความการแกว่งใกล้ศูนย์เป็นจุดกลับตัว');
+    }
+    if(next.candidate!==wanted){next.candidate=wanted;next.candidateAt=now;return out('watch','WATCH '+wanted.toUpperCase(),'Score กลับขั้วแล้ว กำลังรอยืนยันต่อเนื่อง 10 นาทีและแนวโน้มราคา');}
+    if(now-next.candidateAt<10*60*1000)return out('watch','WATCH '+wanted.toUpperCase(),'Score กลับขั้วแล้ว แต่ยังยืนยันไม่ครบ 10 นาที');
+    if((wanted==='long'&&!trendUp)||(wanted==='short'&&!trendDown))return out('watch','WATCH '+wanted.toUpperCase(),'Score ยืนยันแล้ว แต่ EMA20/EMA50 ยังไม่ยืนยันทิศทางราคา');
+    next.active=wanted;next.anchor=current;next.anchorAt=now;next.candidate=null;next.candidateAt=null;
+    return out(wanted,wanted.toUpperCase()+' BIAS','Regime Shift ยืนยัน: '+(wanted==='long'?'+ บาทแข็ง → − บาทอ่อน และ EMA20 > EMA50':'− บาทอ่อน → + บาทแข็ง และ EMA20 < EMA50'));
+  }
   return {number:number,day:day,monthEnd:monthEnd,freshness:freshness,assessGoldTrade:assessGoldTrade,
-    assessMonthly:assessMonthly,assessForeign:assessForeign,composite:composite};
+    assessMonthly:assessMonthly,assessForeign:assessForeign,composite:composite,regime:regime,tradingBias:tradingBias};
 });
