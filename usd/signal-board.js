@@ -85,7 +85,7 @@
     var futures = oil.market_type === 'futures';
     var dxy=market.dxyManual?number(market.dxyChange):da.available&&da.last>0&&da.previous>0?(da.last/da.previous-1)*100:null;
     show('dxy',dxy,dxy === null ? 'Δ รอข้อมูล' : (market.dxyManual?'Δ ':format(da.last,2)+' · ')+signed(dxy,2)+'%',
-      market.dxyManual ? 'จำลองจาก Δ% ที่กรอก' : 'Synthetic DXY · ECB ผ่าน Frankfurter · '+(dq.date?dq.date+' เทียบ '+dq.previous_date:'รอข้อมูลรายวัน')+' · ไม่ใช่ราคา ICE เรียลไทม์');
+      market.dxyManual ? 'จำลองจาก Δ% ที่กรอก' : (dq.source === 'TradingView' ? 'TradingView Cloud · TVC:DXY · เปลี่ยนแปลงเทียบราคาปิดก่อนหน้า' : 'Synthetic DXY · ECB ผ่าน Frankfurter · '+(dq.date?dq.date+' เทียบ '+dq.previous_date:'รอข้อมูลรายวัน')+' · ไม่ใช่ราคา ICE เรียลไทม์'));
     show('oil',oil.available ? oil.pct : null,oil.available ? '$'+format(oil.last,2)+' · '+signed(oil.pct,2)+'%' : 'รอราคา Brent',
       oil.manual ? 'กรอกจำลองเอง · Brent USD/บาร์เรล' : (futures ? 'Yahoo Finance · BZ=F · ราคา delayed · เปลี่ยนแปลงระหว่าง '+(oil.date ? oil.previousDate+' → '+oil.date : 'วันที่ยังไม่ทราบ') : 'EIA / FRED · เปลี่ยนแปลงระหว่าง '+(oil.date ? oil.previousDate+' → '+oil.date : 'วันที่ยังไม่ทราบ'))+' · ใช้ช่วงนี้คำนวณคะแนน'+(oil.available ? '' : ' · งดสรุปทิศทาง'));
     el('sg-oil-title').textContent=oil.manual?'Brent · จำลอง':(futures?'Brent Futures · BZ=F':'Brent Spot · EIA');

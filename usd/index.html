@@ -133,11 +133,19 @@
   .err{color:var(--bad);font-size:12px;}
   footer{font-size:11px;color:var(--text-muted);margin-top:20px;}
   a{color:var(--cat-1);}
-  .zone-live-card{position:fixed;right:18px;bottom:18px;z-index:50;width:min(320px,calc(100vw - 36px));background:var(--surface-1);border:2px solid var(--neutral);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);padding:12px 14px;}
-  .zone-live-card .zone-live-title{font-size:11px;color:var(--text-secondary);font-weight:800;letter-spacing:.4px;}
-  .zone-live-card .zone-live-action{font-size:23px;font-weight:900;margin:3px 0 6px;}
+  .zone-card-dock{display:flex;justify-content:flex-end;margin:0 0 12px;}
+  .zone-live-card{position:static;width:min(230px,100%);background:var(--surface-1);border:1px solid var(--neutral);border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.08);overflow:hidden;}
+  .zone-live-details{margin:0;}
+  .zone-live-details > .zone-live-summary{display:block;position:relative;cursor:pointer;list-style:none;padding:8px 28px 8px 10px;background:transparent;border:0;border-radius:0;}
+  .zone-live-summary::-webkit-details-marker{display:none;}
+  .zone-live-summary::after{content:"▾";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-secondary);}
+  .zone-live-details[open] .zone-live-summary::after{content:"▴";}
+  .zone-live-expanded{padding:0 10px 10px;}
+  .zone-live-card .zone-live-title{display:block;font-size:11px;color:var(--text-secondary);font-weight:800;letter-spacing:.4px;}
+  .zone-live-card .zone-live-action{display:block;font-size:13px;font-weight:800;margin:2px 0 0;line-height:1.3;}
   .zone-live-card .zone-live-spot{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;}
-  .zone-live-card .zone-live-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 12px;margin-top:7px;font-size:11px;color:var(--text-secondary);}
+  .zone-live-card .zone-live-grid{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 8px;margin-top:7px;font-size:10px;color:var(--text-secondary);}
+  .zone-live-card .zone-live-grid b{text-align:right;}
   .zone-live-card .zone-live-grid b{color:var(--text-primary);font-variant-numeric:tabular-nums;}
   .zone-live-card .zone-live-foot{font-size:10px;color:var(--text-muted);margin-top:7px;}
   .zone-live-card.zone-premium{border-color:#b91c1c;background:color-mix(in srgb,var(--bad-bg) 72%,var(--surface-1));}
@@ -145,26 +153,33 @@
   .zone-live-card.zone-discount{border-color:#15803d;background:color-mix(in srgb,var(--good-bg) 72%,var(--surface-1));}
   .zone-live-card.zone-discount .zone-live-action{color:#15803d;}
   .zone-live-card.zone-equilibrium .zone-live-action{color:#a16207;}
-  @media (max-width:600px){.zone-live-card{right:10px;bottom:10px;width:calc(100vw - 20px);}}
+  .zone-live-card.zone-stale{border-color:#a16207;background:var(--warn-bg);}
+  .zone-live-card.zone-stale .zone-live-action{color:#a16207;}
+  @media (max-width:600px){.zone-live-card{width:min(210px,100%);}}
 </style>
 <link rel="stylesheet" href="./trade-planner.css?v=39a307fd">
 <link rel="stylesheet" href="./signal-board.css?v=39a307fd">
 </head>
 <body>
-<aside id="zone-live-card" class="zone-live-card" aria-live="polite">
-  <div class="zone-live-title">USD/THB LIVE ZONE · TRADINGVIEW 15m</div>
-  <div id="zone-live-action" class="zone-live-action">กำลังรอสัญญาณ</div>
-  <div id="zone-live-spot" class="zone-live-spot">Spot: —</div>
-  <div class="zone-live-grid">
-    <span>Premium</span><b id="zone-live-premium">—</b>
-    <span>Equilibrium</span><b id="zone-live-equilibrium">—</b>
-    <span>Discount</span><b id="zone-live-discount">—</b>
-  </div>
-  <div id="zone-live-foot" class="zone-live-foot">กำลังรอข้อมูลจาก TradingView Webhook…</div>
-</aside>
 <div class="wrap">
   <h1>USD/THB Intermarket Dashboard</h1>
   <p class="subtitle">ข้อมูลอัตโนมัติ · คะแนนแรงกดดันเงินบาทตามช่วงเวลา · จำลองแผน USD Futures เป็นสัญญา</p>
+  <div class="zone-card-dock">
+    <aside id="zone-live-card" class="zone-live-card" aria-live="polite">
+      <details class="zone-live-details" open>
+        <summary class="zone-live-summary"><span class="zone-live-title">USD1! ZONE · ราคาปิดแท่ง 15 นาที</span><span id="zone-live-action" class="zone-live-action">กำลังรอสัญญาณ</span></summary>
+        <div class="zone-live-expanded">
+          <div id="zone-live-spot" class="zone-live-spot">Last: —</div>
+          <div class="zone-live-grid">
+            <span>Premium</span><b id="zone-live-premium">—</b>
+            <span>Equilibrium</span><b id="zone-live-equilibrium">—</b>
+            <span>Discount</span><b id="zone-live-discount">—</b>
+          </div>
+          <div id="zone-live-foot" class="zone-live-foot">กำลังรอข้อมูลจาก TradingView Webhook…</div>
+        </div>
+      </details>
+    </aside>
+  </div>
 
   <p><a class="chip" href="#trade-planner">เปิด Calculator · Long / Short · Excess Equity</a></p>
 
@@ -237,9 +252,10 @@
   </div>
 
   <div class="warnbox">
-    <b>ข้อมูลตลาดอัปเดตอัตโนมัติจาก GitHub Actions; ช่องสีเหลืองแก้เองได้</b> ·
-    รีเฟรชฟีดทุกชั่วโมงตามตาราง GitHub Actions · ข้อมูลต้นทางมีทั้งรายวันและรายเดือน · <b>คะแนนเป็นกติกาจำลองที่ยังไม่ผ่านการทดสอบย้อนหลัง</b> ไม่ใช่ความน่าจะเป็นหรือราคาคาดการณ์
+    <b>ราคา Spot, DXY, Gold และ Bond yield ดึงสดจาก TradingView Cloud ทุก 30 วินาที</b> ·
+    ข้อมูลพื้นฐานที่เผยแพร่รายวัน/รายเดือนอัปเดตแยกตามรอบต้นทาง · ช่องสีเหลืองแก้เองได้ · <b>คะแนนเป็นกติกาจำลองที่ยังไม่ผ่านการทดสอบย้อนหลัง</b> ไม่ใช่ความน่าจะเป็นหรือราคาคาดการณ์
   </div>
+  <div class="note" id="liveFeedStatus" role="status" aria-live="polite">กำลังเชื่อมต่อฟีดตลาดสด…</div>
   <div class="note" id="marketDataStatus" role="status" aria-live="polite">กำลังโหลดข้อมูลตลาด…</div>
 
   <section class="signal-board" id="usd-signals" aria-labelledby="signals-title">
@@ -604,7 +620,7 @@
   </details>
 
   <details>
-    <summary>⚓ Valuation anchors — CIP (futures fair) + PPP (long-run)</summary>
+    <summary>⚓ Valuation anchors — CIP + REER + Relative PPP · <span id="pppSummaryValue">—</span></summary>
     <div class="card">
       <h2>CIP — ราคายุติธรรม TFEX USD Futures</h2>
       <div class="row"><span class="label">ดอกเบี้ยไทย %/ปี (auto)</span><input type="number" id="iTH" step="0.05" value="1.50"></div>
@@ -642,14 +658,27 @@
       <div class="note">ขาดทุนจากราคาเหวี่ยง = (บาทที่เหวี่ยง/0.01)×10×สัญญา · เผื่อ = ระดับ margin + ขาดทุนที่เหวี่ยง (ยังไม่รวมค่าคอม — ถ้าจะปิดสถานะหลังเหวี่ยงบวกค่าคอมไป-กลับ {ช่องด้านบน} เพิ่มเอง)
         · นี่คือขั้นต่ำทางคณิตศาสตร์ ไม่ใช่คำแนะนำการเทรด ควรเผื่อ buffer เพิ่มสำหรับความผันผวนที่มากกว่าที่ประเมินไว้</div>
 
-      <h2 style="margin-top:14px">PPP — จุดยึดระยะยาว</h2>
-      <div class="row"><span class="label">Spot ปีฐาน (anchor คงที่ ไม่ auto)</span><input type="number" id="sBase" step="0.01" value="35.30"></div>
-      <div class="row"><span class="label">CPI ไทย ฐาน (คงที่) / ปัจจุบัน (auto)</span>
-        <span><input type="number" id="cpiTH0" step="0.1" value="100.0"> <input type="number" id="cpiTH1" step="0.1" value="108.0"></span></div>
-      <div class="row"><span class="label">CPI สหรัฐ ฐาน (คงที่) / ปัจจุบัน (auto)</span>
-        <span><input type="number" id="cpiUS0" step="0.1" value="100.0"> <input type="number" id="cpiUS1" step="0.1" value="134.0"></span></div>
-      <div class="row"><span class="label">PPP fair</span><span class="value" id="pppFair">—</span></div>
-      <div class="row"><span class="label">Spot เบี่ยงจาก PPP</span><span class="value" id="pppDev">—</span></div>
+      <h2 style="margin-top:14px">REER — ค่าเงินบาทจริงเทียบคู่ค้า (ธปท.)</h2>
+      <div class="row"><span class="label">ดัชนีล่าสุด · เดือนที่มีข้อมูลจริง</span><span class="value" id="reerValue">กำลังโหลด…</span></div>
+      <div class="row"><span class="label">เปลี่ยนแปลงจากเดือนก่อน</span><span class="value" id="reerChange">—</span></div>
+      <div class="note" id="reerNote">ดัชนีฐาน 2012=100 · ค่าสูงขึ้นหมายถึงบาทแข็งค่าจริงเทียบคู่ค้า ไม่ใช่ราคา USD/THB หรือจุดเข้าเทรด</div>
+      <div class="stamp"><a href="https://app.bot.or.th/BTWS_STAT/statistics/BOTWEBSTAT.aspx?language=eng&amp;reportID=407" target="_blank" rel="noopener noreferrer">ที่มา: ธปท. EC_EI_007</a> · <span id="reerStamp">กำลังตรวจข้อมูล…</span></div>
+
+      <h2 style="margin-top:14px">Relative PPP — ปรับ USD/THB ตาม CPI</h2>
+      <div class="row"><span class="label">ค่าอ้างอิงล่าสุด · ฐาน ก.ย. 2025</span><strong class="value" id="pppReference">—</strong></div>
+      <div class="note" id="pppReferenceNote">รอ CPI ไทยและสหรัฐฯ ของเดือนเดียวกัน</div>
+      <div class="note">ฐานที่ตรวจสอบได้: USD/THB เฉลี่ย 31.9643 · CPI ไทย 100.11 · CPI สหรัฐฯ 324.800 (ก.ย. 2025) · เป็นการปรับราคาเดือนฐานด้วยเงินเฟ้อสัมพัทธ์ ไม่ใช่ PPP ทางการ ราคาเป้าหมาย หรือจุดเข้าเทรด</div>
+      <h3 style="margin-top:14px">จำลองเดือนฐานอื่นเอง (ไม่บังคับ)</h3>
+      <div class="row" id="pppBaseMonthRow"><label class="label" for="pppBaseMonth">เดือนฐานร่วมกัน</label><input type="month" id="pppBaseMonth"></div>
+      <div class="row"><label class="label" for="sBase">USD/THB ฐาน (บาท/USD)</label><input type="number" id="sBase" step="0.0001" min="0" placeholder="Spot ฐาน"></div>
+      <div class="row"><span class="label">CPI ไทย เดือนฐาน / ล่าสุด (auto)</span>
+        <span><input type="number" id="cpiTH0" step="0.01" min="0" aria-label="CPI ไทยเดือนฐาน" placeholder="ฐาน"> <input type="number" id="cpiTH1" step="0.01" min="0" aria-label="CPI ไทยล่าสุด" readonly></span></div>
+      <div class="row"><span class="label">CPI สหรัฐ เดือนฐาน / ล่าสุด (auto)</span>
+        <span><input type="number" id="cpiUS0" step="0.01" min="0" aria-label="CPI สหรัฐเดือนฐาน" placeholder="ฐาน"> <input type="number" id="cpiUS1" step="0.01" min="0" aria-label="CPI สหรัฐล่าสุด" readonly></span></div>
+      <div class="row"><span class="label">ผลจำลองจากฐานที่กรอก</span><span class="value" id="pppFair">—</span></div>
+      <div class="row"><span class="label">อัตราอ้างอิงรายวันเทียบผลจำลอง</span><span class="value" id="pppDev">—</span></div>
+      <div class="note" id="pppNote">กำลังตรวจข้อมูล CPI…</div>
+      <div class="note">แหล่งอ้างอิงเดือนฐาน: <a href="https://fred.stlouisfed.org/data/EXTHUS" target="_blank" rel="noopener noreferrer">USD/THB · FRED</a> · <a href="https://uploads.tpso.go.th/4.1%20Info_CPI_SEP_2025%20ver%205.pdf" target="_blank" rel="noopener noreferrer">CPI ไทย · สนค.</a> · <a href="https://fred.stlouisfed.org/data/cpiaucns" target="_blank" rel="noopener noreferrer">CPI สหรัฐ · FRED/BLS</a></div>
       <div class="stamp" id="pppStamp"></div>
     </div>
   </details>
@@ -666,7 +695,7 @@
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
-  var state = { spot:null, liveSpot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, us2Quote:null, dxyQuote:null, goldTradeQuote:null, foreignFlowQuote:null, currentAccountQuote:null, pmiMom:{} };
+  var state = { spot:null, liveSpot:null, dxy:null, xau:null, dxyPctAuto:null, xauPctAuto:null, oilQuote:null, us2Quote:null, dxyQuote:null, goldTradeQuote:null, foreignFlowQuote:null, currentAccountQuote:null, pmiMom:{}, pppLatestMonth:null, liveMarketAt:null };
   state.spotMeta = 'กำลังโหลดอัตราอ้างอิงรายวัน…';
   state.liveSpotMeta = 'กำลังโหลด Spot ล่าสุด…';
   state.liveSpotSource = 'fxrates';
@@ -676,7 +705,7 @@
   var SAVED = ["spotOverride","dxyPctOv","xauPctOv","us10","th10","bdiLevel","bdiPct",
                "pmiCN","pmiTH","pmiIN","pmiUS","oilMode","oilCurrent","oilPrevious","wOIL","vOIL",
                "wDXY","wXAU","wSPR","wBDI","wPMI","vDXY","vXAU","vBDI","sprNeutral","sprScale","kSens",
-               "iTH","iUS","days","fut","tfexSeries","cipContracts","sBase","cpiTH0","cpiTH1","cpiUS0","cpiUS1","calNote",
+               "iTH","iUS","days","fut","tfexSeries","cipContracts","calNote",
                "commRT","imPerLot","mmPerLot","fmPerLot","swingBaht"];
   var PMI_STAMPED = {pmiCN:"pmiCNstamp", pmiTH:"pmiTHstamp", pmiIN:"pmiINstamp", pmiUS:"pmiUSstamp"};
   SAVED.forEach(function(id){
@@ -690,6 +719,13 @@
         });
       }
       if (PMI_STAMPED[id]) stampPMI(id, true);
+      recalc();
+    });
+  });
+  [["pppBaseMonth", "month"], ["sBase", "sBase"], ["cpiTH0", "cpiTH0"], ["cpiUS0", "cpiUS0"]].forEach(function(pair){
+    $(pair[0]).value = localStorage.getItem("usdthb_ppp_manual_" + pair[1]) || "";
+    $(pair[0]).addEventListener("input", function(){
+      localStorage.setItem("usdthb_ppp_manual_" + pair[1], this.value);
       recalc();
     });
   });
@@ -736,8 +772,10 @@
     $('spotMeta').textContent = manual ? 'แหล่งข้อมูล: ค่าจำลองที่คุณกรอกและบันทึกไว้ในเบราว์เซอร์ · ไม่อัปเดตตามตลาด' : (liveAvailable ? state.liveSpotMeta : (fallback ? state.liveSpotMeta + ' · ' + state.spotMeta : state.liveSpotMeta));
     $('spotAttribution').hidden = manual || (!liveAvailable && state.spot === null);
     $('spotReset').hidden = !manual;
-    $('spotSourceLink').textContent = liveAvailable ? (state.liveSpotSource === 'tripcalc' ? 'TripCalc' : 'FXRatesAPI') : (state.spotSource === 'ecb' ? 'ECB / Frankfurter' : 'Rates By Exchange Rate API');
-    $('spotSourceLink').href = liveAvailable ? (state.liveSpotSource === 'tripcalc' ? 'https://tripcalc.io/' : 'https://fxratesapi.com/') : (state.spotSource === 'ecb' ? 'https://frankfurter.dev/' : 'https://www.exchangerate-api.com');
+    var liveName = state.liveSpotSource === 'tradingview' ? 'TradingView Cloud' : (state.liveSpotSource === 'tripcalc' ? 'TripCalc' : 'FXRatesAPI');
+    var liveHref = state.liveSpotSource === 'tradingview' ? 'https://www.tradingview.com/symbols/USDTHB/?exchange=FX_IDC' : (state.liveSpotSource === 'tripcalc' ? 'https://tripcalc.io/' : 'https://fxratesapi.com/');
+    $('spotSourceLink').textContent = liveAvailable ? liveName : (state.spotSource === 'ecb' ? 'ECB / Frankfurter' : 'Rates By Exchange Rate API');
+    $('spotSourceLink').href = liveAvailable ? liveHref : (state.spotSource === 'ecb' ? 'https://frankfurter.dev/' : 'https://www.exchangerate-api.com');
     $('liveSpotValue').textContent = state.liveSpot === null ? '—' : fmt(state.liveSpot, 3);
     $('liveSpotMeta').textContent = state.liveSpotMeta;
     $('spotReferenceMeta').textContent = state.spot === null ? 'อัตราอ้างอิงรายวัน: ยังโหลดไม่ได้' : 'อัตราอ้างอิงรายวัน (ใช้เป็นสำรอง/เปรียบเทียบ): ' + fmt(state.spot, 3) + ' · ' + state.spotMeta;
@@ -978,9 +1016,23 @@
     }
 
     var sB = num("sBase"), t0 = num("cpiTH0"), t1 = num("cpiTH1"), u0 = num("cpiUS0"), u1 = num("cpiUS1");
-    var pppFair = (sB > 0 && t0 > 0 && t1 > 0 && u0 > 0 && u1 > 0) ? sB * (t1/t0) / (u1/u0) : null;
+    var referenceBase = { month:"2025-09", spot:31.9643, th:100.11, us:324.800 };
+    var referenceReady = state.pppLatestMonth && state.pppLatestMonth > referenceBase.month && t1 > 0 && u1 > 0;
+    var pppReference = referenceReady ? referenceBase.spot * (t1/referenceBase.th) / (u1/referenceBase.us) : null;
+    $("pppReference").textContent = pppReference ? fmt(pppReference, 4) + " บาท/USD" : "—";
+    $("pppSummaryValue").textContent = pppReference ? fmt(pppReference, 4) + " บาท/USD" : "—";
+    $("pppReferenceNote").textContent = pppReference ?
+      "CPI ล่าสุดเดือน " + state.pppLatestMonth + " · ฐาน ก.ย. 2025 · ค่านี้เปลี่ยนเมื่อ CPI ทั้งสองประเทศอัปเดตครบ ไม่ใช่ราคา Spot สดหรือมูลค่ายุติธรรมของ Futures" :
+      "รอ CPI ไทยและสหรัฐฯ ของเดือนเดียวกัน · ยังไม่แสดงค่าอ้างอิงเก่า";
+    var baseMonth = $("pppBaseMonth").value;
+    var validBase = state.pppLatestMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(baseMonth) && baseMonth < state.pppLatestMonth &&
+      sB > 0 && t0 > 0 && u0 > 0;
+    var pppFair = (validBase && t1 > 0 && u1 > 0) ? sB * (t1/t0) / (u1/u0) : null;
     $("pppFair").textContent = fmt(pppFair, 4);
     $("pppDev").textContent = (pppFair && S) ? ((S/pppFair-1)*100).toFixed(2) + "%" : "—";
+    $("pppNote").textContent = pppFair ? "ปรับจากเดือนฐาน " + baseMonth + " ถึง CPI เดือน " + state.pppLatestMonth + " · สมมติฐานเงินเฟ้อ ไม่ใช่ราคาเป้าหมาย" :
+      (baseMonth && state.pppLatestMonth && baseMonth >= state.pppLatestMonth ? "เดือนฐานต้องเก่ากว่าเดือน CPI ล่าสุด " + state.pppLatestMonth :
+      "ยังไม่คำนวณ: ระบุเดือนฐานและ USD/THB เฉลี่ยพร้อม CPI ดิบของเดือนนั้นทั้งสองประเทศ");
 
     recalcMarginReserve();
   }
@@ -1029,8 +1081,45 @@
     return url + (url.indexOf("?") === -1 ? "?" : "&") + "_=" + Date.now();
   }
 
+  function hasFreshLiveMarket(){
+    return state.liveMarketAt instanceof Date && Number.isFinite(state.liveMarketAt.getTime()) && Date.now() - state.liveMarketAt.getTime() < 120000;
+  }
+
   function fetchLiveSpot(){
-    return fetch(bust("https://api.fxratesapi.com/latest?base=USD&currencies=THB"), {cache:"no-store"})
+    return fetch(bust("https://usd-zone-alerts.valueinvestor182.workers.dev/market-context"), {cache:"no-store", signal:AbortSignal.timeout(8000)})
+      .then(function(r){ if (!r.ok) throw new Error('TradingView Cloud HTTP '+r.status); return r.json(); })
+      .then(function(j){
+        var c = j && j.context, q = c && c.quotes, fetched = c && new Date(c.fetched_at);
+        if (!j.ok || !c || !q || !Number.isFinite(c.spot) || c.spot <= 0 || !Number.isFinite(fetched.getTime()) || Date.now() - fetched.getTime() > 120000)
+          throw new Error('TradingView Cloud returned invalid/stale data');
+        state.liveSpot = c.spot;
+        state.liveSpotSource = 'tradingview';
+        state.liveMarketAt = fetched;
+        state.liveSpotMeta = 'TradingView Cloud · ตรวจล่าสุด ' + fetched.toLocaleTimeString('th-TH', {timeZone:'Asia/Bangkok'}) + ' (ไทย) · รีเฟรชทุก 30 วินาที';
+        var today = fetched.toISOString().slice(0,10), before = new Date(fetched.getTime()-86400000).toISOString().slice(0,10);
+        if (q.DXY && Number.isFinite(q.DXY.close) && Number.isFinite(q.DXY.change)) {
+          state.dxyQuote = {last:q.DXY.close, previous:q.DXY.close/(1+q.DXY.change/100), date:today, previous_date:before, source:'TradingView', series:'TVC:DXY'};
+        }
+        if (q.GOLD && Number.isFinite(q.GOLD.close) && Number.isFinite(q.GOLD.change)) {
+          state.xau = q.GOLD.close;
+          state.xauPctAuto = q.GOLD.change;
+          $('xauStamp').textContent = 'TradingView Cloud · TVC:GOLD · ' + fetched.toLocaleTimeString('th-TH', {timeZone:'Asia/Bangkok'}) + ' (ไทย)';
+          $('xauStamp').className = 'stamp';
+        }
+        if (c.yields && Number.isFinite(c.yields.us10y) && Number.isFinite(c.yields.th10y)) {
+          $('us10').value = c.yields.us10y;
+          $('th10').value = c.yields.th10y;
+        }
+        var slowAge = c.freshness && Number.isFinite(c.freshness.slow_snapshot_hours) ? c.freshness.slow_snapshot_hours : null;
+        $('liveFeedStatus').textContent = 'LIVE · TradingView Cloud · Spot/DXY/Gold/Bond yield ตรวจล่าสุด ' + fetched.toLocaleTimeString('th-TH', {timeZone:'Asia/Bangkok'}) +
+          ' (ไทย)' + (slowAge === null ? '' : ' · ชุดข้อมูลรายวัน/รายเดือนอายุ ' + slowAge.toFixed(1) + ' ชม.');
+        $('liveFeedStatus').className = 'note good';
+        recalc();
+      })
+      .catch(function(){
+        $('liveFeedStatus').textContent = 'ฟีด TradingView Cloud ใช้งานไม่ได้ · กำลังใช้ Spot สำรอง และไม่ถือว่าเป็นข้อมูล live ครบชุด';
+        $('liveFeedStatus').className = 'note err';
+        return fetch(bust("https://api.fxratesapi.com/latest?base=USD&currencies=THB"), {cache:"no-store"})
       .then(function(r){ if (!r.ok) throw new Error('Live spot HTTP '+r.status); return r.json(); })
       .then(function(j){
         if (j && j.rates && Number.isFinite(j.rates.THB) && j.rates.THB > 0){
@@ -1061,6 +1150,7 @@
             renderSpotSource();
             recalc();
           });
+      });
       });
   }
 
@@ -1111,6 +1201,7 @@
       .then(function(r){ if (!r.ok) throw new Error("gold API HTTP " + r.status); return r.json(); })
       .then(function(j){
         if (j && Number.isFinite(j.price) && j.price > 0){
+          if (hasFreshLiveMarket()) { recalc(); return; }
           state.xau = j.price;
           state.xauPctAuto = snapshotDelta("xau", state.xau);
           $("xauStamp").textContent = "gold-api.com · " +
@@ -1128,12 +1219,34 @@
       });
 
     var mdP = fetchMarketData();
+    var reerP = fetchReer();
     var calP = fetchCalendar();
 
-    Promise.allSettled([liveSpotP, spotP, xauP, mdP, calP]).then(function(){
+    Promise.allSettled([liveSpotP, spotP, xauP, mdP, reerP, calP]).then(function(){
       btn.disabled = false;
       btn.textContent = btnLabel;
     });
+  }
+
+  function fetchReer(){
+    return fetch(bust('/api/reer'), {cache:'no-store'})
+      .then(function(response){ if (!response.ok) throw new Error('REER HTTP ' + response.status); return response.json(); })
+      .then(function(data){
+        var latest = data && data.latest, previous = data && data.previous;
+        if (!latest || !previous || !/^\d{4}-\d{2}$/.test(latest.period) ||
+            !Number.isFinite(latest.value) || !Number.isFinite(previous.value) || previous.value <= 0)
+          throw new Error('REER data invalid');
+        var change = (latest.value / previous.value - 1) * 100;
+        $('reerValue').textContent = latest.value.toFixed(2) + ' · ' + latest.period;
+        $('reerChange').textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '% เทียบ ' + previous.period;
+        $('reerNote').textContent = 'ดัชนีฐาน 2012=100 · ' + (change >= 0 ? 'เพิ่ม = บาทแข็งค่าจริง' : 'ลด = บาทอ่อนค่าจริง') + ' เทียบคู่ค้า · ไม่ใช่ราคา USD/THB หรือสัญญาณเทรด';
+        $('reerStamp').textContent = 'เดือนข้อมูล ' + latest.period + ' · ตรวจล่าสุด ' + new Date(data.fetched_at).toLocaleString('th-TH', {timeZone:'Asia/Bangkok'});
+      })
+      .catch(function(){
+        $('reerValue').textContent = 'ยังไม่มีข้อมูลที่ยืนยันได้';
+        $('reerChange').textContent = '—';
+        $('reerStamp').textContent = 'ดึงข้อมูล ธปท. ไม่สำเร็จ · ไม่แสดงค่าค้าง';
+      });
   }
 
   // Prefer the GitHub Actions source because static hosting may not redeploy
@@ -1165,7 +1278,7 @@
         state.oilQuote = j.brent_futures || j.brent || null;
         state.eiaBrentQuote = j.brent || null;
         state.us2Quote = j.us2y || null;
-        state.dxyQuote = j.dxy_daily || null;
+        if (!hasFreshLiveMarket()) state.dxyQuote = j.dxy_daily || null;
         state.goldTradeQuote = j.gold_trade || null;
         state.foreignFlowQuote = j.foreign_flow || null;
         state.currentAccountQuote = j.current_account || null;
@@ -1185,8 +1298,10 @@
           $(fieldId).value = value;
           localStorage.setItem("usdthb_" + fieldId, String(value));
         }
-        apply("us10", j.us10y && j.us10y.last);
-        apply("th10", j.th10y && j.th10y.last);
+        if (!hasFreshLiveMarket()) {
+          apply("us10", j.us10y && j.us10y.last);
+          apply("th10", j.th10y && j.th10y.last);
+        }
         apply("bdiLevel", j.bdi && j.bdi.last);
         apply("bdiPct", j.bdi && j.bdi.pct);
         [["pmi_cn","pmiCN"], ["pmi_th","pmiTH"], ["pmi_in","pmiIN"], ["pmi_us","pmiUS"]].forEach(function(p){
@@ -1217,12 +1332,22 @@
         }
         apply("cpiTH1", j.th_cpi && j.th_cpi.last);
         apply("cpiUS1", j.us_cpi && j.us_cpi.last);
+        var cpiMonths = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        var thCpiMonth = j.th_cpi && j.th_cpi.mom && j.th_cpi.mom.cur_month;
+        var usCpiMonth = j.us_cpi && j.us_cpi.mom && j.us_cpi.mom.cur_month;
+        var cpiMonthIndex = cpiMonths.indexOf(thCpiMonth);
+        var feedUpdated = new Date(j.updated);
+        state.pppLatestMonth = null;
+        if (thCpiMonth === usCpiMonth && cpiMonthIndex >= 0 && Number.isFinite(feedUpdated.getTime())) {
+          var cpiYear = feedUpdated.getUTCFullYear() - (cpiMonthIndex > feedUpdated.getUTCMonth() ? 1 : 0);
+          state.pppLatestMonth = cpiYear + "-" + String(cpiMonthIndex + 1).padStart(2, "0");
+        }
 
         var stampTxt = "auto · " + result.source + " · " + when;
         $("sprStamp").textContent = stampTxt;
         $("bdiStamp").textContent = stampTxt;
         $("cipStamp").textContent = stampTxt + " (ดอกเบี้ย)";
-        $("pppStamp").textContent = stampTxt + " (CPI ปัจจุบัน — ฐานยังคงต้องกรอกเอง)";
+        $("pppStamp").textContent = stampTxt + (state.pppLatestMonth ? " · CPI ล่าสุดเดือน " + state.pppLatestMonth + " · ค่าอ้างอิงฐาน ก.ย. 2025; จำลองฐานอื่นได้" : " · CPI ไทย/สหรัฐคนละงวดหรือไม่ทราบงวด — งดคำนวณ PPP");
         [["pmi_cn","pmiCN"], ["pmi_th","pmiTH"], ["pmi_in","pmiIN"], ["pmi_us","pmiUS"]].forEach(function(p){
           if (j[p[0]]){
             localStorage.setItem("usdthb_" + p[1] + "_date", (j.updated || "").slice(0, 10));
@@ -1254,6 +1379,7 @@
         $("sprStamp").textContent = "ไม่มีข้อมูลล่าสุด";
         $("bdiStamp").textContent = "ไม่มีข้อมูลล่าสุด";
         $("cipStamp").textContent = "ไม่มีข้อมูลล่าสุด";
+        state.pppLatestMonth = null;
         $("pppStamp").textContent = "ไม่มีข้อมูลล่าสุด";
         recalc();
       });
@@ -1316,42 +1442,13 @@
   fetchAll();
   window.setInterval(function(){
     if (!$('refresh').disabled) fetchLiveSpot();
-  }, 60 * 1000);
+  }, 30 * 1000);
   window.setInterval(function(){
     if (!$("refresh").disabled) fetchAll();
   }, 15 * 60 * 1000);
 })();
 </script>
-<script>
-(function(){
-  var latestUrl='https://peer-expressed-dui-brings.trycloudflare.com/latest';
-  var card=document.getElementById('zone-live-card');
-  var actionEl=document.getElementById('zone-live-action');
-  var spotEl=document.getElementById('zone-live-spot');
-  var premiumEl=document.getElementById('zone-live-premium');
-  var equilibriumEl=document.getElementById('zone-live-equilibrium');
-  var discountEl=document.getElementById('zone-live-discount');
-  var footEl=document.getElementById('zone-live-foot');
-  function fmt(v){return v===null||v===undefined||isNaN(Number(v))?'—':Number(v).toFixed(3);}
-  function range(z){return z&&z.low!==undefined&&z.high!==undefined?fmt(z.low)+' – '+fmt(z.high):'—';}
-  function render(data){
-    var p=data&&data.payload;
-    if(!data||!data.ok||!p){footEl.textContent='ยังไม่มีข้อมูลจาก TradingView Webhook';return;}
-    var zone=String(p.zone||'OUTSIDE').toUpperCase();
-    var action=p.action||(zone==='PREMIUM'?'SHORT / SELL':zone==='DISCOUNT'?'LONG / BUY':'WAIT');
-    card.className='zone-live-card zone-'+zone.toLowerCase();
-    actionEl.textContent=action+' · '+zone;
-    spotEl.textContent='Spot: '+fmt(p.spot);
-    premiumEl.textContent=range(p.premium);
-    equilibriumEl.textContent=range(p.equilibrium);
-    discountEl.textContent=range(p.discount);
-    footEl.textContent='อัปเดตจาก TradingView Webhook · '+(p.received_at?new Date(p.received_at).toLocaleString('th-TH'):'—');
-  }
-  function poll(){fetch(latestUrl+'?t='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(render).catch(function(){footEl.textContent='เชื่อมต่อข้อมูลโซนไม่ได้ · ตรวจสอบ bridge/tunnel';});}
-  poll();
-  setInterval(poll,15000);
-})();
-</script>
+<script src="/zone-cloud.js?v=2026102501"></script>
 <script src="./trade-planner-core.js?v=39a307fd"></script>
 <script src="./trade-planner.js?v=39a307fd"></script>
 </body>
