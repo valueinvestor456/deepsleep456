@@ -113,11 +113,11 @@
       next.active=null;
       return out('exit','EXIT SHORT','Score อ่อนต่ำกว่า +5 หรือแนวโน้มราคาไม่ยืนยันแล้ว');
     }
-    if(!next.anchor&&(current==='strong'||current==='weak')){next.anchor=current;next.anchorAt=now;return out('armed','ARMED '+(current==='strong'?'LONG':'SHORT'),'บันทึกระบอบ '+(current==='strong'?'บาทแข็ง':'บาทอ่อน')+' เป็นฐาน รอการกลับขั้ว');}
+    if(!next.anchor&&(current==='strong'||current==='weak')){next.anchor=current;next.anchorAt=now;return out(current==='strong'?'armed-long':'armed-short','ARMED '+(current==='strong'?'LONG':'SHORT'),'บันทึกระบอบ '+(current==='strong'?'บาทแข็ง':'บาทอ่อน')+' เป็นฐาน รอการกลับขั้ว');}
     var wanted=next.anchor==='strong'&&current==='weak'?'long':next.anchor==='weak'&&current==='strong'?'short':null;
     if(!wanted){
       next.candidate=null;next.candidateAt=null;
-      if(current===next.anchor)return out('armed','ARMED '+(next.anchor==='strong'?'LONG':'SHORT'),'ยังอยู่ระบอบเดิม รอ Score กลับข้ามอีกฝั่ง');
+      if(current===next.anchor)return out(next.anchor==='strong'?'armed-long':'armed-short','ARMED '+(next.anchor==='strong'?'LONG':'SHORT'),'ยังอยู่ระบอบเดิม รอ Score กลับข้ามอีกฝั่ง');
       return out('neutral','NO TRADE','Score อยู่เขตกลาง −15 ถึง +15; งดตีความการแกว่งใกล้ศูนย์เป็นจุดกลับตัว');
     }
     if(next.candidate!==wanted){next.candidate=wanted;next.candidateAt=now;return out('watch','WATCH '+wanted.toUpperCase(),'Score กลับขั้วแล้ว กำลังรอยืนยันต่อเนื่อง 10 นาทีและแนวโน้มราคา');}

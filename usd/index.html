@@ -118,8 +118,8 @@
   .warnbox b{color:var(--text-primary);}
   .bias-panel{margin:10px 0;padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-1);display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;}
   .bias-panel strong{font-size:20px;letter-spacing:.2px;}
-  [data-status="long"],[data-status="armed"]{color:var(--good);}
-  [data-status="short"],[data-status="exit"]{color:var(--bad);}
+  [data-status="long"],[data-status="armed-long"]{color:var(--good);}
+  [data-status="short"],[data-status="armed-short"],[data-status="exit"]{color:var(--bad);}
   [data-status="watch"]{color:#c98a38;}
   [data-status="blocked"],[data-status="neutral"]{color:var(--text-muted);}
   .bias-panel p{margin:2px 0;font-size:12px;color:var(--text-secondary);}
@@ -272,7 +272,7 @@
     <div class="signal-summary" aria-labelledby="sg-summary-title">
       <div class="signal-summary-head">
         <div><h3 id="sg-summary-title">แรงกดดันเงินบาทรวม</h3><p id="sg-scenario" class="signal-source">กำลังโหลดข้อมูลอัตโนมัติ</p></div>
-        <div class="signal-controls"><label for="sg-horizon">ระยะที่ใช้วางแผน</label><select id="sg-horizon"><option value="short">สั้น · 1–5 วัน</option><option value="medium" selected>กลาง · 1–4 สัปดาห์</option><option value="long">ยาว · 1–3 เดือน</option></select><button id="sg-auto-all" type="button">ใช้ข้อมูลอัตโนมัติทั้งหมด</button></div>
+        <div class="signal-controls"><label for="sg-horizon">ระยะที่ใช้วางแผน</label><select id="sg-horizon"><option value="short" selected>สั้น · 1–5 วัน</option><option value="medium">กลาง · 1–4 สัปดาห์</option><option value="long">ยาว · 1–3 เดือน</option></select><button id="sg-auto-all" type="button">ใช้ข้อมูลอัตโนมัติทั้งหมด</button></div>
       </div>
       <div class="signal-total"><strong id="sg-score">—</strong><div><b id="sg-verdict">รอข้อมูล</b><p id="sg-coverage">—</p></div></div>
       <div class="signal-gauge"><span id="sg-score-pin" hidden></span></div>

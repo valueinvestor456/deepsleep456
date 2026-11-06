@@ -71,8 +71,11 @@
     el('sg-score-pin').style.left=(result.score===null?50:(result.score+100)/2)+'%';
     el('sg-score-pin').hidden=!result.ready;
     el('sg-drivers').textContent=result.ready&&result.leaders.length?'ตัวขับหลัก: '+result.leaders.map(function(r){return r.label+' '+signed(r.contribution,1)+' คะแนน';}).join(' · '):'ข้อมูลยังไม่พอให้สรุปตัวขับหลัก';
+    var horizon=el('sg-horizon').value;
+    if(biasMemory.horizon!==horizon)biasMemory={horizon:horizon};
     var bias=Score.tradingBias(result,biasMemory,{live:market.live===true,trend:market.trend});
     biasMemory=bias.next;
+    biasMemory.horizon=horizon;
     try{localStorage.setItem('usdthb_regime_v1',JSON.stringify(biasMemory));}catch(_){}
     ['sg-bias','sg-bias-top'].forEach(function(id){el(id).textContent=bias.label;el(id).dataset.status=bias.status;});
     el('sg-bias-reason').textContent=bias.reason;
