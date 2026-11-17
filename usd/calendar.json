@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-16T22:06:57Z",
+  "updated": "2026-11-17T07:56:48Z",
   "events": [
     {
       "title": "BusinessNZ Services Index",
@@ -222,6 +222,14 @@
       "country": "USD",
       "date": "2026-11-16T18:30:00-05:00",
       "impact": "Low",
+      "forecast": "",
+      "previous": ""
+    },
+    {
+      "title": "RBNZ Gov Breman Speaks",
+      "country": "NZD",
+      "date": "2026-11-16T19:00:00-05:00",
+      "impact": "Medium",
       "forecast": "",
       "previous": ""
     },
